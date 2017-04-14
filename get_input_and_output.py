@@ -20,7 +20,7 @@ def fill_in_pitch_class(pitchclass, list):
 if __name__ == "__main__":
     # Get input features
     for fn in os.listdir(cwd):
-
+        print(fn)
         if fn[-3:] == 'mid':
 
             s = converter.parse(cwd + fn)
@@ -34,18 +34,18 @@ if __name__ == "__main__":
 
             input('asd')
     # Get output labels
-    for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
+    '''for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
         if(file_name[:5] == 'trans'):
             f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + file_name, 'r')
             print(file_name)
             for line in f.readlines():
-                '''for i, letter in enumerate(line):
+                for i, letter in enumerate(line):
                     if(letter not in ' ¸-#+°/[](){}\n'):
                         if(letter.isalpha() == 0 and letter.isdigit() == 0):
 
                             print('special' + letter)
-                            print(line)'''
+                            print(line)
                 line = get_chord_line(line, replace)
                 print(line)
                 dic = calculate_freq(dic, line)
-    li = sorted(dic.items(), key=lambda d: d[1], reverse=True)  # sort it
+    li = sorted(dic.items(), key=lambda d: d[1], reverse=True)  # sort it'''
