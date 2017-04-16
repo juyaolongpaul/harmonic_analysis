@@ -1,7 +1,172 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="84ee9d40-864b-4636-81d3-3d48800ebc95" name="Default" comment="" />
+    <list default="true" id="84ee9d40-864b-4636-81d3-3d48800ebc95" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/examine_salami.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/harmonic_analysis.iml" afterPath="$PROJECT_DIR$/.idea/harmonic_analysis.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/chord_frequency.txt" afterPath="$PROJECT_DIR$/chord_frequency.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/chord_frequency_no_inversion.txt" afterPath="$PROJECT_DIR$/chord_frequency_no_inversion.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/counter_chord_frequency.py" afterPath="$PROJECT_DIR$/counter_chord_frequency.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_001.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_001.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_002.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_002.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_003.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_003.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_004.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_004.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_005.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_005.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_006.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_006.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_007.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_007.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_008.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_008.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_010.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_010.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_012.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_012.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_014.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_014.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_017.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_017.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_018.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_018.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_019.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_019.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_020.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_020.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_021.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_021.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_022.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_022.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_023.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_023.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_024.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_024.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_025.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_025.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_026.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_026.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_027.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_027.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_028.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_028.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_029.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_029.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_030.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_030.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_031.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_031.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_032.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_032.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_033.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_033.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_036.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_036.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_040.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_040.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_042.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_042.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_044.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_044.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_046.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_046.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_048.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_048.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_050.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_050.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_053.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_053.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_054.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_054.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_055.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_055.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_056.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_056.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_057.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_057.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_059.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_059.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_060.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_060.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_062.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_062.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_065.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_065.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_072.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_072.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_074.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_074.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_075.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_075.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_076.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_076.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_078.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_078.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_080.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_080.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_090.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_090.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_093.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_093.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_094.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_094.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_095.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_095.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_129.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_129.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_130.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_130.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_131.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_131.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_132.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_132.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_133.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_133.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_134.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_134.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_135.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_135.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_136.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_136.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_137.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_137.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_138.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_138.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_139.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_139.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_140.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_140.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_141.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_141.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_142.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_142.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_143.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_143.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_144.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_144.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_145.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_145.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_146.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_146.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_147.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_147.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_148.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_148.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_149.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_149.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_150.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_150.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_151.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_151.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_152.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_152.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_153.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_153.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_154.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_154.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_155.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_155.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_156.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_156.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_157.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_157.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_158.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_158.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_159.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_159.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_160.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_160.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_161.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_161.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_162.pop" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_162.pop" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_163.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_163.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_164.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_164.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_165.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_165.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_166.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_166.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_167.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_167.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_168.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_168.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_169.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_169.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_170.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_170.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_171.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_171.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_172.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_172.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_173.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_173.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_174.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_174.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_175.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_175.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_176.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_176.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_177.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_177.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_178.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_178.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_179.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_179.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_180.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_180.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_181.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_181.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_182.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_182.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_217.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_217.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_228.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_228.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_248.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_248.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_249.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_249.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_250.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_250.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_251.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_251.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_252.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_252.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_253.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_253.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_254.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_254.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_255.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_255.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_256.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_256.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_257.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_257.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_258.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_258.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_259.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_259.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_260.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_260.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_261.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_261.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_262.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_262.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_263.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_263.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_264.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_264.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_265.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_265.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_266.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_266.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_267.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_267.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_268.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_268.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_269.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_269.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_270.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_270.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_271.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_271.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_273.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_273.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_274.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_274.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_275.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_275.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_276.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_276.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_277.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_277.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_278.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_278.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_340.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_340.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_357.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_357.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_358.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_358.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_359.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_359.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_360.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_360.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_361.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_361.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_362.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_362.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_363.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_363.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_364.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_364.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_365.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_365.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_366.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_366.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_367.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_367.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_368.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_368.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_370.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_370.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_371.pop.not" afterPath="$PROJECT_DIR$/genos-corpus/answer-sheets/bach-chorales/translated_transposed_371.pop.not" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/get_input_and_output.py" afterPath="$PROJECT_DIR$/get_input_and_output.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/translate_output.py" afterPath="$PROJECT_DIR$/translate_output.py" />
+    </list>
     <ignored path="harmonic_analysis.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -12,12 +177,56 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/harmonic_analysis$translate_output.coverage" NAME="translate_output Coverage Results" MODIFIED="1492230008241" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/harmonic_analysis$examine_salami.coverage" NAME="examine_salami Coverage Results" MODIFIED="1492312454984" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/harmonic_analysis$get_input_and_output.coverage" NAME="get_input_and_output Coverage Results" MODIFIED="1492316474679" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/harmonic_analysis$counter_chord_frequency.coverage" NAME="counter_chord_frequency Coverage Results" MODIFIED="1492313705523" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/harmonic_analysis$translate_output.coverage" NAME="translate_output Coverage Results" MODIFIED="1492312463304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="DockManager">
+    <window id="2">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file leaf-file-name="transpose_to_C_polyphony.py" pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/transpose_to_C_polyphony.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="0">
+                    <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                    <folding>
+                      <element signature="e#0#21#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file leaf-file-name="counter_chord_frequency.py" pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/counter_chord_frequency.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="744">
+                    <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+                    <folding>
+                      <element signature="e#0#9#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FavoritesManager">
@@ -25,12 +234,24 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-      <file leaf-file-name="translate_output.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="translate_output.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/translate_output.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="2.0444446">
-              <caret line="45" column="46" selection-start-line="45" selection-start-column="46" selection-end-line="45" selection-end-column="46" />
+            <state relative-caret-position="426">
+              <caret line="35" column="26" lean-forward="false" selection-start-line="35" selection-start-column="26" selection-end-line="35" selection-end-column="26" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="examine_salami.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/examine_salami.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="407">
+              <caret line="31" column="53" lean-forward="true" selection-start-line="30" selection-start-column="16" selection-end-line="31" selection-end-column="53" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -38,8 +259,8 @@
       <file leaf-file-name="transpose_to_C_chords.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/transpose_to_C_chords.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-8.15625">
-              <caret line="178" column="56" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
+            <state relative-caret-position="503">
+              <caret line="178" column="56" lean-forward="false" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
               </folding>
@@ -47,7 +268,51 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="generate_midi.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/generate_midi.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="get_input_and_output.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/get_input_and_output.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="117">
+              <caret line="64" column="0" lean-forward="true" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#21#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="codecs.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Anaconda3/Lib/codecs.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="823">
+              <caret line="310" column="0" lean-forward="false" selection-start-line="310" selection-start-column="0" selection-end-line="310" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>chord</find>
+    </findStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -56,30 +321,23 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/transpose_to_C_chords.py" />
+        <option value="$PROJECT_DIR$/examine_salami.py" />
         <option value="$PROJECT_DIR$/translate_output.py" />
+        <option value="$PROJECT_DIR$/counter_chord_frequency.py" />
+        <option value="$PROJECT_DIR$/get_input_and_output.py" />
       </list>
     </option>
   </component>
-  <component name="JsBuildToolGruntFileManager" detection-done="true" />
-  <component name="JsBuildToolPackageJson" detection-done="true" />
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
   <component name="JsGulpfileManager">
     <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="3" />
-    <option name="y" value="7" />
-    <option name="width" value="1917" />
-    <option name="height" value="1023" />
-  </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
-    <OptionsSetting value="true" id="Add" />
-    <OptionsSetting value="true" id="Remove" />
-    <OptionsSetting value="true" id="Checkout" />
-    <OptionsSetting value="true" id="Update" />
-    <OptionsSetting value="true" id="Status" />
-    <OptionsSetting value="true" id="Edit" />
-    <ConfirmationsSetting value="0" id="Add" />
-    <ConfirmationsSetting value="0" id="Remove" />
+    <option name="x" value="-8" />
+    <option name="width" value="1932" />
+    <option name="height" value="1038" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -101,9 +359,9 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
-    <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="js.eslint.eslintPackage" value="" />
   </component>
-  <component name="RunManager" selected="Python.translate_output">
+  <component name="RunManager" selected="Python.get_input_and_output">
     <configuration default="false" name="translate_output" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -118,6 +376,60 @@
       <module name="harmonic_analysis" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/translate_output.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="examine_salami" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="harmonic_analysis" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examine_salami.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="counter_chord_frequency" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="harmonic_analysis" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/counter_chord_frequency.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="get_input_and_output" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="harmonic_analysis" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/get_input_and_output.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
@@ -140,6 +452,12 @@
       <option name="CUSTOM_SETTINGS" value="false" />
       <option name="USE_OPTIONS" value="false" />
       <option name="OPTIONS" value="" />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerProtractor" factoryName="Protractor">
+      <config-file value="" />
+      <node-interpreter value="project" />
+      <envs />
       <method />
     </configuration>
     <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
@@ -191,12 +509,32 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <module name="harmonic_analysis" />
+      <method />
+    </configuration>
     <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.npm" factoryName="npm">
-      <command value="run-script" />
+      <command value="run" />
       <scripts />
+      <node-interpreter value="project" />
       <envs />
       <method />
     </configuration>
@@ -310,16 +648,24 @@
       <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
-    <list size="1">
+    <list size="4">
       <item index="0" class="java.lang.String" itemvalue="Python.translate_output" />
+      <item index="1" class="java.lang.String" itemvalue="Python.examine_salami" />
+      <item index="2" class="java.lang.String" itemvalue="Python.counter_chord_frequency" />
+      <item index="3" class="java.lang.String" itemvalue="Python.get_input_and_output" />
     </list>
     <recent_temporary>
-      <list size="1">
-        <item index="0" class="java.lang.String" itemvalue="Python.translate_output" />
+      <list size="4">
+        <item index="0" class="java.lang.String" itemvalue="Python.get_input_and_output" />
+        <item index="1" class="java.lang.String" itemvalue="Python.counter_chord_frequency" />
+        <item index="2" class="java.lang.String" itemvalue="Python.translate_output" />
+        <item index="3" class="java.lang.String" itemvalue="Python.examine_salami" />
       </list>
     </recent_temporary>
   </component>
-  <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -328,11 +674,13 @@
       <changelist id="84ee9d40-864b-4636-81d3-3d48800ebc95" name="Default" comment="" />
       <created>1492191667201</created>
       <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
       <updated>1492191667201</updated>
     </task>
     <task id="LOCAL-00001" summary="Translation finished (not fully debug yet)">
       <created>1492230117194</created>
       <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
       <updated>1492230117194</updated>
     </task>
@@ -340,22 +688,22 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="3" y="7" width="1917" height="1023" extended-state="1" />
+    <frame x="-8" y="0" width="1932" height="1038" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33133253" sideWeight="0.5018909" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297491" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297491" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33133253" sideWeight="0.49810913" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297491" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33067274" sideWeight="0.49810913" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297491" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.28195938" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28164196" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -363,6 +711,9 @@
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="processedProjectFiles" value="true" />
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
@@ -373,6 +724,13 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/get_input_and_output.py</url>
+          <line>67</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -380,31 +738,23 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="11" />
+      <option name="time" value="15" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/translate_output.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://F:/Anaconda2/envs/py35Debug/Lib/codecs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.38229755">
-          <caret line="310" column="0" selection-start-line="310" selection-start-column="0" selection-end-line="310" selection-end-column="0" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/transpose_to_C_chords.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-8.15625">
-          <caret line="178" column="56" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
+        <state relative-caret-position="4272">
+          <caret line="178" column="56" lean-forward="false" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
           <folding>
             <element signature="e#0#21#0" expanded="true" />
           </folding>
@@ -413,9 +763,110 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/translate_output.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="2.0444446">
-          <caret line="45" column="46" selection-start-line="45" selection-start-column="46" selection-end-line="45" selection-end-column="46" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transpose_to_C_chords.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4272">
+          <caret line="178" column="56" lean-forward="false" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/translate_output.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://F:/Anaconda2/envs/py35Debug/Lib/codecs.py" />
+    <entry file="file://$USER_HOME$/.PyCharm2016.3/system/python_stubs/-19825236/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1697">
+          <caret line="5077" column="8" lean-forward="false" selection-start-line="5077" selection-start-column="8" selection-end-line="5077" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transpose_to_C_chords.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="503">
+          <caret line="178" column="56" lean-forward="false" selection-start-line="178" selection-start-column="52" selection-end-line="178" selection-end-column="56" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generate_midi.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/counter_chord_frequency.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="744">
+          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examine_salami.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="407">
+          <caret line="31" column="53" lean-forward="true" selection-start-line="30" selection-start-column="16" selection-end-line="31" selection-end-column="53" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda3/Lib/codecs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="823">
+          <caret line="310" column="0" lean-forward="false" selection-start-line="310" selection-start-column="0" selection-end-line="310" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/translate_output.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="426">
+          <caret line="35" column="26" lean-forward="false" selection-start-line="35" selection-start-column="26" selection-end-line="35" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transpose_to_C_polyphony.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/get_input_and_output.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="117">
+          <caret line="64" column="0" lean-forward="true" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

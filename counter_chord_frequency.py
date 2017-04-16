@@ -1,19 +1,19 @@
 import os
 import re
-replace = '-*![](){}\n'
 dic = {}
 
 
-def get_chord_line(line, replace):
+def get_chord_line(line, sign):
     """
 
     :param line:
     :param replace:
     :return:
     """
-    for letter in replace:
-        line = line.replace(letter, '')
-    line = re.sub(r'/\w+', '', line)
+    #for letter in replace:
+        #line = line.replace(letter, '')
+    if(sign == '0'):
+        line = re.sub(r'/\w+', '', line)  # remove inversions
     return line
 
 
@@ -46,11 +46,12 @@ def output_freq_to_file(filename, dic):
         print(word, end='', file=fchord)
         total_percentage += word[1] / total_freq
         print(str(word[1] / total_freq), end='', file=fchord)
-        print('total: ' + str(total_percentage), file=fchord)
+        print(' total: ' + str(total_percentage), file=fchord)
 if __name__ == "__main__":
+    sign = input("do you want inversions or not? 1: yes, 0: no")
 
     for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
-        if(file_name[:5] == 'trans'):
+        if(file_name[:6] == 'transl'):
             f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + file_name, 'r')
             print(file_name)
             for line in f.readlines():
@@ -60,9 +61,11 @@ if __name__ == "__main__":
 
                             print('special' + letter)
                             print(line)'''
-                line = get_chord_line(line, replace)
+                line = get_chord_line(line, sign)
                 print(line)
                 dic = calculate_freq(dic, line)
-    output_freq_to_file('chord_frequency_no_inversion.txt', dic)
+    if(sign == '1'):
+        output_freq_to_file('chord_frequency.txt', dic)
+    else: output_freq_to_file('chord_frequency_no_inversion.txt', dic)
 
 

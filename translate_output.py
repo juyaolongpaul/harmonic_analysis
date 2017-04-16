@@ -35,7 +35,7 @@ def translate_chord_line(line, replace):
     """
     for letter in replace:
         line = line.replace(letter, '')
-    line = re.sub(r'/\w+', '', line) # remove inversion
+    #line = re.sub(r'/\w+', '', line) # remove inversion
     chord_candidate = line.split()
     #chord_candidate = ['[b]', '[b', 'g#]', 'am', '[d]', 'e', 'f#7#']
     #chord_candidate = ['[b', 'd]', 'am', '[b]', '[a]', 'e', 'am', 'f#掳', 'g#掳']
