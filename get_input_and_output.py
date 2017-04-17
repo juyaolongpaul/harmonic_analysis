@@ -120,26 +120,20 @@ if __name__ == "__main__":
                 print(thisChord.pitchClasses)
                 print(pitchClass)
 
-            if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[
-                                                                                                              0:3] + '.pop''')):
-                f = open(
-                    '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop',
-                    'r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[
-                                                                                                           0:3] + '.pop'
-            elif (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[
-                                                                                                                0:3] + '.pop.not''')):
-                f = open(
-                    '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not',
-                    'r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[
-                                                                                                           0:3] + '.pop.not'
+            if (os.path.isfile('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop''')):
+                f = open('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop','r')
+
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop.not','r')
+            else:
+                continue  # skip the file which does not have chord labels
             for line in f.readlines():
                 line = get_chord_line(line, sign)
                 for chord in line.split():
 
                     chord_class = [0] * 35
                     chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                    print('check')
     # Get output labels
 
 
