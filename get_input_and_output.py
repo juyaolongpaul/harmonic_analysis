@@ -1,11 +1,13 @@
 from music21 import *
 import os
 import re
+import numpy as np
 dic = {}
 from counter_chord_frequency import *
 format = ['mid']
-cwd = '.\\bach_chorales_scores\\original_midi+PDF\\'
-
+cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
+x = []
+y = []
 
 def get_chord_line(line, sign):
     """
@@ -80,6 +82,48 @@ def fill_in_pitch_class(pitchclass, list):
     return pitchclass
 
 
+def generate_data(counter1, counter2, string, x, y):
+    for fn in os.listdir(cwd):
+        print(fn)
+        if fn[-3:] == 'mid':
+            if (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop''')):
+                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop','r')
+
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+            else:
+                continue  # skip the file which does not have chord labels
+            s = converter.parse(cwd + fn)
+            sChords = s.chordify()
+            for line in f.readlines():
+                line = get_chord_line(line, sign)
+                for chord in line.split():
+                    counter2 += 1
+                    chord_class = [0] * 35
+                    chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                    if(counter2 == 1):
+                        y = np.concatenate((y, chord_class))
+                    else:
+                        y = np.vstack((y, chord_class))
+            for thisChord in sChords.recurse().getElementsByClass('Chord'):
+                counter1 += 1
+                pitchClass = [0] * 12
+                pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                print(thisChord.pitchClasses)
+                print(pitchClass)
+                if(counter1 == 1):
+                    x = np.concatenate((x, pitchClass))
+                else:
+                    x = np.vstack((x, pitchClass))
+    # add zero to the matrix, so that it can be divided by 50
+    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    while(x.shape[0] % 50 !=0):
+        x = np.vstack((x, [0] * 12))
+        y = np.vstack((y, [0] * 35))
+    print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    np.savetxt(string + '_x.txt', x, fmt = '%.1e')
+    np.savetxt(string + '_y.txt', y, fmt = '%.1e')
+
 
 if __name__ == "__main__":
     # Get input features
@@ -107,33 +151,11 @@ if __name__ == "__main__":
     print (list_of_chords)  # Get the top 35 chord freq
 
     # Get the encodings for input
-    for fn in os.listdir(cwd):
-        print(fn)
-        if fn[-3:] == 'mid':
-
-            s = converter.parse(cwd + fn)
-            sChords = s.chordify()
-            print(len(sChords.notes))
-            for thisChord in sChords.recurse().getElementsByClass('Chord'):
-                pitchClass = [0] * 12
-                pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
-                print(thisChord.pitchClasses)
-                print(pitchClass)
-
-            if (os.path.isfile('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + 'translated_transposed_' + fn[0:3] + '.pop.not','r')
-            else:
-                continue  # skip the file which does not have chord labels
-            for line in f.readlines():
-                line = get_chord_line(line, sign)
-                for chord in line.split():
-
-                    chord_class = [0] * 35
-                    chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                    print('check')
+    counter1 = 0  # record the number of salami slices of poly
+    counter2 = 0  # record the number of salami slices of chords
+    generate_data(counter1, counter2, 'train', x, y)
+    generate_data(counter1, counter2, 'valid', x, y)
+    generate_data(counter1, counter2, 'test', x, y)
     # Get output labels
 
 

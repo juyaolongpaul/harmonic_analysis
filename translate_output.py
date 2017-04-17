@@ -60,17 +60,20 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
             if i != 0:  # replaced by the previous chord, or the following chord
                 if(len(beat_poly[num_of_salami_poly - 1]) == 1):  # on beat, replaced by the following chord
                     if(len(chord_candidate) > i + 1):
-                        if(chord_candidate[i + 1] != '(' and chord[0] != '['):
-                            chord_candidate[i] = chord_candidate[i + 1]
+                        if(chord_candidate[i + 1][0] != '(' and chord_candidate[i + 1][0] != '['):
+                            chord_candidate[i] = chord_candidate[i + 1]  # The next chord is actually a chord
                         else:
                             chord_candidate[i] = chord_candidate[i - 1]
+                            bad += 1
                     else:
                         chord_candidate[i] = chord_candidate[i - 1]  # compromise
+                        bad += 1
                 else:
                     chord_candidate[i] = chord_candidate[i - 1]   # off beat, replaced by the previous chord
                 if chord_candidate[i-1][0] == '[':
                     print("non-chord tone preceded by another one???")
                     bad += 1
+
             else:
                 if(chord_candidate[i+1][0] == '['):
                     remove_chord_tone(i+1, chord_candidate)
