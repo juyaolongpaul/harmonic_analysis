@@ -1,6 +1,6 @@
 import LSTM_AMH_TRAIN_BATCH
-layer=[2,3,4]
-nodes=[50,100,150]
+layer=[2,3]
+nodes=[100,200,300]
 batch_size = [50]
 for i in range(len(layer)):
     for j in range(len(nodes)):

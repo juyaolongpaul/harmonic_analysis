@@ -13,13 +13,12 @@ GPU command:
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
-from keras.regularizers import l2, l1, l1l2
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, TimeDistributedDense
+from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.datasets import imdb
@@ -89,10 +88,10 @@ def TrainBatch(layer,nodes,BATCH_SIZE):
     #model.add(Dense(output_dim=256, init='glorot_uniform', activation='tanh', input_dim= 36))
     #model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
     model.add(LSTM(input_dim=INPUT_DIM, output_dim=HIDDEN_NODE, return_sequences=True, init='glorot_uniform'))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.2))
     for i in range(layer-1):
         model.add(LSTM(output_dim=HIDDEN_NODE, return_sequences=True))
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.2))
     model.add(Dense(OUTPUT_DIM))
     model.add(Activation('softmax')) # need time distributed softmax??
     #model.add(Dropout(0.2))
@@ -101,7 +100,7 @@ def TrainBatch(layer,nodes,BATCH_SIZE):
     early_stopping = EarlyStopping(monitor='val_loss', patience=2) # set up early stopping
     print("Train...")
     checkpointer = ModelCheckpoint(filepath=MODEL_NAME+".hdf5", verbose=1, save_best_only=True, monitor='val_acc')
-    hist = model.fit(train_xxx, train_yyy, batch_size=batch_size, nb_epoch=100, validation_data=(valid_xxx,valid_yyy), shuffle=True, verbose=1, callbacks=[checkpointer, early_stopping])
+    hist = model.fit(train_xxx, train_yyy, batch_size=batch_size, nb_epoch=200, validation_data=(valid_xxx,valid_yyy), shuffle=True, verbose=1, callbacks=[checkpointer, early_stopping])
 
     SaveModelLog.Save(MODEL_NAME, hist, model, test_xxx, test_yyy)
     score = model.evaluate(test_xxx, test_yyy, verbose=0)

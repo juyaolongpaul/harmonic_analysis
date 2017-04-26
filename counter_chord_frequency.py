@@ -13,7 +13,7 @@ def get_chord_line(line, sign):
     #for letter in replace:
         #line = line.replace(letter, '')
     if(sign == '0'):
-        line = re.sub(r'/\w+', '', line)  # remove inversions
+        line = re.sub(r'/\w[b#]*', '', line)  # remove inversions
     return line
 
 

@@ -18,7 +18,7 @@ from keras.preprocessing import sequence
 from keras.utils import np_utils
 #from keras.utils.visualize_util import plot # draw fig
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, TimeDistributedDense
+from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.datasets import imdb
@@ -44,8 +44,8 @@ def FineTuneDNN(layer,nodes):
     valid_yy = np.loadtxt('valid_y.txt')
     test_xx = np.loadtxt('test_x.txt')
     test_yy = np.loadtxt('test_y.txt')
-    all_xx = np.loadtxt('all_x.txt')
-    all_yy = np.loadtxt('all_y.txt')
+    #all_xx = np.loadtxt('all_x.txt')
+    #all_yy = np.loadtxt('all_y.txt')
     #np.random.shuffle(all_xx)
     #np.random.shuffle(all_yy)
     '''train_xx = all_xx[:int(len(all_xx)*0.8)]
@@ -72,7 +72,7 @@ def FineTuneDNN(layer,nodes):
     model = Sequential()
     #model.add(Embedding(36, 256, input_length=batch))
     model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim= INPUT_DIM))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.2))
     for i in range(layer-1):
     #model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
     #model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
@@ -80,7 +80,7 @@ def FineTuneDNN(layer,nodes):
     #model.add(LSTM(output_dim=500, return_sequences=True))
     #model.add(LSTM(48))
         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim= INPUT_DIM))
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.2))
     model.add(Dense(OUTPUT_DIM, init='uniform'))
     #model.add(Dropout(0.5)) # dropout does not add at output layer!!
     model.add(Activation('softmax')) # need time distributed softmax??

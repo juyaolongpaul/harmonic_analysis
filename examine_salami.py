@@ -8,6 +8,7 @@ if __name__ == "__main__":
         # Get input features
         useless_files_number = 0
         useless_files_number_with_not = 0
+        flog = open('salami_log_one+_difference.txt', 'w')
         for fn in os.listdir(cwd):
             if fn[-3:] == 'mid':
                 print(fn)
@@ -32,6 +33,10 @@ if __name__ == "__main__":
                     chord_slices += len(line.split())
                 print('salami slices of chorales: ' + str(len(sChords.notes)))
                 print('salami slices of chords: ' + str(chord_slices))
+                if(abs(chord_slices - len(sChords.notes)) >= 1 and chord_slices != 0):
+                    print(fn, file=flog)
+                    print('salami slices of chorales: ' + str(len(sChords.notes)), file=flog)
+                    print('salami slices of chords: ' + str(chord_slices), file=flog)
                 if(len(sChords.notes) != chord_slices):
                     if(chord_slices != 0):
                         if(file_name[-3:] == 'not'):
@@ -43,6 +48,8 @@ if __name__ == "__main__":
                         os.mkdir('useful_chord_symbols')
                         os.chdir('useful_chord_symbols')
                     shutil.copy(file_name, './')
-        print('useless:' + str(useless_files_number))
-        print('useless with pop not:' + str(useless_files_number_with_not))
+        print('useless:' + str(useless_files_number), file=flog)
+        print('useless with pop not:' + str(useless_files_number_with_not), file=flog)
+
+
 

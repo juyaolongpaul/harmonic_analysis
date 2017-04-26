@@ -52,8 +52,11 @@ def write_back(tmp, i, j, c1, c2, displacement, flag, mark):
 
                 if (j >= 1 and tmp[i][j - 1 + mark] == 'b'): # j = 0 still "works", but not in the right way!
                     print('checkout')
-                elif(tmp[i][j + mark] == 'b' and tmp[i][j + mark - 1].isalpha()):
+                elif(tmp[i][j + mark] == 'b' and tmp[i][j + mark - 1].isalpha() and (j + mark - 1) > 0):
+                    print(tmp[i][j + mark])
+                    print(tmp[i][j + mark - 1])
                     print('checkout')
+                    #if(tmp[i] < 0):  # error found: bm is not transposed!
                 else:
 
                     pitch_class = letter.lower()
@@ -135,13 +138,13 @@ def transpose(c1, c2, displacement, pitch):
     else:
         return c2[target]
 if __name__ == "__main__":
-    for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
+    for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\'):
 
             if file_name[-3:] == 'pop' or file_name[-3:] == 'not':
                 #if(file_name[:3] != '369'):
                     #continue
                 ptr = file_name.find('.')
-                s = converter.parse(os.getcwd() + '\\midi_files\\original\\' + file_name[:ptr]+'.mid')
+                s = converter.parse(os.getcwd() + '\\bach_chorales_scores\\original_midi+PDF\\' + file_name[:ptr]+'.mid')
                 k = s.analyze('key')
                 #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)
