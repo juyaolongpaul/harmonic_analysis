@@ -1,5 +1,5 @@
 import DNN_no_window_cross_validation
-layer=[2]
+layer=[1,2]
 nodes=[200]
 
 for i in range(len(layer)):

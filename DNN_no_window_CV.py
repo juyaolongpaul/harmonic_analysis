@@ -23,7 +23,7 @@ from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.datasets import imdb
 from scipy.io import loadmat
-from keras.optimizers import SGD, RMSprop
+from keras.optimizers import SGD
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
 import h5py
@@ -34,40 +34,16 @@ import sys
 import string
 import time
 import SaveModelLog
-from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
-from music21 import *
-def get_predict_file_name():
-    string = 'test'
-    cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
-    filename = []
-    num_salami_slices = []
-    for fn in os.listdir(cwd):
-        #print(fn)
-        if fn[-3:] == 'mid':
-            if (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
-            else:
-                continue  # skip the file which does not have chord labels
-            s = converter.parse(cwd + fn)
-            sChords = s.chordify()
-            length = len(sChords.notes)
-            filename.append(fn[0:3])
-            num_salami_slices.append(length)
-    return filename, num_salami_slices
-
 def FineTuneDNN(layer,nodes):
     print('Loading data...')
     #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
     #AllData='musicALL7.mat'
-    train_xx = np.loadtxt('train_x_windowing_1.txt')
-    train_yy = np.loadtxt('train_y_windowing_1.txt')
-    valid_xx = np.loadtxt('valid_x_windowing_1.txt')
-    valid_yy = np.loadtxt('valid_y_windowing_1.txt')
-    test_xx = np.loadtxt('test_x_windowing_1.txt')
-    test_yy = np.loadtxt('test_y_windowing_1.txt')
+    train_xx = np.loadtxt('train_x_CV.txt')
+    train_yy = np.loadtxt('train_y_CV.txt')
+    valid_xx = np.loadtxt('test_x.txt')
+    valid_yy = np.loadtxt('test_y.txt')
+    #test_xx = np.loadtxt('test_x.txt')
+    #test_yy = np.loadtxt('test_y.txt')
     #all_xx = np.loadtxt('all_x.txt')
     #all_yy = np.loadtxt('all_y.txt')
     #np.random.shuffle(all_xx)
@@ -84,7 +60,7 @@ def FineTuneDNN(layer,nodes):
     INPUT_DIM = train_xx.shape[1]
     OUTPUT_DIM = train_yy.shape[1]
     HIDDEN_NODE = nodes
-    MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN_no_window'
+    MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN_no_window_CV'
     print('Loading data...')
     print('train_xx shape:', train_xx.shape)
     print('train_yy shape:', train_yy.shape)
@@ -93,8 +69,6 @@ def FineTuneDNN(layer,nodes):
     #print('test_xx shape:', test_xx.shape)
     #print('test_yy shape:', test_yy.shape)
     print('Build model...')
-    output_dim = input('how many chords?')
-    sign = input("do you want inversions or not? 1: yes, 0: no")
     model = Sequential()
     #model.add(Embedding(36, 256, input_length=batch))
     model.add(Dense(HIDDEN_NODE, init='uniform', activation='relu', input_dim= INPUT_DIM))
@@ -128,36 +102,8 @@ def FineTuneDNN(layer,nodes):
     #print('Test score:', score)
     #print('Test accuracy:', acc)
 
-    SaveModelLog.Save(MODEL_NAME, hist, model, test_xx, test_yy)
-    score = model.evaluate(test_xx, test_yy, verbose=0)
+    SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+    score = model.evaluate(valid_xx, valid_yy, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
-    # visualize the result and put into file
-    predict_y = model.predict(test_xx, verbose=0)
-    list_of_chords = get_chord_list(predict_y.shape[1], sign)
-    list_of_chords.append('other')
-    fileName, numSalamiSlices = get_predict_file_name()
-    sum = 0
-    for i in range(len(numSalamiSlices)):
-        sum += numSalamiSlices[i]
-    input(sum)
-    input(predict_y.shape[0])
-
-
-    length = len(fileName)
-    a_counter = 0
-    for i in range(length):
-        f = open('predicted_result_' + fileName[i] + '.txt', 'w')
-        num_salami_slice = numSalamiSlices[i]
-        for j in range(num_salami_slice):
-            pointer = np.argmax(predict_y[a_counter])
-            currentchord = list_of_chords[pointer]
-            if(j%10==0):
-                print(currentchord, end='\n', file=f)
-            else:
-                print(currentchord, end=' ', file=f)
-            a_counter += 1
-        f.close()
-
-    #np.savetxt('predict_y_windowing_1' + '.txt', predict_yy, fmt='%.1e')
 
