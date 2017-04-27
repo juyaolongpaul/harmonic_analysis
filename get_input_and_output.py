@@ -170,7 +170,7 @@ if __name__ == "__main__":
     counter2 = 0  # record the number of salami slices of chords
     generate_data(counter1, counter2, 'train', x, y, input_dim, output_dim)
     #generate_data(counter1, counter2, 'valid', x, y, input_dim, output_dim)
-    #generate_data(counter1, counter2, 'test', x, y, input_dim, output_dim)
+    generate_data(counter1, counter2, 'test', x, y, input_dim, output_dim)
     # Get output labels
 
 

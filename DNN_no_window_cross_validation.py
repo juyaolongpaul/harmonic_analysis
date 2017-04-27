@@ -26,7 +26,6 @@ from scipy.io import loadmat
 from keras.optimizers import SGD
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
-from sklearn.model_selection import StratifiedKFold
 import h5py
 import os
 import numpy as np
@@ -35,15 +34,27 @@ import sys
 import string
 import time
 import SaveModelLog
-seed = 7
-np.random.seed(seed)
+def divide_training_data(k, trainx, trainy, times):
+    placement = int(trainx.shape[0] / k)
+    valid_x = trainx[times*placement:(times+1)*placement]
+    if(times*placement!=0):
+        train_x = np.vstack((trainx[:times*placement], trainx[(times+1)*placement:]))
+    else:
+        train_x = trainx[(times+1)*placement:]
+    valid_y = trainy[times*placement:(times+1)*placement]
+    if(times*placement!=0):
+        train_y = np.vstack((trainy[:times*placement], trainy[(times+1)*placement:]))
+    else:
+        train_y = trainy[(times+1)*placement:]
+    return train_x, train_y, valid_x, valid_y
 def FineTuneDNN(layer,nodes):
     print('Loading data...')
     #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
     #AllData='musicALL7.mat'
-    train_xx = np.loadtxt('train_x.txt')
-    train_yy = np.loadtxt('train_y.txt')
-
+    train_xxx = np.loadtxt('train_x.txt')
+    train_yyy = np.loadtxt('train_y.txt')
+    test_xx = np.loadtxt('test_x.txt')
+    test_yy = np.loadtxt('test_y.txt')
     #all_xx = np.loadtxt('all_x.txt')
     #all_yy = np.loadtxt('all_y.txt')
     #np.random.shuffle(all_xx)
@@ -57,17 +68,27 @@ def FineTuneDNN(layer,nodes):
     #max_features = 20000
     #maxlen = 100  # cut texts after this number of words (among top max_features most common words)
     batch_size = 50
-    INPUT_DIM = train_xx.shape[1]
-    OUTPUT_DIM = train_yy.shape[1]
+    INPUT_DIM = train_xxx.shape[1]
+    OUTPUT_DIM = train_yyy.shape[1]
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN_no_window'
+    K = 10
+    cv_log = open('cv_log+' + MODEL_NAME + '.txt', 'w')
     print('Loading data...')
-    print('train_xx shape:', train_xx.shape)
-    print('train_yy shape:', train_yy.shape)
+    print('train_xx shape:', train_xxx.shape)
+    print('train_yy shape:', train_yyy.shape)
+    print('test_xx shape:', test_xx.shape)
+    print('test_yy shape:', test_yy.shape)
     print('Build model...')
-    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     cvscores = []
-    for train, test in kfold.split(train_xx, train_yy):
+    cvscores_test = []
+    for i in range(K):
+        train_xx, train_yy, valid_xx, valid_yy = divide_training_data(K, train_xxx, train_yyy, i)
+        print('Shape for cross validation...')
+        print('train_xx shape:', train_xx.shape)
+        print('train_yy shape:', train_yy.shape)
+        print('valid_xx shape:', valid_xx.shape)
+        print('valid_yy shape:', valid_yy.shape)
         model = Sequential()
         #model.add(Embedding(36, 256, input_length=batch))
         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim= INPUT_DIM))
@@ -93,17 +114,24 @@ def FineTuneDNN(layer,nodes):
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=MODEL_NAME+".hdf5", verbose=1, save_best_only=True, monitor='val_acc')
         #hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=3,validation_split=0.2, shuffle=True, verbose=1, show_accuracy=True, callbacks=[early_stopping])
-        hist = model.fit(train_xx[train], train_yy[train], batch_size=batch_size, validation_split=0.1, nb_epoch=100, shuffle=True, verbose=1, callbacks=[early_stopping, checkpointer]) # for debug
+        hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=100, shuffle=True, verbose=1, validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer]) # for debug
         #plot(model, to_file='model.png') # draw fig of accuracy
         #score, acc = model.evaluate(valid_xx, valid_yy,
                                    # batch_size=batch_size,
                                    # show_accuracy=True)
         #print('Test score:', score)
         #print('Test accuracy:', acc)
-
-        SaveModelLog.Save(MODEL_NAME, hist, model, train_xx[test], train_yy[test])
-        scores = model.evaluate(train_xx[test], train_yy[test], verbose=0)
-        print("%s: %.2f%%" % (model.metrics_names[1], scores[1] * 100))
+        scores = model.evaluate(valid_xx, valid_yy, verbose=0)
+        scores_test = model.evaluate(test_xx, test_yy, verbose=0)
+        print(' valid_acc: ', scores[1])
         cvscores.append(scores[1] * 100)
-    print("%.2f%% (+/- %.2f%%)" % (np.mean(cvscores), np.std(cvscores)))
+        cvscores_test.append(scores_test[1] * 100)
+        #SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+    print(np.mean(cvscores), np.std(cvscores))
+    print(MODEL_NAME, file=cv_log)
+    print('valid:' , np.mean(cvscores) , '%' , '±' , np.std(cvscores) , '%', file=cv_log)
+    print('Test:' , np.mean(cvscores_test) , '%' , '±' , np.std(cvscores_test) , '%', file=cv_log)
+    #score = model.evaluate(test_xx, test_yy, verbose=0)
+    #print('Test loss:', score[0])
+    #print('Test accuracy:', score[1])
 

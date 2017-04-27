@@ -40,10 +40,10 @@ def FineTuneDNN(layer,nodes):
     #AllData='musicALL7.mat'
     train_xx = np.loadtxt('train_x.txt')
     train_yy = np.loadtxt('train_y.txt')
-    valid_xx = np.loadtxt('valid_x.txt')
-    valid_yy = np.loadtxt('valid_y.txt')
-    test_xx = np.loadtxt('test_x.txt')
-    test_yy = np.loadtxt('test_y.txt')
+    valid_xx = np.loadtxt('test_x.txt')
+    valid_yy = np.loadtxt('test_y.txt')
+    #test_xx = np.loadtxt('test_x.txt')
+    #test_yy = np.loadtxt('test_y.txt')
     #all_xx = np.loadtxt('all_x.txt')
     #all_yy = np.loadtxt('all_y.txt')
     #np.random.shuffle(all_xx)
@@ -66,13 +66,13 @@ def FineTuneDNN(layer,nodes):
     print('train_yy shape:', train_yy.shape)
     print('valid_xx shape:', valid_xx.shape)
     print('valid_yy shape:', valid_yy.shape)
-    print('test_xx shape:', test_xx.shape)
-    print('test_yy shape:', test_yy.shape)
+    #print('test_xx shape:', test_xx.shape)
+    #print('test_yy shape:', test_yy.shape)
     print('Build model...')
     model = Sequential()
     #model.add(Embedding(36, 256, input_length=batch))
     model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim= INPUT_DIM))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.5))
     for i in range(layer-1):
     #model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
     #model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
@@ -80,7 +80,7 @@ def FineTuneDNN(layer,nodes):
     #model.add(LSTM(output_dim=500, return_sequences=True))
     #model.add(LSTM(48))
         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim= INPUT_DIM))
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.5))
     model.add(Dense(OUTPUT_DIM, init='uniform'))
     #model.add(Dropout(0.5)) # dropout does not add at output layer!!
     model.add(Activation('softmax')) # need time distributed softmax??
@@ -102,8 +102,8 @@ def FineTuneDNN(layer,nodes):
     #print('Test score:', score)
     #print('Test accuracy:', acc)
 
-    SaveModelLog.Save(MODEL_NAME, hist, model, test_xx, test_yy)
-    score = model.evaluate(test_xx, test_yy, verbose=0)
+    SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+    score = model.evaluate(valid_xx, valid_yy, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
