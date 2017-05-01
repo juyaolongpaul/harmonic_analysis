@@ -15,7 +15,7 @@ import re
 import os
 from music21 import *
 #replace = '-*!{}\n'
-replace = '!{}\n'
+replace = '{}\n'
 
 cwd = '.\\bach_chorales_scores\\original_midi+PDF\\'
 def replace_non_chord_tone_with_following_chord(chordcandidate,i):

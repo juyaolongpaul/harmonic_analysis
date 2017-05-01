@@ -1,7 +1,7 @@
 import time
 import h5py
-def Save(name, hist, model, test_xx, test_yy):
-    log=open(name+'.txt','w+')
+def Save(name, hist, model, test_xx, test_yy, windowsize, portion):
+    log=open(name + '.txt','w+')
     log.write(time.ctime())
     log.write('\n')
     '''for item, value in hist.params.iteritems():

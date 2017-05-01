@@ -34,19 +34,27 @@ import sys
 import string
 import time
 import SaveModelLog
-def divide_training_data(k, trainx, trainy, times):
-    placement = int(trainx.shape[0] / k)
-    valid_x = trainx[times*placement:(times+1)*placement]
+def divide_training_data(k, portion, times, trainxo, trainyo):
+    placement = int(trainxo.shape[0] / k)
+    placement2 = int(trainxo.shape[0] / k)
+    valid_x = trainxo[times*placement2:(times+1)*placement2]
+    test_x = trainxo[(times+1)*placement2:(times+2)*placement2]
+    if(times == 8):
+        print('debug')
     if(times*placement!=0):
-        train_x = np.vstack((trainx[:times*placement], trainx[(times+1)*placement:]))
+        train_x = np.vstack((trainxo[:times*placement], trainxo[(times+2)*placement:]))
     else:
-        train_x = trainx[(times+1)*placement:]
-    valid_y = trainy[times*placement:(times+1)*placement]
+        train_x = trainxo[(times+2)*placement:]
+    valid_y = trainyo[times*placement2:(times+1)*placement2]
+    test_y = trainyo[(times + 1) * placement2:(times + 2) * placement2]
     if(times*placement!=0):
-        train_y = np.vstack((trainy[:times*placement], trainy[(times+1)*placement:]))
+        train_y = np.vstack((trainyo[:times*placement], trainyo[(times+2)*placement:]))
     else:
-        train_y = trainy[(times+1)*placement:]
-    return train_x, train_y, valid_x, valid_y
+        train_y = trainyo[(times+2)*placement:]
+    train_x = train_x[:portion*train_x.shape[0]]
+    train_y = train_y[:portion * train_y.shape[0]]
+    print('times' + str(times) + 'valid' + str(valid_x.shape[0]) + 'train' + str(train_x.shape[0]) + 'test' + str(test_x.shape[0]) + 'portion' + str(portion))
+    return train_x, train_y, valid_x, valid_y, test_x, test_y
 def FineTuneDNN(layer,nodes):
     print('Loading data...')
     #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')

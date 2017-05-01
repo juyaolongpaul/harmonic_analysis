@@ -120,8 +120,8 @@ def generate_data_CV(counter1, counter2, string, string1, x, y, inputdim, output
                 pitchClass = [0] * inputdim
                 pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                 #(thisChord.pitchClasses)
-                #print('chord is' + thisChord.pitchedCommonName)
-                #print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
+                print('chord is' + thisChord.pitchedCommonName)
+                print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
                 #print(pitchClass)
                 #if(thisChord._root.fullName.find('flat') != -1):
                     #input("flat is here!!")
@@ -144,7 +144,7 @@ def generate_data_CV(counter1, counter2, string, string1, x, y, inputdim, output
     np.savetxt(string + '_y_CV.txt', y, fmt = '%.1e')
 
 
-def generate_data(counter1, counter2, string, x, y, inputdim, outputdim):
+def generate_data(counter1, counter2, string, string1, x, y, inputdim, outputdim):
     for fn in os.listdir(cwd):
         #print(fn)
         if fn[-3:] == 'mid':
@@ -153,6 +153,11 @@ def generate_data(counter1, counter2, string, x, y, inputdim, outputdim):
 
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
                 f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
+                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
+
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
             else:
                 continue  # skip the file which does not have chord labels
             s = converter.parse(cwd + fn)
@@ -223,9 +228,25 @@ def get_chord_list(output_dim, sign):
         list_of_chords.append(word[0])
     print (list_of_chords)  # Get the top 35 chord freq
     return list_of_chords
-def generate_data_windowing(counter1, counter2, string, x, y, inputdim, outputdim, windowsize):
+
+
+def add_beat_into(pitchclass, beat):
+    """
+    adding two dimension to the input vector, specifying whether the current slice is on/off beat.
+    :return:
+    """
+    if(len(beat) == 1):  # on beat
+        pitchclass.append(1)
+        pitchclass.append(0)
+    else:
+        pitchclass.append(0)
+        pitchclass.append(1)
+    return pitchclass
+def generate_data_windowing(counter1, counter2, string, string1, string2, x, y, inputdim, outputdim, windowsize):
     file_counter = 0
-    for fn in os.listdir(cwd):
+    slice_counter = 0
+
+    for id, fn in enumerate(os.listdir(cwd)):
         #print(fn)
         if fn[-3:] == 'mid':
             chorale_x = []
@@ -234,6 +255,16 @@ def generate_data_windowing(counter1, counter2, string, x, y, inputdim, outputdi
 
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
                 f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
+                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
+
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
+                f = open('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
+
+            elif (os.path.isfile('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
             else:
                 continue  # skip the file which does not have chord labels
             file_counter += 1
@@ -254,10 +285,15 @@ def generate_data_windowing(counter1, counter2, string, x, y, inputdim, outputdi
                     else:
                         y = np.vstack((y, chord_class))
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+
                 counter1 += 1
+                slice_counter += 1
                 pitchClass = [0] * inputdim
                 pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                 #(thisChord.pitchClasses)
+                pitchClass = add_beat_into(pitchClass, thisChord.beatStr)  # add on/off beat info
+                #input(fn)
+                #input(pitchClass)
                 #print('chord is' + thisChord.pitchedCommonName)
                 #print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
                 #print(pitchClass)
@@ -285,8 +321,8 @@ def generate_data_windowing(counter1, counter2, string, x, y, inputdim, outputdi
         x = np.vstack((x, [0] * inputdim))
         y = np.vstack((y, yy))'''
     print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    np.savetxt(string + '_x_windowing_' + str(windowsize) + '.txt', x, fmt = '%.1e')
-    np.savetxt(string + '_y_windowing_' + str(windowsize) + '.txt', y, fmt = '%.1e')
+    np.savetxt(string + string1 + string2 + '_x_windowing_' + str(windowsize) + '.txt', x, fmt = '%.1e')
+    np.savetxt(string + string1 + string2 + '_y_windowing_' + str(windowsize) + '.txt', y, fmt = '%.1e')
 if __name__ == "__main__":
     # Get input features
     sign = input("do you want inversions or not? 1: yes, 0: no")
@@ -318,13 +354,13 @@ if __name__ == "__main__":
             break
         list_of_chords.append(word[0])
     print (list_of_chords)  # Get the top 35 chord freq
-
+    # Get the on/off beat info
     # Get the encodings for input
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
-    generate_data_windowing(counter1, counter2, 'train', x, y, input_dim, output_dim, window_size)
-    generate_data_windowing(counter1, counter2, 'valid', x, y, input_dim, output_dim, window_size)
-    generate_data_windowing(counter1, counter2, 'test', x, y, input_dim, output_dim, window_size)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, window_size)
+    #generate_data_windowing(counter1, counter2, 'valid', x, y, input_dim, output_dim, window_size)
+    #generate_data_windowing(counter1, counter2, 'test', x, y, input_dim, output_dim, window_size)
     #generate_data_CV(counter1, counter2, 'train', 'valid', x, y, input_dim, output_dim)
     # Get output labels
 
