@@ -218,7 +218,7 @@ def get_chord_list(output_dim, sign):
                             print('special' + letter)
                             print(line)'''
                 line = get_chord_line(line, sign)
-                print(line)
+                #print(line)
                 dic = calculate_freq(dic, line)
     li = sorted(dic.items(), key=lambda d: d[1], reverse=True)
     list_of_chords = []
@@ -358,7 +358,13 @@ if __name__ == "__main__":
     # Get the encodings for input
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, window_size)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5)
+    #generate_data_windowing(counter1, counter2, 'valid', 'valid', 'valid', x, y, input_dim, output_dim, window_size)
+    #generate_data_windowing(counter1, counter2, 'test', 'test', 'test', x, y, input_dim, output_dim, window_size)
     #generate_data_windowing(counter1, counter2, 'valid', x, y, input_dim, output_dim, window_size)
     #generate_data_windowing(counter1, counter2, 'test', x, y, input_dim, output_dim, window_size)
     #generate_data_CV(counter1, counter2, 'train', 'valid', x, y, input_dim, output_dim)

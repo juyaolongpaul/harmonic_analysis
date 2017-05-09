@@ -10,8 +10,8 @@ def get_chord_line(line, sign):
     :param replace:
     :return:
     """
-    #for letter in replace:
-        #line = line.replace(letter, '')
+    for letter in '!':
+        line = line.replace(letter, '')
     if(sign == '0'):
         line = re.sub(r'/\w[b#]*', '', line)  # remove inversions
     return line

@@ -63,8 +63,8 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
     print('Loading data...')
     #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
     #AllData='musicALL7.mat'
-    train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_1.txt')
-    train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_1.txt')
+    train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_'+ str(windowsize) + '.txt')
+    train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_'+ str(windowsize) + '.txt')
     #valid_xx = np.loadtxt('valid_x_windowing_'+ str(windowsize) + '.txt')
     #valid_yy = np.loadtxt('valid_y_windowing_'+ str(windowsize) + '.txt')
     #test_xx = np.loadtxt('test_x_windowing_'+ str(windowsize) + '.txt')
@@ -90,7 +90,7 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
     MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN' + 'window_size' + str(windowsize) + 'training_data'+ str(portion)
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
-    print('original train_yy shape:', train_yyy_ori  .shape)
+    print('original train_yy shape:', train_yyy_ori.shape)
     #print('valid_xx shape:', valid_xx.shape)
     #print('valid_yy shape:', valid_yy.shape)
     #print('test_xx shape:', test_xx.shape)
@@ -151,6 +151,8 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     print('valid:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+    for i in range(len(cvscores_test)):
+        print('Test:', i, cvscores_test[i], '%', file=cv_log)
     print('Test:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
     # visualize the result and put into file
     '''predict_y = model.predict(test_xx, verbose=0)
