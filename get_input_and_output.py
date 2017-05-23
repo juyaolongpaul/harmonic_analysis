@@ -10,6 +10,7 @@ cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
 x = []
 y = []
 
+
 def get_chord_line(line, sign):
     """
 
@@ -74,6 +75,79 @@ def fill_in_chord_class(chord, chordclass, list):
     return chordclass
 
 
+def fill_in_pitch_class_with_bass(pitchclass, list, counter):
+    """
+
+    :param pitchclass: The pitch class vector that needs to label
+    :param list: The pitch class encoded in number
+    :return: the modified pitch class that need to store
+    """
+
+    pitchclassvoice = pitchclass
+    pitchclassvoice = np.vstack((pitchclassvoice, pitchclass))
+    for i in list:
+        pitchclass[i] = 1
+    pitchclassvoice[0] = pitchclass
+    if len(list) == 4:
+        pitchclassvoice[1][list[3]] = 1  # the last voice is the bass, proved
+    else:
+        print('no bass?')
+        counter += 1
+        print(counter)
+    pitchclassvoice = pitchclassvoice.ravel()
+    pitchclassvoice = pitchclassvoice.tolist()
+    return pitchclassvoice, counter
+
+
+def fill_in_pitch_class_with_octave(list):
+    """
+
+    :param pitchclass: The pitch class vector that needs to label
+    :param list: The pitch class encoded in number
+    :return: the modified pitch class that need to store
+    """
+    pitchclass = [0] * 36  # calculate by pitch_distribution
+    for i in list:
+        pitchclass[(i.midi-28) % 36] = 1  # the lowest is 28, compressed
+    return pitchclass
+
+
+def pitch_distribution(list, counter, countermin):
+    """
+
+    :param pitchclass: The pitch class vector that needs to label
+    :param list: The pitch class encoded in number
+    :return: the modified pitch class that need to store
+    """
+    for i in list:
+        if i.midi > counter:
+            counter = i.midi
+            print('max', counter)
+        if i.midi < countermin:
+            countermin = i.midi
+            print('min', countermin)
+    return counter, countermin
+
+
+def fill_in_pitch_class_with_voice(pitchclass, list):
+    """
+
+    :param pitchclass: The pitch class vector that needs to label
+    :param list: The pitch class encoded in number
+    :return: the modified pitch class that need to store
+    """
+    pitchclassvoice = pitchclass
+    pitchclassvoice = np.vstack((pitchclassvoice, pitchclass))
+    pitchclassvoice = np.vstack((pitchclassvoice, pitchclass))
+    pitchclassvoice = np.vstack((pitchclassvoice, pitchclass))  # 2-D array
+
+    for i, item in enumerate(list):
+        pitchclassvoice[i][item] = 1
+    pitchclassvoice = pitchclassvoice.ravel()
+    pitchclassvoice = pitchclassvoice.tolist()
+    return pitchclassvoice
+
+
 def fill_in_pitch_class(pitchclass, list):
     """
 
@@ -84,126 +158,8 @@ def fill_in_pitch_class(pitchclass, list):
     for i in list:
         pitchclass[i] = 1
     return pitchclass
-def generate_data_CV(counter1, counter2, string, string1, x, y, inputdim, outputdim):
-    for fn in os.listdir(cwd):
-        #print(fn)
-        if fn[-3:] == 'mid':
-            if (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
-            else:
-                continue  # skip the file which does not have chord labels
-            s = converter.parse(cwd + fn)
-            sChords = s.chordify()
-            for line in f.readlines():
-                line = get_chord_line(line, sign)
-                for chord in line.split():
-                    if(chord.find('g]') != -1):
-                        print(fn)
-                        input('wtf is that?')
-                    counter2 += 1
-                    chord_class = [0] * outputdim
-                    chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                    if(counter2 == 1):
-                        y = np.concatenate((y, chord_class))
-                    else:
-                        y = np.vstack((y, chord_class))
-            for thisChord in sChords.recurse().getElementsByClass('Chord'):
-                counter1 += 1
-                pitchClass = [0] * inputdim
-                pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
-                #(thisChord.pitchClasses)
-                print('chord is' + thisChord.pitchedCommonName)
-                print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
-                #print(pitchClass)
-                #if(thisChord._root.fullName.find('flat') != -1):
-                    #input("flat is here!!")
-                #if (thisChord.pitchedCommonName.find('half') != -1):
-                    #input("half diminished is here!!")
-                if(counter1 == 1):
-                    x = np.concatenate((x, pitchClass))
-                else:
-                    x = np.vstack((x, pitchClass))
-    # add zero to the matrix, so that it can be divided by 50
-    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    yy = [0] * outputdim
-    yy[-1] = 1  # there should be a chord for these artificial slices, chord is 'other'
-    print('yy:', yy)
-    while(x.shape[0] % 50 !=0):
-        x = np.vstack((x, [0] * inputdim))
-        y = np.vstack((y, yy))
-    print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    np.savetxt(string + '_x_CV.txt', x, fmt = '%.1e')
-    np.savetxt(string + '_y_CV.txt', y, fmt = '%.1e')
 
 
-def generate_data(counter1, counter2, string, string1, x, y, inputdim, outputdim):
-    for fn in os.listdir(cwd):
-        #print(fn)
-        if fn[-3:] == 'mid':
-            if (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
-            elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
-            else:
-                continue  # skip the file which does not have chord labels
-            s = converter.parse(cwd + fn)
-            sChords = s.chordify()
-            length = len(sChords)
-            for line in f.readlines():
-                line = get_chord_line(line, sign)
-                for chord in line.split():
-                    if(chord.find('g]') != -1):
-                        print(fn)
-                        input('wtf is that?')
-                    counter2 += 1
-                    chord_class = [0] * outputdim
-                    chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                    if(counter2 == 1):
-                        y = np.concatenate((y, chord_class))
-                    else:
-                        y = np.vstack((y, chord_class))
-            for thisChord in sChords.recurse().getElementsByClass('Chord'):
-                counter1 += 1
-                pitchClass = [0] * inputdim
-                pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
-                #(thisChord.pitchClasses)
-                #print('chord is' + thisChord.pitchedCommonName)
-                #print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
-                #print(pitchClass)
-                #if(thisChord._root.fullName.find('flat') != -1):
-                    #input("flat is here!!")
-                #if (thisChord.pitchedCommonName.find('half') != -1):
-                    #input("half diminished is here!!")
-                if(counter1 == 1):
-                    x = np.concatenate((x, pitchClass))
-                else:
-                    x = np.vstack((x, pitchClass))
-    # add zero to the matrix, so that it can be divided by 50
-    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    yy = [0] * outputdim
-    yy[-1] = 1  # there should be a chord for these artificial slices, chord is 'other'
-    print('yy:', yy)
-    while(x.shape[0] % 50 !=0):
-        x = np.vstack((x, [0] * inputdim))
-        y = np.vstack((y, yy))
-    print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    np.savetxt(string + '_x.txt', x, fmt = '%.1e')
-    np.savetxt(string + '_y.txt', y, fmt = '%.1e')
 def get_chord_list(output_dim, sign):
     dic = {}
     for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
@@ -242,7 +198,9 @@ def add_beat_into(pitchclass, beat):
         pitchclass.append(0)
         pitchclass.append(1)
     return pitchclass
-def generate_data_windowing(counter1, counter2, string, string1, string2, x, y, inputdim, outputdim, windowsize):
+
+
+def generate_data_windowing(counter1, counter2, string, string1, string2, x, y, inputdim, outputdim, windowsize, counter, countermin):
     file_counter = 0
     slice_counter = 0
 
@@ -289,18 +247,12 @@ def generate_data_windowing(counter1, counter2, string, string1, string2, x, y, 
                 counter1 += 1
                 slice_counter += 1
                 pitchClass = [0] * inputdim
-                pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                #pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
+                pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
+                #pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                 #(thisChord.pitchClasses)
                 pitchClass = add_beat_into(pitchClass, thisChord.beatStr)  # add on/off beat info
-                #input(fn)
-                #input(pitchClass)
-                #print('chord is' + thisChord.pitchedCommonName)
-                #print('chord is: ' + thisChord._root.name + ' ' + thisChord.quality)
-                #print(pitchClass)
-                #if(thisChord._root.fullName.find('flat') != -1):
-                    #input("flat is here!!")
-                #if (thisChord.pitchedCommonName.find('half') != -1):
-                    #input("half diminished is here!!")
                 if(i == 0):
                     chorale_x = np.concatenate((chorale_x, pitchClass))
                 else:
@@ -324,6 +276,8 @@ def generate_data_windowing(counter1, counter2, string, string1, string2, x, y, 
     np.savetxt(string + string1 + string2 + '_x_windowing_' + str(windowsize) + '.txt', x, fmt = '%.1e')
     np.savetxt(string + string1 + string2 + '_y_windowing_' + str(windowsize) + '.txt', y, fmt = '%.1e')
 if __name__ == "__main__":
+    counter = 0
+    counterMin = 60
     # Get input features
     sign = input("do you want inversions or not? 1: yes, 0: no")
     output_dim =  input('how many kinds of chords do you want to calculate?')
@@ -358,11 +312,11 @@ if __name__ == "__main__":
     # Get the encodings for input
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1)
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2)
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3)
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4)
-    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5)
+    generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1, counter, counterMin)
+    #generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2)
+    #generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3)
+    #generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4)
+    #generate_data_windowing(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5)
     #generate_data_windowing(counter1, counter2, 'valid', 'valid', 'valid', x, y, input_dim, output_dim, window_size)
     #generate_data_windowing(counter1, counter2, 'test', 'test', 'test', x, y, input_dim, output_dim, window_size)
     #generate_data_windowing(counter1, counter2, 'valid', x, y, input_dim, output_dim, window_size)

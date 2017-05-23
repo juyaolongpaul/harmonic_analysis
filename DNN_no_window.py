@@ -87,7 +87,7 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
     INPUT_DIM = train_xxx_ori.shape[1]
     OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
-    MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN' + 'window_size' + str(windowsize) + 'training_data'+ str(portion)
+    MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN' + 'window_size' + str(windowsize) + 'training_data'+ str(portion) + '_bass_voice'
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
     print('original train_yy shape:', train_yyy_ori.shape)
@@ -118,7 +118,7 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
             # model.add(LSTM(output_dim=500, return_sequences=True))
             # model.add(LSTM(output_dim=500, return_sequences=True))
             # model.add(LSTM(48))
-            model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
+            model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
             model.add(Dropout(0.2))
         model.add(Dense(OUTPUT_DIM, init='uniform'))
         # model.add(Dropout(0.5)) # dropout does not add at output layer!!
