@@ -1,6 +1,6 @@
 import DNN_no_window
-layer=[2]
-nodes=[200]
+layer=[2,3]
+nodes=[100,200,300]
 
 for i in range(len(layer)):
     for j in range(len(nodes)):

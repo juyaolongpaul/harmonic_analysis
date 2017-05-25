@@ -15,10 +15,12 @@ import numpy as np
 np.random.seed(1337)  # for reproducibility
 from keras.preprocessing import sequence
 from keras.utils import np_utils
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout, Embedding, LSTM, Bidirectional
 
 from keras.layers.recurrent import LSTM
 
@@ -54,7 +56,7 @@ def TrainBatch(layer, nodes, BATCH_SIZE, windowsize, portion):
     INPUT_DIM = train_xxx_ori.shape[1]
     OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
-    MODEL_NAME = str(layer)+'layer'+str(nodes)+'LSTM' + 'window_size' + str(windowsize) + 'training_data'+ str(portion) + '_bass_voice'
+    MODEL_NAME = str(layer)+'layer'+str(nodes)+'BLSTM' + 'window_size' + str(windowsize) + 'training_data'+ str(portion) + 'batch_size' + str(batch_size)
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
     print('original train_yy shape:', train_yyy_ori.shape)
@@ -91,15 +93,15 @@ def TrainBatch(layer, nodes, BATCH_SIZE, windowsize, portion):
         #model.add(Embedding(36, 256, input_length=batch))
         #model.add(Dense(output_dim=256, init='glorot_uniform', activation='tanh', input_dim= 36))
         #model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
-        model.add(LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE, kernel_initializer="glorot_uniform"))
+        model.add(Bidirectional(LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE, kernel_initializer="glorot_uniform"),input_shape=(None, 50, 42)))
         for i in range(layer-1):
-            model.add(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+            model.add(Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
         model.add(Dense(OUTPUT_DIM))
         model.add(Activation('softmax')) # need time distributed softmax??
         #model.add(Dropout(0.2))
         # try using different optimizers and different optimizer configs
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics = ['accuracy'])
-        early_stopping = EarlyStopping(monitor='val_loss', patience=2) # set up early stopping
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5) # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=MODEL_NAME+".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
         hist = model.fit(train_xxx, train_yyy, batch_size=batch_size, epochs=200, validation_data=(valid_xxx,valid_yyy), shuffle=True, verbose=1, callbacks=[checkpointer, early_stopping])

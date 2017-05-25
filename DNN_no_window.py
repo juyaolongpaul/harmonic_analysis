@@ -13,7 +13,7 @@ GPU command:
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
-
+from keras.models import load_model
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 #from keras.utils.visualize_util import plot # draw fig
@@ -28,6 +28,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
 import h5py
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import numpy as np
 import keras.callbacks as CB
 import sys
@@ -130,7 +131,7 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
                   nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=1)  # set up early stopping
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10)  # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
         # hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=3,validation_split=0.2, shuffle=True, verbose=1, show_accuracy=True, callbacks=[early_stopping])
@@ -142,6 +143,7 @@ def FineTuneDNN(layer,nodes,windowsize,portion):
         # show_accuracy=True)
         # print('Test score:', score)
         # print('Test accuracy:', acc)
+        model = load_model(MODEL_NAME + ".hdf5")
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
         scores_test = model.evaluate(test_xx, test_yy, verbose=0)
         print(' valid_acc: ', scores[1])
