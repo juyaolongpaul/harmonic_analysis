@@ -93,7 +93,7 @@ def TrainBatch(layer, nodes, BATCH_SIZE, windowsize, portion):
         #model.add(Embedding(36, 256, input_length=batch))
         #model.add(Dense(output_dim=256, init='glorot_uniform', activation='tanh', input_dim= 36))
         #model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
-        model.add(Bidirectional(LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE, kernel_initializer="glorot_uniform"),input_shape=(None, 50, 42)))
+        model.add(Bidirectional(LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE, kernel_initializer="glorot_uniform"),input_shape=train_xxx.shape))
         for i in range(layer-1):
             model.add(Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
         model.add(Dense(OUTPUT_DIM))

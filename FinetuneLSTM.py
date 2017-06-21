@@ -7,4 +7,4 @@ for i in range(len(layer)):
         for k in range(len(batch_size)):
             LSTM_AMH_TRAIN_BATCH.TrainBatch(layer[i],nodes[j],batch_size[k], 1, 1)
 
- 
+  

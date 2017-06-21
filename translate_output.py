@@ -109,7 +109,7 @@ def only_one_nonchord_tone(chord_candidate):
 
     return chord_candidate
 
-def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace, beat_poly, bad):
+def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace, beat_poly, bad, fn):
     """
     Remove the sign in replace, and deal with non-chord tone and multiply answers
     :param line: the original chord line
@@ -195,14 +195,21 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad
 
 
-if __name__ == "__main__":
+def write_to_files(transposed=''):
+    """
+    A function that can either translate transposed files or not.
+    :param transposed: 
+    :return: 
+    """
     bad = 0
     num_of_samples = 0
     for fn in os.listdir(cwd):
         if fn[-3:] == 'mid':
             print(fn)
-            if ((os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop''')) or
-                (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop.not'''))):
+            if ((os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
+                                                                                                    0:3] + '.pop''')) or
+                    (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
+                                                                                                        0:3] + '.pop.not'''))):
 
                 s = converter.parse(cwd + fn)
                 sChords = s.chordify()
@@ -212,18 +219,23 @@ if __name__ == "__main__":
                 num_of_salami_poly = 0
                 num_of_salami_chord = 0
                 for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    beat_poly[i] = thisChord.beatStr # the ptr is not accurate, but the off-beat can still be detected
-                    if(len(thisChord.beatStr) != 1):
+                    beat_poly[i] = thisChord.beatStr  # the ptr is not accurate, but the off-beat can still be detected
+                    if (len(thisChord.beatStr) != 1):
                         print('beat location is: ' + thisChord.beatStr)
 
-            if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop''')):
-                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop','r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop'
-                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + 'transposed_' + fn[0:3] + '.pop', 'w')
-            elif (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop.not''')):
-                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop.not','r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'transposed_' + fn[0:3] + '.pop.not'
-                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + 'transposed_' + fn[0:3] + '.pop.not', 'w')
+            if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop''')):
+                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop', 'r')
+                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop'
+                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
+                                                                                                                0:3] + '.pop',
+                            'w')
+            elif (
+            os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not''')):
+                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not', 'r')
+                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not'
+                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
+                                                                                                                0:3] + '.pop.not',
+                            'w')
             else:
                 print('no file is opened')
             for line in f.readlines():
@@ -233,22 +245,27 @@ if __name__ == "__main__":
 
                             print('special' + letter)
                             print(line)'''
-                line, num_of_salami_poly, num_of_salami_chord, bad = translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace, beat_poly, bad)
-                print (line)
+                line, num_of_salami_poly, num_of_salami_chord, bad = translate_chord_line(num_of_salami_poly,
+                                                                                          num_of_salami_chord, line,
+                                                                                          replace, beat_poly, bad, fn)
+                print(line)
                 if ('[' in line) or (']' in line) or ('(' in line) or (')' in line):
                     print(fn)
                     print(line)
                     print('what do you think?')
-                    #input('[]() still exists, bug!')  # exmaine
+                    # input('[]() still exists, bug!')  # exmaine
                     line = re.sub(r'\[\w\]', '', line)
                     line = re.sub(r'\[\w\w]', '', line)
                     line = re.sub(r'\[\w\W]', '', line)
 
-                    line = re.sub(r'\[\w \w]', '', line) # nesty exceptions
+                    line = re.sub(r'\[\w \w]', '', line)  # nesty exceptions
                     print('new line:' + line)
-                    #input('what do you think?')
-                    #pattern = re.compile(r'\w[+]')
-                    #if(pattern):  # deal with  'c[d]' case
+                    # input('what do you think?')
+                    # pattern = re.compile(r'\w[+]')
+                    # if(pattern):  # deal with  'c[d]' case
                 print(line, end='\n', file=fnew)
     print('bad =' + str(bad))
-    print ('number of samples = ' + str(num_of_samples))
+    print('number of samples = ' + str(num_of_samples))
+if __name__ == "__main__":
+    write_to_files()
+    #write_to_files('transposed_')

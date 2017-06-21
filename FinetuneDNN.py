@@ -1,6 +1,6 @@
 import DNN_no_window
-layer=[2,3]
-nodes=[100,200,300]
+layer=[2]
+nodes=[200]
 
 for i in range(len(layer)):
     for j in range(len(nodes)):
@@ -13,7 +13,10 @@ for i in range(len(layer)):
         #DNN_no_window.FineTuneDNN(layer[i], nodes[j], 2, 0.7)
         #DNN_no_window.FineTuneDNN(layer[i], nodes[j], 2, 0.8)
         #DNN_no_window.FineTuneDNN(layer[i], nodes[j], 2, 0.9)
-        DNN_no_window.FineTuneDNN(layer[i], nodes[j], 1, 1)
+
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 1)
+        #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 2, 1)
+        #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 3, 1)
         #DNN_no_window.FineTuneDNN(layer[i],nodes[j],1,1)
         #DNN_no_window.FineTuneDNN(layer[i], nodes[j], 2, 1)
         #DNN_no_window.FineTuneDNN(layer[i],nodes[j],3,1)

@@ -9,6 +9,7 @@ if __name__ == "__main__":
         useless_files_number = 0
         useless_files_number_with_not = 0
         flog = open('salami_log_one+_difference.txt', 'w')
+        sign = int(input('do you want to examine the transposed file (1) or not (0)'))
         for fn in os.listdir(cwd):
             if fn[-3:] == 'mid':
                 print(fn)
@@ -17,16 +18,34 @@ if __name__ == "__main__":
                 print(len(sChords.notes))
 
 
+                if(sign == 1):
 
-
-                if(os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop''')):
-                    f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop', 'r')
-                    file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop'
-                elif(os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not''')):
-                    f = open(
-                        '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not',
-                        'r')
-                    file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not'
+                    if(os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop''')):
+                        f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop', 'r')
+                        file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop'
+                    elif(os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not''')):
+                        f = open(
+                            '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not',
+                            'r')
+                        file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_transposed_' + fn[0:3] + '.pop.not'
+                else:
+                    if (os.path.isfile(
+                                        '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                                       0:3] + '.pop''')):
+                        f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                                0:3] + '.pop',
+                                 'r')
+                        file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                                   0:3] + '.pop'
+                    elif (os.path.isfile(
+                                        '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                                       0:3] + '.pop.not''')):
+                        f = open(
+                            '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                           0:3] + '.pop.not',
+                            'r')
+                        file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + fn[
+                                                                                                                   0:3] + '.pop.not'
 
                 chord_slices = 0
                 for line in f.readlines():
