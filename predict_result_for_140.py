@@ -60,6 +60,139 @@ def get_predict_file_name():
             num_salami_slices.append(length)
     return filename, num_salami_slices
 
+
+def train_and_predict_non_chord_tone(layer,nodes,windowsize,portion):
+    extension = '_pitch_class'
+    extension1 = 'y4_non-chord_tone'
+    print('Loading data...')
+    #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
+    #AllData='musicALL7.mat'
+    train_xx = np.loadtxt('traintraintrain_x_windowing_1y4_non-chord_tone' + extension + '.txt')
+    train_yy = np.loadtxt('traintraintrain_y_windowing_1y4_non-chord_tone' + extension + '.txt')
+    valid_xx = np.loadtxt('validvalidvalid_x_windowing_1y4_non-chord_tone' + extension + '.txt')
+    valid_yy = np.loadtxt('validvalidvalid_y_windowing_1y4_non-chord_tone' + extension + '.txt')
+    test_xx = np.loadtxt('testtesttest_x_windowing_1y4_non-chord_tone' + extension + '.txt')
+    test_yy = np.loadtxt('testtesttest_y_windowing_1y4_non-chord_tone' + extension + '.txt')
+    batch_size = 50
+    INPUT_DIM = train_xx.shape[1]
+    OUTPUT_DIM = train_yy.shape[1]
+    HIDDEN_NODE = nodes
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + 'DNN' + 'window_size' + str(windowsize) + 'training_data' + str(
+        portion) + extension1 + extension
+    print('Loading data...')
+    print('original train_xx shape:', train_xx.shape)
+    print('original train_yy shape:', train_yy.shape)
+    print('valid_xx shape:', valid_xx.shape)
+    print('valid_yy shape:', valid_yy.shape)
+    print('test_xx shape:', test_xx.shape)
+    print('test_yy shape:', test_yy.shape)
+    print('Build model...')
+    # cvscores = []
+    # cvscores_test = []
+    # cv_log = open('cv_log+' + MODEL_NAME + '.txt', 'w')
+    # for i in range(9):  # add test set to share another 10%, only validate 9 times!
+    # train_xx, train_yy, valid_xx, valid_yy, test_xx, test_yy = divide_training_data(10, portion, i, train_xxx_ori, train_yyy_ori)
+    print('Shape for cross validation...')
+    print('train_xx shape:', train_xx.shape)
+    print('train_yy shape:', train_yy.shape)
+    print('valid_xx shape:', valid_xx.shape)
+    print('valid_yy shape:', valid_yy.shape)
+    print('test_xx shape:', test_xx.shape)
+    print('test_yy shape:', test_yy.shape)
+    model = Sequential()
+    # model.add(Embedding(36, 256, input_length=batch))
+    model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
+    model.add(Dropout(0.2))
+    for i in range(layer - 1):
+        # model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
+        # model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
+        # model.add(LSTM(output_dim=500, return_sequences=True))
+        # model.add(LSTM(output_dim=500, return_sequences=True))
+        # model.add(LSTM(48))
+        model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
+        model.add(Dropout(0.2))
+    model.add(Dense(OUTPUT_DIM, init='uniform'))
+    # model.add(Dropout(0.5)) # dropout does not add at output layer!!
+    model.add(Activation('sigmoid'))  # need time distributed softmax??
+
+    # try using different optimizers and different optimizer configs
+    # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+    sgd = SGD(lr=0.1, decay=0.002, momentum=0.5,
+              nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10)  # set up early stopping
+    print("Train...")
+    checkpointer = ModelCheckpoint(filepath=MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
+    # hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=3,validation_split=0.2, shuffle=True, verbose=1, show_accuracy=True, callbacks=[early_stopping])
+    hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=100, shuffle=True, verbose=1,
+                     validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer])  # for debug
+
+    # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+
+    # visualize the result and put into file
+    model = load_model(MODEL_NAME + ".hdf5")
+    predict_y = model.predict(test_xx, verbose=0)
+    score = model.evaluate(test_xx, test_yy, verbose=0)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+    #list_of_chords = get_chord_list(predict_y.shape[1], '0')
+    #list_of_chords.append('other')
+    for i in predict_y: # regulate the prediction
+        for j, item in enumerate(i):
+            if (item > 0.5):
+                i[j] = 1
+            else:
+                i[j] = 0
+    fileName, numSalamiSlices = get_predict_file_name()
+    sum = 0
+    for i in range(len(numSalamiSlices)):
+        sum += numSalamiSlices[i]
+    # input(sum)
+    # input(predict_y.shape[0])
+
+
+    length = len(fileName)
+    a_counter = 0
+    a_counter_correct = 0
+    pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+    for i in range(length):
+        f = open('predicted_result_' + fileName[i] + '_non-chord_tone.txt', 'w')
+        num_salami_slice = numSalamiSlices[i]
+        correct_num = 0
+        for j in range(num_salami_slice):
+            gt = test_yy[a_counter]
+            prediction = predict_y[a_counter]
+            if (gt.all() == prediction.all()):  # the label is correct
+                correct_num += 1
+            else:
+                print('error')
+            nonchordpitchclassptr = [-1] * 4
+            yyptr = -1
+            dimension = test_xx.shape[1]
+            realdimension = dimension/3
+            x = test_xx[a_counter][realdimension:2*realdimension]
+            for i in range(len(x) - 2):
+                if (x[i] == 1):  # non-chord tone
+                    yyptr += 1
+                    if (prediction[yyptr] == 1):
+
+                        nonchordpitchclassptr[yyptr] = i % 12
+
+            if (nonchordpitchclassptr == [-1] * 4):
+                print('n/a', end=' ', file=f)
+            else:
+                for item in nonchordpitchclassptr:
+                    if (item != -1):
+                        print(pitchclass[item], end='', file=f)
+                print(end=' ', file=f)
+            a_counter += 1
+        a_counter_correct += correct_num
+        print(end='\n', file=f)
+        # print('accucary: ' + str(correct_num/num_salami_slice), end='\n', file=f)
+        # print('num of correct answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice), file=f)
+        # print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f)
+        f.close()
 def train_and_predict(layer,nodes,windowsize,portion):
     print('Loading data...')
     #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
@@ -186,4 +319,4 @@ def train_and_predict(layer,nodes,windowsize,portion):
     #np.savetxt('predict_y_windowing_1' + '.txt', predict_yy, fmt='%.1e')'''
 
 if __name__ == "__main__":
-    train_and_predict(2, 200, 1, 1)
+    train_and_predict_non_chord_tone(2, 200, 1, 1)

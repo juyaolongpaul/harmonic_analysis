@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     if not os.path.exists('useful_chord_symbols'):
                         os.mkdir('useful_chord_symbols')
                         os.chdir('useful_chord_symbols')
-                    shutil.copy(file_name, './')
+                    #shutil.copy(file_name, './')
         print('useless:' + str(useless_files_number), file=flog)
         print('useless with pop not:' + str(useless_files_number_with_not), file=flog)
 

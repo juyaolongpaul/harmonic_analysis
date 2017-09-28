@@ -8,7 +8,7 @@ def translate_chord_name_into_music21(chordname):
     :param chordname:
     :return:
     """
-    print('original chord: ', chordname)
+    #print('original chord: ', chordname)
     for i, item in enumerate(chordname):
         if(item == 'b'):
             if(i != 0):
@@ -16,9 +16,9 @@ def translate_chord_name_into_music21(chordname):
                     chordname = chordname[:i] + '-' + chordname [i + 1:]
                 else:
                     chordname = chordname[:i] + 'B' + chordname[i + 1:]
-            else:
-                print('$%^&*')
-    print('translated: ', chordname)
+            #else:
+                #print('$%^&*')
+    #print('translated: ', chordname)
     chordname = chordname.replace('°', 'o')
     chordname = chordname.replace('ø', '/o')
     return chordname
@@ -36,11 +36,18 @@ def get_chord_tone(i,outputdim):
         and i.find('ee') == -1 and i.find('5+') == -1 and i.find('+6') == -1 and i.find('f#/o/a') == -1
         and i.find('f#c#s') == -1 and i.find('fis') == -1 and i.find('af') == -1 and i.find('d7f#') == -1
         and i !='7/f#' and i.find(']') == -1 and i.find('7M') == -1 and i != '7' and i.find('g#7-') == -1):
+        if i.find('7+') != -1:
+            i = i.replace('7+','M7')
         d = harmony.ChordSymbol(i)
         for j in d.pitchClasses:
             chordtone[j] = 1
     else:
         chordtone[outputdim] = 1  # 'other' category
+        print('broken chord')
+        #chordtone[0] = 1
+        #chordtone[4] = 1
+        #chordtone[7] = 1  # assume it is a c chord
+
     return chordtone
 '''if __name__ == "__main__":
     s = converter.parse('001.xml')

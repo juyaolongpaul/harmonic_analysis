@@ -32,25 +32,34 @@ import numpy as np
 import keras.callbacks as CB
 import sys
 import string
-import time
 import SaveModelLog
 def divide_training_data(k, portion, times, trainxo, trainyo):
     placement = int(trainxo.shape[0] / k)
     placement2 = int(trainxo.shape[0] / k)
     valid_x = trainxo[times*placement2:(times+1)*placement2]
-    test_x = trainxo[(times+1)*placement2:(times+2)*placement2]
-    if(times == 8):
-        print('debug')
-    if(times*placement!=0):
-        train_x = np.vstack((trainxo[:times*placement], trainxo[(times+2)*placement:]))
+    if(times != 9):
+        test_x = trainxo[((times+1))*placement2:((times+2))*placement2]
     else:
-        train_x = trainxo[(times+2)*placement:]
+        test_x = trainxo[((times + 1)%k) * placement2:((times + 2)%k) * placement2]
+    if(times*placement!=0):
+        if(times != 9):
+            train_x = np.vstack((trainxo[:times*placement], trainxo[(times+2)*placement:]))
+        else:
+            train_x = np.vstack((trainxo[((times+2)%k)*placement2:times*placement2]))
+    else:
+        train_x = trainxo[((times+2)%k)*placement:]
     valid_y = trainyo[times*placement2:(times+1)*placement2]
-    test_y = trainyo[(times + 1) * placement2:(times + 2) * placement2]
-    if(times*placement!=0):
-        train_y = np.vstack((trainyo[:times*placement], trainyo[(times+2)*placement:]))
+    if (times != 9):
+        test_y = trainyo[((times + 1)) * placement2:((times + 2)) * placement2]
     else:
-        train_y = trainyo[(times+2)*placement:]
+        test_y = trainyo[((times+1)%k) * placement2:((times+2)%k) * placement2]
+    if(times*placement!=0):
+        if (times != 9):
+            train_y = np.vstack((trainyo[:times*placement], trainyo[((times+2))*placement:]))
+        else:
+            train_y = np.vstack((trainyo[((times+2)%k)*placement2:times*placement2]))
+    else:
+        train_y = trainyo[((times+2)%k)*placement:]
     train_x = train_x[:portion*train_x.shape[0]]
     train_y = train_y[:portion * train_y.shape[0]]
     print('times' + str(times) + 'valid' + str(valid_x.shape[0]) + 'train' + str(train_x.shape[0]) + 'test' + str(test_x.shape[0]) + 'portion' + str(portion))

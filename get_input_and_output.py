@@ -6,6 +6,7 @@ dic = {}
 from counter_chord_frequency import *
 from adding_window_one_hot import adding_window_one_hot
 from test_musicxml_gt import get_chord_tone
+from random import shuffle
 format = ['mid']
 cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
 x = []
@@ -125,9 +126,9 @@ def fill_in_pitch_class_with_octave(list):
     :param list: The pitch class encoded in number
     :return: the modified pitch class that need to store
     """
-    pitchclass = [0] * 12  # calculate by pitch_distribution
+    pitchclass = [0] * 72 # calculate by pitch_distribution
     for i in list:
-        pitchclass[(i.midi-24) % 12] = 1  # the lowest is 28, compressed
+        pitchclass[(i.midi-24)] = 1  # the lowest is 28, compressed
     return pitchclass
 
 
@@ -145,6 +146,8 @@ def pitch_distribution(list, counter, countermin):
         if i.midi < countermin:
             countermin = i.midi
             print('min', countermin)
+        #if(i.midi > 84):
+            #input('pitch class more than 84')
     return counter, countermin
 
 
@@ -321,7 +324,7 @@ def get_non_chord_tone(x,y,outputdim):
     return yy
 
 
-def get_non_chord_tone_4(x,y,outputdim):
+def get_non_chord_tone_4(x,y,outputdim, f):
     """
     Take out chord tones, only leave with non-chord tone
 
@@ -329,42 +332,69 @@ def get_non_chord_tone_4(x,y,outputdim):
     :param y:
     :return:
     """
+    pitchclass = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
+    nonchordpitchclassptr = [-1] * 4
+    yori = y
     y = y[:12]
     yy = [0] * 4
     yyptr = -1
-    for i in range(12):
+    for i in range(len(x) - 2):
+        if(yori[-1] == 1): # broken chord, assume there is no non-chord tone!
+            break
         if(x[i] == 1):  # non-chord tone
             yyptr += 1
             if(y[i%12] == 0):
                 yy[yyptr] = 1
-
+                nonchordpitchclassptr[yyptr] = i%12
+    if(nonchordpitchclassptr == [-1] * 4):
+        print('n/a', end= ' ', file=f)
+    else:
+        if(2 in nonchordpitchclassptr):
+            print('debug')
+        for item in nonchordpitchclassptr:
+            if(item != -1):
+                print(pitchclass[item], end='', file=f)
+        print(end=' ', file=f)
     return yy
-
 
 
 def generate_data_windowing_non_chord_tone(counter1, counter2, string, string1, string2, x, y, inputdim, outputdim, windowsize, counter, countermin):
     file_counter = 0
     slice_counter = 0
-
+    fn_total = []
     for id, fn in enumerate(os.listdir(cwd)):
         #print(fn)
         if fn[-3:] == 'mid':
+            fn_total.append(fn)
+    shuffle(fn_total)
+    print (fn_total)
+    #input('?')
+    for id, fn in enumerate(fn_total):
+
             chorale_x = []
             if (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop''')):
                 f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt','w')
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
                 f = open('.\\useful_chord_symbols\\' + string + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt',
+                             'w')
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
                 f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt',
+                             'w')
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
                 f = open('.\\useful_chord_symbols\\' + string1 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt',
+                             'w')
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop''')):
                 f = open('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop','r')
-
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt',
+                             'w')
             elif (os.path.isfile('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop.not''')):
                 f = open('.\\useful_chord_symbols\\' + string2 + '\\translated_transposed_' + fn[0:3] + '.pop.not','r')
+                f_non = open('.\\useful_chord_symbols\\' + string + '\\transposed_non_chord_tone' + fn[0:3] + '.txt',
+                             'w')
             else:
                 continue  # skip the file which does not have chord labels
             file_counter += 1
@@ -377,9 +407,9 @@ def generate_data_windowing_non_chord_tone(counter1, counter2, string, string1, 
                 slice_counter += 1
                 pitchClass = [0] * inputdim
                 #pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
-                #pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                 counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
-                pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
+                #pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                 #(thisChord.pitchClasses)
                 pitchClass = add_beat_into(pitchClass, thisChord.beatStr)  # add on/off beat info
                 if(i == 0):
@@ -404,12 +434,14 @@ def generate_data_windowing_non_chord_tone(counter1, counter2, string, string1, 
                     #chord_class = get_non_chord_tone(chorale_x[slice_counter],)
                     chord_class = get_chord_tone(chord, output_dim)
                     #chord_class = get_non_chord_tone(chorale_x[slice_counter], chord_class, output_dim)
-                    chord_class = get_non_chord_tone_4(chorale_x[slice_counter], chord_class, output_dim)
+                    chord_class = get_non_chord_tone_4(chorale_x[slice_counter], chord_class, output_dim, f_non)
+
                     slice_counter += 1
                     if(counter2 == 1):
                         y = np.concatenate((y, chord_class))
                     else:
                         y = np.vstack((y, chord_class))
+            # save x, y into file as "ground truth"
 
     # add zero to the matrix, so that it can be divided by 50
     print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
@@ -421,8 +453,8 @@ def generate_data_windowing_non_chord_tone(counter1, counter2, string, string1, 
         x = np.vstack((x, [0] * inputdim))
         y = np.vstack((y, yy))'''
     print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
-    np.savetxt(string + string1 + string2 + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone.txt', x, fmt = '%.1e')
-    np.savetxt(string + string1 + string2 + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone.txt', y, fmt = '%.1e')
+    np.savetxt(string + string1 + string2 + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class.txt', x, fmt = '%.1e')
+    np.savetxt(string + string1 + string2 + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class.txt', y, fmt = '%.1e')
 
 def generate_data_windowing_no_y(counter1, string, string1, string2, x, inputdim, windowsize, counter, countermin):
     file_counter = 0
@@ -486,7 +518,7 @@ if __name__ == "__main__":
     # Get input features
     sign = '1'#input("do you want inversions or not? 1: yes, 0: no")
     output_dim =  '12'#input('how many kinds of chords do you want to calculate?')
-    window_size = '1'#int(input('how big window?'))
+    window_size = '0'#int(input('how big window?'))
     '''sign = 0
     output_dim = 30
     window_size = 1'''
@@ -517,7 +549,34 @@ if __name__ == "__main__":
     # Get the encodings for input
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1, counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 0, counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1,
+                                           counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2,
+                                           counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3,
+                                           counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4,
+                                           counter, counterMin)
+    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5,
+                                           counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'train', 'train', x, y, input_dim, output_dim, 1,
+                                           #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'valid', 'valid', 'valid', x, y, input_dim, output_dim,
+                                           #1,
+                                          #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'test', 'test', 'test', x, y, input_dim, output_dim,
+                                           #1,
+                                           #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2,
+                                           #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3,
+                                           #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4,
+                                           #counter, counterMin)
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5,
+                                           #counter, counterMin)
+
     #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2,
                                            #counter, counterMin)
     #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3,

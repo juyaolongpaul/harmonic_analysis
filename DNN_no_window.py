@@ -256,11 +256,10 @@ def evaluate_f1score(model, x,y):
     accuracy = (tp+tn)/(tp+tn+fp+fn)
     return precision, recall, f1, accuracy, tp, fp, fn, tn
 
+
 def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
     print('Loading data...')
-    #log=open('256LSTM256LSTMNN48lr=0.1dp=0.5.txt','w+')
-    #AllData='musicALL7.mat'
-    extension = 'y4_non-chord_tone'
+    extension = 'y4_non-chord_tone_pitch_class'
     train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_'+ str(windowsize) + extension + '.txt')
     train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_'+ str(windowsize) + extension + '.txt')
     #valid_xx = np.loadtxt('valid_x_windowing_'+ str(windowsize) + '.txt')
@@ -309,7 +308,7 @@ def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
     fp = []
     fn = []
     cv_log = open('cv_log+' + MODEL_NAME + '.txt', 'w')
-    for i in range(9):  # add test set to share another 10%, only validate 9 times!
+    for i in range(10):  # add test set to share another 10%, only validate 9 times!
         train_xx, train_yy, valid_xx, valid_yy, test_xx, test_yy = divide_training_data(10, portion, i, train_xxx_ori, train_yyy_ori)
         print('Shape for cross validation...')
         print('train_xx shape:', train_xx.shape)
@@ -407,10 +406,10 @@ def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
     print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
     print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
     for i in range(len(cvscores_test)):
-        print('Test accuracy:', i, cvscores_test[i], '%', file=cv_log)
+        #print('Test accuracy:', i, cvscores_test[i], '%', file=cv_log)
         #print('Test precision:', i, pre_test[i], '%', file=cv_log)
         #print('Test reall:', i, rec_test[i], '%', file=cv_log)
-        #print('Test f1:', i, f1_test[i], '%', file=cv_log)
+        print('Test f1:', i, f1_test[i], '%', file=cv_log)
         #print('Test acc:', i, acc_test[i], '%', file=cv_log)
     print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
     print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
@@ -445,3 +444,163 @@ def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
         f.close()
 
     #np.savetxt('predict_y_windowing_1' + '.txt', predict_yy, fmt='%.1e')'''
+def FineTuneDNN_non_chord_tone_shuffle(layer,nodes,windowsize,portion,shuffletimes):
+    total_f1 = []
+    total_f1_std = []
+    total_acc = []
+    total_acc_std = []
+    for i in range(shuffletimes):
+        print('Loading data...')
+        extension = 'y4_non-chord_tone'
+        train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_' + str(windowsize) + extension + '.txt')
+        train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_' + str(windowsize) + extension + '.txt')
+        print('shuffle data ' + str(i) + 'times')
+        rng_state = np.random.get_state()  # shuffle two arrays with the same random seed
+        np.random.shuffle(train_xxx_ori)
+        np.random.set_state(rng_state)
+        np.random.shuffle(train_yyy_ori)
+        batch_size = 50
+        INPUT_DIM = train_xxx_ori.shape[1]
+        OUTPUT_DIM = train_yyy_ori.shape[1]
+        HIDDEN_NODE = nodes
+        MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN' + 'window_size' + str(windowsize) + 'training_data'+ str(portion) + extension + '_shuffletimes_' + str(i)
+        print('Loading data...')
+        print('original train_xx shape:', train_xxx_ori.shape)
+        print('original train_yy shape:', train_yyy_ori.shape)
+        #print('valid_xx shape:', valid_xx.shape)
+        #print('valid_yy shape:', valid_yy.shape)
+        #print('test_xx shape:', test_xx.shape)
+        #print('test_yy shape:', test_yy.shape)
+        print('Build model...')
+        pre = []
+        pre_test = []
+        rec = []
+        rec_test = []
+        f1 = []
+        f1_test = []
+        acc = []
+        acc_test = []
+        cvscores = []
+        cvscores_test = []
+        tp = []
+        tn = []
+        fp = []
+        fn = []
+        cv_log = open('cv_log+' + MODEL_NAME + '.txt', 'w')
+        for i in range(10):  # add test set to share another 10%, only validate 9 times!
+            train_xx, train_yy, valid_xx, valid_yy, test_xx, test_yy = divide_training_data(10, portion, i, train_xxx_ori, train_yyy_ori)
+            print('Shape for cross validation...')
+            print('train_xx shape:', train_xx.shape)
+            print('train_yy shape:', train_yy.shape)
+            print('valid_xx shape:', valid_xx.shape)
+            print('valid_yy shape:', valid_yy.shape)
+            print('test_xx shape:', test_xx.shape)
+            print('test_yy shape:', test_yy.shape)
+            model = Sequential()
+            # model.add(Embedding(36, 256, input_length=batch))
+            model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
+            model.add(Dropout(0.2))
+            for i in range(layer - 1):
+                # model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
+                # model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
+                # model.add(LSTM(output_dim=500, return_sequences=True))
+                # model.add(LSTM(output_dim=500, return_sequences=True))
+                # model.add(LSTM(48))
+                model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
+                model.add(Dropout(0.2))
+            model.add(Dense(OUTPUT_DIM, init='uniform'))
+            # model.add(Dropout(0.5)) # dropout does not add at output layer!!
+            model.add(Activation('sigmoid'))  # need time distributed softmax??
+
+            # try using different optimizers and different optimizer configs
+            # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+            sgd = SGD(lr=0.1, decay=0.002, momentum=0.5,
+                      nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
+            model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+
+            early_stopping = EarlyStopping(monitor='val_loss', patience=10)  # set up early stopping
+            print("Train...")
+            checkpointer = ModelCheckpoint(filepath=MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
+            # hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=3,validation_split=0.2, shuffle=True, verbose=1, show_accuracy=True, callbacks=[early_stopping])
+            hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=100, shuffle=True, verbose=1,
+                             validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer])  # for debug
+            # plot(model, to_file='model.png') # draw fig of accuracy
+            # score, acc = model.evaluate(valid_xx, valid_yy,
+            # batch_size=batch_size,
+            # show_accuracy=True)
+            # print('Test score:', score)
+            # print('Test accuracy:', acc)
+            model = load_model(MODEL_NAME + ".hdf5")
+            '''scores, fakescores = evaluate_multi_label(model, valid_xx, valid_yy)
+            scores_test, fakescores_test = evaluate_multi_label(model, test_xx, test_yy)
+
+            print(' valid_acc: ', scores)
+            print(' test_acc: ', scores_test)
+            print(' note_valid_acc: ', fakescores)
+            print(' note_test_acc: ', fakescores_test)
+            cvscores.append(scores * 100)
+            cvscores_test.append(scores_test * 100)
+            fake_cvscores.append(fakescores * 100)
+            fake_cvscores_test.append(fakescores_test * 100)
+            # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+        print(np.mean(cvscores), np.std(cvscores))
+        print(MODEL_NAME, file=cv_log)
+        print('valid:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+        print('note_valid:', np.mean(fake_cvscores), '%', '±', np.std(fake_cvscores), '%', file=cv_log)
+        for i in range(len(cvscores_test)):
+            print('Test:', i, cvscores_test[i], '%', file=cv_log)
+            print('note_Test:', i, fake_cvscores_test[i], '%', file=cv_log)
+        print('Test:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+        print('note_Test:', np.mean(fake_cvscores_test), '%', '±', np.std(fake_cvscores_test), '%', file=cv_log)'''
+            scores = model.evaluate(valid_xx, valid_yy, verbose=0)
+            scores_test = model.evaluate(test_xx, test_yy, verbose=0)
+            print(' valid_acc: ', scores[1])
+            cvscores.append(scores[1] * 100)
+            cvscores_test.append(scores_test[1] * 100)
+            # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+
+            precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(model, valid_xx, valid_yy)
+            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh= evaluate_f1score(model, test_xx, test_yy)
+            pre.append(precision*100)
+            pre_test.append(precision_test * 100)
+            rec.append(recall * 100)
+            rec_test.append(recall_test * 100)
+            f1.append(f1score * 100)
+            f1_test.append(f1score_test * 100)
+            acc.append(accuracy * 100)
+            acc_test.append(accuracy_test * 100)
+            tp.append(true_positive)
+            fp.append(false_positive)
+            fn.append(false_negative)
+            tn.append(true_negative)
+        print(np.mean(cvscores), np.std(cvscores))
+        print(MODEL_NAME, file=cv_log)
+        print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+        print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
+        print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
+        print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
+        print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
+        print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
+        print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
+        print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
+        print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+        for i in range(len(cvscores_test)):
+            print('Test accuracy:', i, cvscores_test[i], '%', file=cv_log)
+            #print('Test precision:', i, pre_test[i], '%', file=cv_log)
+            #print('Test reall:', i, rec_test[i], '%', file=cv_log)
+            #print('Test f1:', i, f1_test[i], '%', file=cv_log)
+            #print('Test acc:', i, acc_test[i], '%', file=cv_log)
+        print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+        print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
+        print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
+        print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
+        total_f1.append(np.mean(f1_test))
+        total_f1_std.append(np.std(f1_test))
+        total_acc.append(np.mean(acc_test))
+        total_acc_std.append(np.std(acc_test))
+    cv_log2 = open('cv_log+' + MODEL_NAME + 'Total.txt', 'w')
+    for i in range(len(total_acc)):
+        print('shuffle time: ' , i + 1 , ' Test f1: ' , total_f1[i], '±', total_f1_std[i], 'Test acc: ', total_acc[i], '±', total_acc_std[i] , file=cv_log2)
+    print('Total: f1: ', np.mean(total_f1), '±', np.std(total_f1), 'acc: ', np.mean(total_acc), '±', np.std(total_acc), file=cv_log2)
+
