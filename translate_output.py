@@ -26,9 +26,55 @@ def replace_non_chord_tone_with_following_chord(chordcandidate,i):
         if (j - i >= 3):
             print('alert!')
         for k in range(i, j):
-            chordcandidate[k] = chordcandidate[j]
+            if chordcandidate[k].find('[') != -1 and chordcandidate[k].find(']') != -1 and chordcandidate[k][0] != \
+                    '(' and chordcandidate[k][0] != '[':
+                ptr1 = chordcandidate[k].find('[')
+                ptr2 = chordcandidate[k].find(']')
+                chordcandidate[k] = chordcandidate[k][:ptr1] + chordcandidate[j] + chordcandidate[k][ptr2 + 1:]
+            else:
+                chordcandidate[k] = chordcandidate[j]
         return chordcandidate
-def remove_candidates(chordcandidate):
+
+def replace_non_chord_tone_with_previous_chord(chordcandidate, i):
+    """
+        This is the function to replace the non-chord tone in multiple interpretation
+        :param chordcandidate:
+        :param i:
+        :return:
+        """
+    ptr1 = chordcandidate[i].find('[')
+    ptr2 = chordcandidate[i].find(']')
+    if ptr1 == -1 or ptr2 == -1:
+        input('no non-chord tone in multiple interpretaions??')
+    chordcandidate[i] = chordcandidate[i][:ptr1] + chordcandidate[i - 1] + chordcandidate[i][ptr2 + 1:]
+    return chordcandidate
+
+def replace_non_chord_tone_with_following_chord1(chordcandidate, i):
+    """
+    This is the function to replace the non-chord tone in multiple interpretation
+    :param chordcandidate:
+    :param i:
+    :return:
+    """
+    ptr1 = chordcandidate[i].find('[')
+    ptr2 = chordcandidate[i].find(']')
+    if ptr1 == -1 or ptr2 == -1 :
+        input('no non-chord tone in multiple interpretaions??')
+    j = i + 1
+    while (is_next_a_chord(chordcandidate, j) == False):
+        j += 1
+    if (j - i >= 3):
+        print('alert!')
+    for k in range(i, j):
+        if chordcandidate[k].find('[') != -1 and chordcandidate[k].find(']') != -1 and chordcandidate[k][0] != \
+                '(' and chordcandidate[k][0] != '[':
+            ptr1 = chordcandidate[k].find('[')
+            ptr2 = chordcandidate[k].find(']')
+            chordcandidate[k] = chordcandidate[k][:ptr1] + chordcandidate[j] + chordcandidate[k][ptr2 + 1:]
+        else:
+            chordcandidate[k] = chordcandidate[j]
+    return chordcandidate
+def remove_candidates(chordcandidate, num_of_ambiguity):
     """
     Remove (), only keep the chord
     :param chordcandidate:
@@ -36,6 +82,49 @@ def remove_candidates(chordcandidate):
     """
     for i, chord in enumerate(chordcandidate):
         if chord[0] == '(':
+            num_of_ambiguity += 1
+            print(chordcandidate)
+            if chord[1] == '[':
+
+                j = i
+                while chordcandidate[j][-1] != ']':
+                    j += 1
+                for k in range(i, j + 1):
+                    del chordcandidate[i]  # delete all ones within []
+
+                if (chordcandidate[i][0] != '['):  # a chord, delete the rest
+                    if (chordcandidate[i][-1] == ')'):  # only one chord, keep it
+                        chordcandidate[i] = chordcandidate[i][:-1]
+                    else:  # multiple chords, only keep the first one
+                        j = i
+                        while chordcandidate[j][-1] != ')':
+                            j += 1
+                        for k in range(i + 1, j + 1):
+                            del chordcandidate[i + 1]  # this section should ve been into a function!
+
+                if (chordcandidate[i][-1] == ')'):
+                    chordcandidate[i] = chordcandidate[i][:-1]
+            else:  # first is the chord we need, delete the rest!
+
+                chordcandidate[i] = chordcandidate[i][1:]  # remove (
+
+                j = i
+                while chordcandidate[j][-1] != ')':
+                    j += 1
+                for k in range(i + 1, j + 1):
+                    del chordcandidate[i + 1]  # this section should ve been into a function!
+    return chordcandidate, num_of_ambiguity
+def keep_candidates(chordcandidate, num_of_ambiguity):
+    """
+    Remove (), the chords and non-chord tones
+    :param chordcandidate:
+    :return:
+    """
+    for i, chord in enumerate(chordcandidate):
+        multi_interpretation = [None] * 10
+        num_of_interpretation = 0
+        if chord[0] == '(':
+            num_of_ambiguity += 1
             print (chordcandidate)
             if chord[1] == '[':
 
@@ -43,15 +132,22 @@ def remove_candidates(chordcandidate):
                 while chordcandidate[j][-1] != ']':
                     j += 1
                 for k in range(i, j + 1):
+                    if k == j:  # keep one non-chord tone for labeling ambiguity
+                        multi_interpretation[num_of_interpretation] = chordcandidate [i]  # incorporate
+                        # non-chord + interpretation.
+                        num_of_interpretation += 1
                     del chordcandidate[i] # delete all ones within []
-                if(chordcandidate[i][0] != '['):  # a chord, delete the rest
-                    if(chordcandidate[i][-1] == ')'): # only one chord, keep it
+                if chordcandidate[i][0] != '[' :  # a chord, delete the rest
+                    if chordcandidate[i][-1] == ')':  # only one chord, keep it
                         chordcandidate[i] = chordcandidate[i][:-1]
                     else:  # multiple chords, only keep the first one
                         j = i
                         while chordcandidate[j][-1] != ')':
                             j += 1
                         for k in range(i+1, j+1):
+                            multi_interpretation[num_of_interpretation] = chordcandidate[i + 1]  # incorporate the
+                            # multi-chord interpretation.
+                            num_of_interpretation += 1
                             del chordcandidate[i+1]  # this section should ve been into a function!
 
 
@@ -67,8 +163,32 @@ def remove_candidates(chordcandidate):
                 while chordcandidate[j][-1] != ')':
                     j += 1
                 for k in range(i+1, j+1):
+                    multi_interpretation[num_of_interpretation] = chordcandidate[i + 1]  # incorporate the
+                    # multi-chord interpretation.
+                    num_of_interpretation += 1
                     del chordcandidate[i+1]  # this section should ve been into a function!
-    return chordcandidate
+            print('debug multi')
+            print('now the chord candidates:', chordcandidate, 'index of it:' , i)
+            print('multi interpretations: ' , multi_interpretation)
+            for ii in (0, num_of_interpretation):
+                if multi_interpretation[ii] is not None and multi_interpretation[ii].find('[') != -1 :  # only keep
+                    #  one non-chord tone
+                    jj = ii
+                    while multi_interpretation[jj] is not None and multi_interpretation[jj].find(']') == -1 :
+                        jj += 1
+                    for k in range(ii, jj):
+                        del multi_interpretation[ii]  # delete all ones within []
+            print('multi interpretations (modified): ', multi_interpretation)
+            for ii, item in enumerate(multi_interpretation):
+                if item is not None:
+                    if item.find(']') != -1 and item.find('[') == -1:  # make full []
+                        item = '[' + item
+                    item = item.replace(')', '')
+                    item = item.replace('(', '')
+                    chordcandidate[i] = chordcandidate[i] + ',' + item
+            print('chord candidates with multi:', chordcandidate, 'index of it:', i)
+            #input('?')
+    return chordcandidate, num_of_ambiguity
 def is_next_a_chord(chordcandidate, i):
     """
     Make sure whether the next element is a chord, can deal with [b, a, c] (c, [x x x]) this kidn of case now
@@ -108,8 +228,51 @@ def only_one_nonchord_tone(chord_candidate):
                         chord_candidate[i] = chord + ']'
 
     return chord_candidate
+def replace_with_chords(beat_poly, num_of_salami_poly, chord_candidate, i, bad):
+    """
 
-def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace, beat_poly, bad, fn):
+    :param beat_poly:
+    :param num_of_salami_poly:
+    :param chord_candidate:
+    :param i:
+    :param bad:
+    :return:
+    """
+    if i != 0:  # replaced by the previous chord, or the following chord
+        if (len(beat_poly[num_of_salami_poly - 1]) == 1):  # on beat, replaced by the following chord
+            if  len(chord_candidate) > i + 1 :
+                if chord_candidate[i].find('[') != -1 and chord_candidate[i].find(']') != -1 and chord_candidate[i][0] !=\
+                        '(' and chord_candidate[i][0] != '[':
+                    chord_candidate = replace_non_chord_tone_with_following_chord1(chord_candidate,i)
+                else:
+                    chord_candidate = replace_non_chord_tone_with_following_chord(chord_candidate,i)  # this needs to be correct, otherwise the salami slices will be wrong!
+            else:
+                chord_candidate[i] = chord_candidate[i - 1]  # compromise
+                #print(fn)
+                # input('current chord' + chord_candidate[i] + 'previous chord' + chord_candidate[i-1] )
+                bad += 1
+        else:
+            if chord_candidate[i].find('[') != -1 and chord_candidate[i].find(']') != -1 and chord_candidate[i][0] != \
+                    '(' and chord_candidate[i][0] != '[':
+                chord_candidate = replace_non_chord_tone_with_previous_chord(chord_candidate, i)
+            else:
+                chord_candidate[i] = chord_candidate[i - 1]  # off beat, replaced by the previous chord
+        if chord_candidate[i - 1][0] == '[':
+            print("non-chord tone preceded by another one???")
+            # bad += 1
+
+    else:  # can only replaced with the following chord
+        if (len(chord_candidate) > i + 1):
+            if chord_candidate[i].find('[') != -1 and chord_candidate[i].find(']') != -1 and chord_candidate[i][0] != \
+                    '(' and chord_candidate[i][0] != '[':
+                chord_candidate = replace_non_chord_tone_with_following_chord1(chord_candidate, i)
+            else:
+                chord_candidate = replace_non_chord_tone_with_following_chord(chord_candidate, i)
+        # begin with a non-chord tone
+        if chord_candidate[i + 1][0] == '[':
+            input("non-chord tone which begins the measure is followed by another one???")
+    return beat_poly, num_of_salami_poly, chord_candidate, i, bad
+def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace, beat_poly, bad, fn, num_of_ambiguity, multi):
     """
     Remove the sign in replace, and deal with non-chord tone and multiply answers
     :param line: the original chord line
@@ -147,35 +310,23 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     print('original one: ')
     print(chord_candidate)
     chord_candidate_original = chord_candidate
-    chord_candidate = remove_candidates(chord_candidate)
+    if(multi==0):
+        chord_candidate, num_of_ambiguity = remove_candidates(chord_candidate, num_of_ambiguity)
+    else:
+        chord_candidate, num_of_ambiguity = keep_candidates(chord_candidate, num_of_ambiguity)
     chord_candidate = only_one_nonchord_tone(chord_candidate)
-    for i, chord in enumerate(chord_candidate):
+    for i, chord in enumerate(chord_candidate):  # replace non-chord tone with either the previous chord or the following chord
         if(chord[0] != '(' and chord[0] != '['):  # just a chord
             num_of_salami_poly += 1
+            if chord.find('[') != -1 and chord.find(']') != -1 :  # replace non-chord into chord
+                beat_poly, num_of_salami_poly, chord_candidate, i, bad = replace_with_chords(beat_poly,
+                                                                                             num_of_salami_poly,
+                                                                                             chord_candidate, i, bad)
         elif chord[0] == '[':
             num_of_salami_poly += 1
             #chord_candidate= only_one_nonchord_tone(i, chord_candidate)
-            if i != 0:  # replaced by the previous chord, or the following chord
-                if(len(beat_poly[num_of_salami_poly - 1]) == 1):  # on beat, replaced by the following chord
-                    if(len(chord_candidate) > i + 1):
-                        chord_candidate = replace_non_chord_tone_with_following_chord(chord_candidate, i)  # this needs to be correct, otherwise the salami slices will be wrong!
-                    else:
-                        chord_candidate[i] = chord_candidate[i - 1]  # compromise
-                        print(fn)
-                        #input('current chord' + chord_candidate[i] + 'previous chord' + chord_candidate[i-1] )
-                        bad += 1
-                else:
-                    chord_candidate[i] = chord_candidate[i - 1]   # off beat, replaced by the previous chord
-                if chord_candidate[i-1][0] == '[':
-                    print("non-chord tone preceded by another one???")
-                    #bad += 1
+            beat_poly, num_of_salami_poly, chord_candidate, i, bad = replace_with_chords(beat_poly, num_of_salami_poly, chord_candidate, i, bad)
 
-            else:
-                if (len(chord_candidate) > i + 1):
-                    chord_candidate = replace_non_chord_tone_with_following_chord(chord_candidate, i)
-                # begin with a non-chord tone
-                if chord_candidate[i+1][0] == '[':
-                    input("non-chord tone which begins the measure is followed by another one???")
 
     print('translated one: ')
 
@@ -192,15 +343,17 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     for chord in chord_candidate:
         line += chord + ' '
     line = line[:-1] # remove the last space
-    return line, num_of_salami_poly, num_of_salami_chord, bad
+    return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
-def write_to_files(transposed=''):
+def write_to_files(transposed='', multi=0):
     """
     A function that can either translate transposed files or not.
-    :param transposed: 
+    :param transposed:
+    :param multi: a switch that whether generate multiple interpretation or not
     :return: 
     """
+    num_of_ambiguity = 0
     bad = 0
     num_of_samples = 0
     for fn in os.listdir(cwd):
@@ -226,16 +379,26 @@ def write_to_files(transposed=''):
             if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop''')):
                 f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop', 'r')
                 file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop'
-                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
+                if(multi==0):
+                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
                                                                                                                 0:3] + '.pop',
                             'w')
+                else:
+                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_multi' + transposed + fn[
+                                                                                                                 0:3] + '.pop',
+                                'w')
             elif (
             os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not''')):
                 f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not', 'r')
                 file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not'
-                fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
+                if(multi==0):
+                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
                                                                                                                 0:3] + '.pop.not',
                             'w')
+                else:
+                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_multi' + transposed + fn[
+                                                                                                                 0:3] + '.pop.not',
+                                'w')
             else:
                 print('no file is opened')
             for line in f.readlines():
@@ -245,9 +408,9 @@ def write_to_files(transposed=''):
 
                             print('special' + letter)
                             print(line)'''
-                line, num_of_salami_poly, num_of_salami_chord, bad = translate_chord_line(num_of_salami_poly,
+                line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity = translate_chord_line(num_of_salami_poly,
                                                                                           num_of_salami_chord, line,
-                                                                                          replace, beat_poly, bad, fn)
+                                                                                          replace, beat_poly, bad, fn, num_of_ambiguity, multi)
                 print(line)
                 if ('[' in line) or (']' in line) or ('(' in line) or (')' in line):
                     print(fn)
@@ -266,6 +429,8 @@ def write_to_files(transposed=''):
                 print(line, end='\n', file=fnew)
     print('bad =' + str(bad))
     print('number of samples = ' + str(num_of_samples))
+    print('number of ambiguity = ' + str(num_of_ambiguity))
 if __name__ == "__main__":
-    write_to_files()
+    multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
+    write_to_files(multi=multi)
     #write_to_files('transposed_')
