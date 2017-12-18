@@ -39,6 +39,8 @@ import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
 from DNN_no_window_cross_validation import divide_training_data
+from LSTM_AMH_TRAIN_BATCH import format_sequence_data
+import TwoToThree
 def get_predict_file_name():
     string = 'test'
     cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
@@ -257,7 +259,7 @@ def evaluate_f1score(model, x,y):
     return precision, recall, f1, accuracy, tp, fp, fn, tn
 
 
-def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
+def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
     print('Loading data...')
     extension = 'y4_non-chord_tone_pitch_class'
     train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_'+ str(windowsize) + extension + '.txt')
@@ -284,7 +286,9 @@ def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
     INPUT_DIM = train_xxx_ori.shape[1]
     OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
-    MODEL_NAME = str(layer)+'layer'+str(nodes)+'DNN' + 'window_size' + str(windowsize) + 'training_data'+ str(portion) + extension
+
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + model + 'window_size' + str(
+            windowsize) + 'training_data' + str(portion) + extension
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
     print('original train_yy shape:', train_yyy_ori.shape)
@@ -317,18 +321,37 @@ def FineTuneDNN_non_chord_tone(layer,nodes,windowsize,portion):
         print('valid_yy shape:', valid_yy.shape)
         print('test_xx shape:', test_xx.shape)
         print('test_yy shape:', test_yy.shape)
+        if model != 'DNN':
+            batch = 10
+            train_xxx, train_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, train_xxx, train_yyy)
+            valid_xxx, valid_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, valid_xxx, valid_yyy)
+            test_xxx, test_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, test_xxx, test_yyy)
+            train_xxx = TwoToThree.TwoToThree(train_xxx, int(train_xxx.shape[0] / batch), int(batch), INPUT_DIM)
+            train_yyy = TwoToThree.TwoToThree(train_yyy, int(train_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
+            valid_xxx = TwoToThree.TwoToThree(valid_xxx, int(valid_xxx.shape[0] / batch), int(batch), INPUT_DIM)
+            valid_yyy = TwoToThree.TwoToThree(valid_yyy, int(valid_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
+            test_xxx = TwoToThree.TwoToThree(test_xxx, int(test_xxx.shape[0] / batch), int(batch), INPUT_DIM)
+            test_yyy = TwoToThree.TwoToThree(test_yyy, int(test_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
         model = Sequential()
         # model.add(Embedding(36, 256, input_length=batch))
-        model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
-        model.add(Dropout(0.2))
-        for i in range(layer - 1):
-            # model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
-            # model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
-            # model.add(LSTM(output_dim=500, return_sequences=True))
-            # model.add(LSTM(output_dim=500, return_sequences=True))
-            # model.add(LSTM(48))
-            model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
+        if model == 'DNN':
+            model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
             model.add(Dropout(0.2))
+            for i in range(layer - 1):
+                # model.add(LSTM(output_dim=48, init='glorot_uniform', inner_init='orthogonal', activation='softmax', inner_activation='tanh'))  # try using a GRU instead, for fun
+                # model.add(LSTM(input_dim=INPUT_DIM, output_dim=500, return_sequences=True, init='glorot_uniform'))
+                # model.add(LSTM(output_dim=500, return_sequences=True))
+                # model.add(LSTM(output_dim=500, return_sequences=True))
+                # model.add(LSTM(48))
+                model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
+                model.add(Dropout(0.2))
+        elif model == 'BLSTM':
+            model.add(Bidirectional(
+                LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
+                     kernel_initializer="glorot_uniform"), input_shape=train_xxx.shape))
+            for i in range(layer - 1):
+                model.add(
+                    Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
         model.add(Dense(OUTPUT_DIM, init='uniform'))
         # model.add(Dropout(0.5)) # dropout does not add at output layer!!
         model.add(Activation('sigmoid'))  # need time distributed softmax??
