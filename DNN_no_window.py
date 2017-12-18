@@ -20,7 +20,7 @@ from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
-from keras.layers.recurrent import LSTM
+from keras.layers import LSTM, Bidirectional
 from keras.datasets import imdb
 from scipy.io import loadmat
 from keras.optimizers import SGD, RMSprop
@@ -259,7 +259,7 @@ def evaluate_f1score(model, x,y):
     return precision, recall, f1, accuracy, tp, fp, fn, tn
 
 
-def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
+def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
     print('Loading data...')
     extension = 'y4_non-chord_tone_pitch_class'
     train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_'+ str(windowsize) + extension + '.txt')
@@ -287,7 +287,7 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
     OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
 
-    MODEL_NAME = str(layer) + 'layer' + str(nodes) + model + 'window_size' + str(
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + str(
             windowsize) + 'training_data' + str(portion) + extension
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
@@ -321,20 +321,20 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
         print('valid_yy shape:', valid_yy.shape)
         print('test_xx shape:', test_xx.shape)
         print('test_yy shape:', test_yy.shape)
-        if model != 'DNN':
-            batch = 10
-            train_xxx, train_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, train_xxx, train_yyy)
-            valid_xxx, valid_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, valid_xxx, valid_yyy)
-            test_xxx, test_yyy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, test_xxx, test_yyy)
-            train_xxx = TwoToThree.TwoToThree(train_xxx, int(train_xxx.shape[0] / batch), int(batch), INPUT_DIM)
-            train_yyy = TwoToThree.TwoToThree(train_yyy, int(train_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
-            valid_xxx = TwoToThree.TwoToThree(valid_xxx, int(valid_xxx.shape[0] / batch), int(batch), INPUT_DIM)
-            valid_yyy = TwoToThree.TwoToThree(valid_yyy, int(valid_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
-            test_xxx = TwoToThree.TwoToThree(test_xxx, int(test_xxx.shape[0] / batch), int(batch), INPUT_DIM)
-            test_yyy = TwoToThree.TwoToThree(test_yyy, int(test_yyy.shape[0] / batch), int(batch), OUTPUT_DIM)
+        if modelID != 'DNN':
+            batch = batch_size
+            train_xx, train_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, train_xx, train_yy)
+            valid_xx, valid_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, valid_xx, valid_yy)
+            test_xx, test_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, test_xx, test_yy)
+            train_xx = TwoToThree.TwoToThree(train_xx, int(train_xx.shape[0] / batch), int(batch), INPUT_DIM)
+            train_yy = TwoToThree.TwoToThree(train_yy, int(train_yy.shape[0] / batch), int(batch), OUTPUT_DIM)
+            valid_xx = TwoToThree.TwoToThree(valid_xx, int(valid_xx.shape[0] / batch), int(batch), INPUT_DIM)
+            valid_yy = TwoToThree.TwoToThree(valid_yy, int(valid_yy.shape[0] / batch), int(batch), OUTPUT_DIM)
+            test_xx = TwoToThree.TwoToThree(test_xx, int(test_xx.shape[0] / batch), int(batch), INPUT_DIM)
+            test_yy = TwoToThree.TwoToThree(test_yy, int(test_yy.shape[0] / batch), int(batch), OUTPUT_DIM)
         model = Sequential()
         # model.add(Embedding(36, 256, input_length=batch))
-        if model == 'DNN':
+        if modelID == 'DNN':
             model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
             model.add(Dropout(0.2))
             for i in range(layer - 1):
@@ -345,10 +345,10 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
                 # model.add(LSTM(48))
                 model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                 model.add(Dropout(0.2))
-        elif model == 'BLSTM':
+        elif modelID == 'BLSTM':
             model.add(Bidirectional(
                 LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
-                     kernel_initializer="glorot_uniform"), input_shape=train_xxx.shape))
+                     kernel_initializer="glorot_uniform"), input_shape=train_xx.shape))
             for i in range(layer - 1):
                 model.add(
                     Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
@@ -358,8 +358,7 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, model):
 
         # try using different optimizers and different optimizer configs
         # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
-        sgd = SGD(lr=0.1, decay=0.002, momentum=0.5,
-                  nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
+        #sgd = SGD(lr=0.1, decay=0.002, momentum=0.5, nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=10)  # set up early stopping
