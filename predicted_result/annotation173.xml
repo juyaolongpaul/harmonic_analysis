@@ -3,2538 +3,2440 @@
   PUBLIC '-//Recordare//DTD MusicXML 2.0 Partwise//EN'
   'http://www.musicxml.org/dtds/partwise.dtd'>
 <score-partwise>
-  <movement-title>Music21 Fragment</movement-title>
+  <work>
+    <work-title>O Herzensangst, o Bangigkeit</work-title>
+    </work>
+  <movement-title>O Herzensangst, o Bangigkeit</movement-title>
   <identification>
-    <creator type="composer">Music21</creator>
+    <creator type="composer">Bach, Johann Sebastian</creator>
+    <creator type="electronic editor">Craig Stuart Sapp</creator>
     <encoding>
-      <encoding-date>2017-12-05</encoding-date>
+      <encoding-date>2018-01-02</encoding-date>
       <software>Music21</software>
-    </encoding>
-  </identification>
+      </encoding>
+    </identification>
   <defaults>
     <scaling>
       <millimeters>7</millimeters>
       <tenths>40</tenths>
-    </scaling>
-  </defaults>
+      </scaling>
+    </defaults>
   <part-list>
-    <score-part id="P5488ba964c9f748d2c72682f7276ec20">
+    <score-part id="P32090a26a40450fcfb90dda1faa95bfa">
       <part-name>Voice</part-name>
       <part-abbreviation>V</part-abbreviation>
-    </score-part>
-    <score-part id="P22b7301e168275deb95aaa39b5bc87c7">
+      <score-instrument id="I6493c9c46c50f45a27ab788cb7836c26">
+        <instrument-name>Voice</instrument-name>
+        <instrument-abbreviation>V</instrument-abbreviation>
+        </score-instrument>
+      <midi-instrument id="I6493c9c46c50f45a27ab788cb7836c26">
+        <midi-channel>1</midi-channel>
+        <midi-program>53</midi-program>
+        </midi-instrument>
+      </score-part>
+    <score-part id="P3cbcf8d3ddf3dd5d0216a3743aef27df">
       <part-name>Voice</part-name>
       <part-abbreviation>V</part-abbreviation>
-    </score-part>
-    <score-part id="P30a11525a0c94b3b7ba8335cf6798a8f">
+      <score-instrument id="I19518781ce539c6ab0362f13b01173ec">
+        <instrument-name>Voice</instrument-name>
+        <instrument-abbreviation>V</instrument-abbreviation>
+        </score-instrument>
+      <midi-instrument id="I19518781ce539c6ab0362f13b01173ec">
+        <midi-channel>3</midi-channel>
+        <midi-program>53</midi-program>
+        </midi-instrument>
+      </score-part>
+    <score-part id="P84a84c445addbdc0d32470b0a825bab1">
       <part-name>Voice</part-name>
       <part-abbreviation>V</part-abbreviation>
-    </score-part>
-    <score-part id="P975773f41ca0c2b082a27ec68ff6a508">
+      <score-instrument id="I344485a9fa776b60b9a63b8b045a64b2">
+        <instrument-name>Voice</instrument-name>
+        <instrument-abbreviation>V</instrument-abbreviation>
+        </score-instrument>
+      <midi-instrument id="I344485a9fa776b60b9a63b8b045a64b2">
+        <midi-channel>5</midi-channel>
+        <midi-program>53</midi-program>
+        </midi-instrument>
+      </score-part>
+    <score-part id="P60c87b62e9b96d0588183bd0044948e8">
       <part-name>Voice</part-name>
       <part-abbreviation>V</part-abbreviation>
-    </score-part>
-    <score-part id="P521813a242d19135c0da2aaa79337304">
+      <score-instrument id="Id1279690878096be8efb35593a0bcff9">
+        <instrument-name>Voice</instrument-name>
+        <instrument-abbreviation>V</instrument-abbreviation>
+        </score-instrument>
+      <midi-instrument id="Id1279690878096be8efb35593a0bcff9">
+        <midi-channel>7</midi-channel>
+        <midi-program>53</midi-program>
+        </midi-instrument>
+      </score-part>
+    <score-part id="P6dc3c840711a17907a1d487937e0ec4d">
       <part-name>Voice</part-name>
       <part-abbreviation>V</part-abbreviation>
-    </score-part>
-  </part-list>
-  <part id="P5488ba964c9f748d2c72682f7276ec20">
+      <score-instrument id="I421eaa870372a10137febea8b58c4254">
+        <instrument-name>Voice</instrument-name>
+        <instrument-abbreviation>V</instrument-abbreviation>
+        </score-instrument>
+      <midi-instrument id="I421eaa870372a10137febea8b58c4254">
+        <midi-channel>9</midi-channel>
+        <midi-program>53</midi-program>
+        </midi-instrument>
+      </score-part>
+    </part-list>
+  <part id="P32090a26a40450fcfb90dda1faa95bfa">
     <measure number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
           <fifths>-3</fifths>
-        </key>
+          </key>
         <time>
           <beats>3</beats>
           <beat-type>4</beat-type>
-        </time>
+          </time>
         <clef>
           <sign>G</sign>
           <line>2</line>
-        </clef>
-      </attributes>
+          </clef>
+        </attributes>
       <direction>
         <direction-type>
           <metronome parentheses="no">
             <beat-unit>quarter</beat-unit>
             <per-minute>100</per-minute>
-          </metronome>
-        </direction-type>
+            </metronome>
+          </direction-type>
         <sound tempo="100" />
-      </direction>
+        </direction>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="2">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="3">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="4">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="5">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="6">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>0</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="7">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="8">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="9">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="10">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="11">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>0</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="12">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="13">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>15120</duration>
         <type>quarter</type>
         <dot />
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="14">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="15">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="16">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>15120</duration>
         <type>quarter</type>
         <dot />
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <alter>0</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="17">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="18">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
-      </barline>
-    </measure>
-  </part>
-  <part id="P22b7301e168275deb95aaa39b5bc87c7">
+        </barline>
+      </measure>
+    </part>
+  <part id="P3cbcf8d3ddf3dd5d0216a3743aef27df">
     <measure number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
           <fifths>-3</fifths>
-        </key>
+          </key>
         <time>
           <beats>3</beats>
           <beat-type>4</beat-type>
-        </time>
+          </time>
         <clef>
           <sign>G</sign>
           <line>2</line>
-        </clef>
-      </attributes>
+          </clef>
+        </attributes>
       <direction>
         <direction-type>
           <metronome parentheses="no">
             <beat-unit>quarter</beat-unit>
             <per-minute>100</per-minute>
-          </metronome>
-        </direction-type>
+            </metronome>
+          </direction-type>
         <sound tempo="100" />
-      </direction>
+        </direction>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="2">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="3">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="4">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="5">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="6">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="7">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="8">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="9">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="10">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="11">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="12">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="13">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="14">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="15">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="16">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <tie type="start" />
         <type>quarter</type>
         <notations>
           <tied type="start" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="17">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <tie type="stop" />
         <type>quarter</type>
         <notations>
           <tied type="stop" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="18">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
-      </barline>
-    </measure>
-  </part>
-  <part id="P30a11525a0c94b3b7ba8335cf6798a8f">
+        </barline>
+      </measure>
+    </part>
+  <part id="P84a84c445addbdc0d32470b0a825bab1">
     <measure number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
           <fifths>-3</fifths>
-        </key>
+          </key>
         <time>
           <beats>3</beats>
           <beat-type>4</beat-type>
-        </time>
+          </time>
         <clef>
           <sign>G</sign>
           <line>2</line>
           <clef-octave-change>-1</clef-octave-change>
-        </clef>
-      </attributes>
+          </clef>
+        </attributes>
       <direction>
         <direction-type>
           <metronome parentheses="no">
             <beat-unit>quarter</beat-unit>
             <per-minute>100</per-minute>
-          </metronome>
-        </direction-type>
+            </metronome>
+          </direction-type>
         <sound tempo="100" />
-      </direction>
+        </direction>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="2">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="3">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="4">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="5">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="6">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="7">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="8">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <tie type="start" />
         <type>quarter</type>
         <notations>
           <tied type="start" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="9">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <tie type="stop" />
         <type>half</type>
         <notations>
           <tied type="stop" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>0</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="10">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="11">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="12">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="13">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="14">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>0</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="15">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="16">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="17">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="18">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
-      </barline>
-    </measure>
-  </part>
-  <part id="P975773f41ca0c2b082a27ec68ff6a508">
+        </barline>
+      </measure>
+    </part>
+  <part id="P60c87b62e9b96d0588183bd0044948e8">
     <measure number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
           <fifths>-3</fifths>
-        </key>
+          </key>
         <time>
           <beats>3</beats>
           <beat-type>4</beat-type>
-        </time>
+          </time>
         <clef>
           <sign>F</sign>
           <line>4</line>
-        </clef>
-      </attributes>
+          </clef>
+        </attributes>
       <direction>
         <direction-type>
           <metronome parentheses="no">
             <beat-unit>quarter</beat-unit>
             <per-minute>100</per-minute>
-          </metronome>
-        </direction-type>
+            </metronome>
+          </direction-type>
         <sound tempo="100" />
-      </direction>
+        </direction>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="2">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="3">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <tie type="start" />
         <type>quarter</type>
         <notations>
           <tied type="start" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="4">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <tie type="stop" />
         <type>quarter</type>
         <notations>
           <tied type="stop" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="5">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="6">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="7">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="8">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>0</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="9">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="10">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="11">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-        <beam number="1">end</beam>
-      </note>
+        <beam number="1">continue</beam>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-        <beam number="1">begin</beam>
-      </note>
+        <beam number="1">continue</beam>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="12">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>0</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="13">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>15120</duration>
         <type>quarter</type>
         <dot />
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="14">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="15">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>3</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="16">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="17">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="18">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>2</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <notations>
           <fermata type="inverted" />
-        </notations>
-      </note>
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
-      </barline>
-    </measure>
-  </part>
-  <part id="P521813a242d19135c0da2aaa79337304">
+        </barline>
+      </measure>
+    </part>
+  <part id="P6dc3c840711a17907a1d487937e0ec4d">
     <measure number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
           <fifths>-3</fifths>
-        </key>
+          </key>
         <time>
           <beats>3</beats>
           <beat-type>4</beat-type>
-        </time>
+          </time>
         <clef>
           <sign>G</sign>
           <line>2</line>
-        </clef>
-      </attributes>
-      <note>
-        <pitch>
-          <step>E</step>
-          <alter>-1</alter>
-          <octave>4</octave>
-        </pitch>
-        <duration>10080</duration>
-        <type>quarter</type>
-        <accidental>flat</accidental>
-        <lyric number="1">
-          <syllabic>single</syllabic>
-          <text>eb</text>
-        </lyric>
-        <lyric number="2">
-          <syllabic>single</syllabic>
-          <text>Multiple interpretations</text>
-        </lyric>
-        <lyric number="3">
-          <syllabic>single</syllabic>
-          <text>NO. of PC changes: </text>
-        </lyric>
-        <lyric number="4">
-          <syllabic>single</syllabic>
-          <text>Maximally melodic: </text>
-        </lyric>
-        <lyric number="5">
-          <syllabic>single</syllabic>
-          <text>Maximally harmonic: </text>
-        </lyric>
-      </note>
-      <note>
-        <chord />
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>10080</duration>
-        <type>quarter</type>
-      </note>
-      <note>
-        <chord />
-        <pitch>
-          <step>B</step>
-          <alter>-1</alter>
-          <octave>4</octave>
-        </pitch>
-        <duration>10080</duration>
-        <type>quarter</type>
-        <accidental>flat</accidental>
-      </note>
-      <attributes>
-        <clef>
-          <sign>G</sign>
-          <line>2</line>
-        </clef>
-      </attributes>
+          </clef>
+        </attributes>
       <direction>
         <direction-type>
           <metronome parentheses="no">
             <beat-unit>quarter</beat-unit>
             <per-minute>100</per-minute>
-          </metronome>
-        </direction-type>
+            </metronome>
+          </direction-type>
         <sound tempo="100" />
-      </direction>
+        </direction>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
-          <text> </text>
-        </lyric>
+          <text>Multiple interpretations</text>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
-          <text>0/3</text>
-        </lyric>
+          <text>NO. of PC changes: </text>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
-          <text>.</text>
-        </lyric>
+          <text>Maximally melodic: </text>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
-          <text>.</text>
-        </lyric>
-      </note>
+          <text>Maximally harmonic: </text>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
+      <note>
+        <pitch>
+          <step>E</step>
+          <alter>-1</alter>
+          <octave>4</octave>
+          </pitch>
+        <duration>10080</duration>
+        <type>quarter</type>
+        <accidental>flat</accidental>
+        <lyric number="1">
+          <syllabic>single</syllabic>
+          <text>eb</text>
+          </lyric>
+        <lyric number="2">
+          <syllabic>single</syllabic>
+          <text> </text>
+          </lyric>
+        <lyric number="3">
+          <syllabic>single</syllabic>
+          <text>0/3</text>
+          </lyric>
+        <lyric number="4">
+          <syllabic>single</syllabic>
+          <text>.</text>
+          </lyric>
+        <lyric number="5">
+          <syllabic>single</syllabic>
+          <text>.</text>
+          </lyric>
+        </note>
+      <note>
+        <chord />
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>10080</duration>
+        <type>quarter</type>
+        </note>
+      <note>
+        <chord />
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>4</octave>
+          </pitch>
+        <duration>10080</duration>
+        <type>quarter</type>
+        <accidental>flat</accidental>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
@@ -2542,116 +2444,134 @@
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="2">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
@@ -2660,626 +2580,700 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="3">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>d°/f</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
         <beam number="1">end</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
-          <text>fm7/eb</text>
-        </lyric>
+          <text>fm7/eb,d°/f</text>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
-          <text> </text>
-        </lyric>
+          <text>['fm7/e-', 'do/f']</text>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/d</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="4">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
         <accidental>flat</accidental>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>fm7/eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/d</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/d</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb/d</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="5">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
@@ -3288,275 +3282,295 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>0/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="6">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb7/d</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>a°/c</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="7">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
@@ -3565,490 +3579,524 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>0/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="8">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>f/a</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="9">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb/f</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm7/eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>f</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>f7</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="10">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
@@ -4058,111 +4106,121 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="11">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>0/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
@@ -4170,161 +4228,197 @@
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7/ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>g7/f</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
@@ -4332,111 +4426,121 @@
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb+</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>D</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">end</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
-          <text>g7/d</text>
-        </lyric>
+          <text>g7/d,eb+</text>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
-          <text> </text>
-        </lyric>
+          <text>['g7/d', 'e-+']</text>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="12">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
@@ -4444,204 +4548,218 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>g/b</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="13">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>0/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
@@ -4649,330 +4767,368 @@
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm7/bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>fm/ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="14">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>F</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>dø7/f</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <beam number="1">begin</beam>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>g7</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="15">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>C</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <notations>
@@ -4980,392 +5136,456 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>cm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>20160</duration>
         <type>half</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb7/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="16">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>abm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>3/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>abm</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>fm/ab</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
-          <text>d°/aes</text>
-        </lyric>
+          <text>d°/aes,fm/ab</text>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
-          <text> </text>
-        </lyric>
+          <text>[]</text>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>C</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <alter>0</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>natural</accidental>
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>4/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>.</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
@@ -5373,312 +5593,372 @@
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/g</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="17">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
+        <notations>
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/4</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="start" />
         <type>quarter</type>
         <accidental>flat</accidental>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>10080</duration>
+        <tie type="stop" />
         <type>quarter</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb/bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <type>eighth</type>
         <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop" />
+          <tied type="start" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="start" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="start" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
         <beam number="1">end</beam>
+        <notations>
+          <tied type="stop" />
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>bb7</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>1/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
+        <tie type="stop" />
         <type>eighth</type>
-      </note>
+        <notations>
+          <tied type="stop" />
+          </notations>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>A</step>
           <alter>-1</alter>
           <octave>5</octave>
-        </pitch>
+          </pitch>
         <duration>5040</duration>
         <type>eighth</type>
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>regular</bar-style>
-      </barline>
-    </measure>
+        </barline>
+      </measure>
     <measure number="18">
-      <attributes>
-        <divisions>10080</divisions>
-      </attributes>
+      <attributes />
       <note>
         <pitch>
           <step>E</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
@@ -5688,53 +5968,53 @@
           <fermata type="inverted" />
           <fermata type="inverted" />
           <fermata type="inverted" />
-        </notations>
+          </notations>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>eb</text>
-        </lyric>
+          </lyric>
         <lyric number="2">
           <syllabic>single</syllabic>
           <text> </text>
-        </lyric>
+          </lyric>
         <lyric number="3">
           <syllabic>single</syllabic>
           <text>2/3</text>
-        </lyric>
+          </lyric>
         <lyric number="4">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
+          </lyric>
         <lyric number="5">
           <syllabic>single</syllabic>
           <text>_</text>
-        </lyric>
-      </note>
+          </lyric>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
-      </note>
+        </note>
       <note>
         <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>4</octave>
-        </pitch>
+          </pitch>
         <duration>30240</duration>
         <type>half</type>
         <dot />
         <accidental>flat</accidental>
-      </note>
+        </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
-      </barline>
-    </measure>
-  </part>
-</score-partwise>
+        </barline>
+      </measure>
+    </part>
+  </score-partwise>

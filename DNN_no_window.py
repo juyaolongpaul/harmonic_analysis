@@ -14,13 +14,14 @@ from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
 from keras.models import load_model
+from keras.utils import plot_model
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 #from keras.utils.visualize_util import plot # draw fig
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
-from keras.layers import LSTM, Bidirectional
+from keras.layers import LSTM, Bidirectional, RNN, SimpleRNN, TimeDistributed
 from keras.datasets import imdb
 from scipy.io import loadmat
 from keras.optimizers import SGD, RMSprop
@@ -226,15 +227,21 @@ def evaluate_multi_label(model, x,y):
     return correctrate, fakecorrectrate
 
 
-def evaluate_f1score(model, x,y):
+def evaluate_f1score(model, x,y, modelname):
     yyy = model.predict(x, verbose=0)
     yy = model.predict(x, verbose=0)
+    if modelname != 'DNN':  # need to reshape the output
+       yy = yyy.reshape(yyy.shape[0]*yyy.shape[1], yyy.shape[2])
+       y = y.reshape(y.shape[0]*y.shape[1], y.shape[2])
     for i in yy:
+        #print(i)
         for j, item in enumerate(i):
-            if (item > 0.5):
+            if (item > 0.4):
                 i[j] = 1
             else:
                 i[j] = 0
+
+
     tp = 0
     fp = 0
     fn = 0
@@ -259,11 +266,14 @@ def evaluate_f1score(model, x,y):
     return precision, recall, f1, accuracy, tp, fp, fn, tn
 
 
-def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
+def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID, bs):
     print('Loading data...')
-    extension = 'y4_non-chord_tone_pitch_class'
-    train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_'+ str(windowsize) + extension + '.txt')
-    train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_'+ str(windowsize) + extension + '.txt')
+    extension = 'y4_non-chord_tone_pitch_class_New_annotation'
+    train_xxx_ori = np.loadtxt('melodic_x_windowing_'+ str(windowsize) + extension + '.txt')
+    train_yyy_ori = np.loadtxt('melodic_y_windowing_'+ str(windowsize) + extension + '.txt')
+    #extension = 'y4_non-chord_tone_pitch_class'
+    #train_xxx_ori = np.loadtxt('trainvalidtest_x_windowing_' + str(windowsize) + extension + '.txt')
+    #train_yyy_ori = np.loadtxt('trainvalidtest_y_windowing_' + str(windowsize) + extension + '.txt')
     #valid_xx = np.loadtxt('valid_x_windowing_'+ str(windowsize) + '.txt')
     #valid_yy = np.loadtxt('valid_y_windowing_'+ str(windowsize) + '.txt')
     #test_xx = np.loadtxt('test_x_windowing_'+ str(windowsize) + '.txt')
@@ -282,13 +292,13 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
     test_yy = all_yy[int(len(all_yy)*0.9):]'''
     #max_features = 20000
     #maxlen = 100  # cut texts after this number of words (among top max_features most common words)
-    batch_size = 50
+    timestep = bs
     INPUT_DIM = train_xxx_ori.shape[1]
     OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
 
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + str(
-            windowsize) + 'training_data' + str(portion) + extension
+            windowsize) + 'training_data' + str(portion) + 'timestep' + str(timestep) + extension
     print('Loading data...')
     print('original train_xx shape:', train_xxx_ori.shape)
     print('original train_yy shape:', train_yyy_ori.shape)
@@ -322,10 +332,10 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
         print('test_xx shape:', test_xx.shape)
         print('test_yy shape:', test_yy.shape)
         if modelID != 'DNN':
-            batch = batch_size
-            train_xx, train_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, train_xx, train_yy)
-            valid_xx, valid_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, valid_xx, valid_yy)
-            test_xx, test_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, batch_size, test_xx, test_yy)
+            batch = timestep
+            train_xx, train_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, timestep, train_xx, train_yy)
+            valid_xx, valid_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, timestep, valid_xx, valid_yy)
+            test_xx, test_yy = format_sequence_data(INPUT_DIM, OUTPUT_DIM, timestep, test_xx, test_yy)
             train_xx = TwoToThree.TwoToThree(train_xx, int(train_xx.shape[0] / batch), int(batch), INPUT_DIM)
             train_yy = TwoToThree.TwoToThree(train_yy, int(train_yy.shape[0] / batch), int(batch), OUTPUT_DIM)
             valid_xx = TwoToThree.TwoToThree(valid_xx, int(valid_xx.shape[0] / batch), int(batch), INPUT_DIM)
@@ -346,26 +356,44 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
                 model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                 model.add(Dropout(0.2))
         elif modelID == 'BLSTM':
+            print("fuck you shape: ", train_xx.shape, train_yy.shape)
             model.add(Bidirectional(
                 LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
                      kernel_initializer="glorot_uniform"), input_shape=train_xx.shape))
             for i in range(layer - 1):
                 model.add(
                     Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
-        model.add(Dense(OUTPUT_DIM, init='uniform'))
+        elif modelID == 'RNN':
+            print("fuck you shape: ", train_xx.shape, train_yy.shape)
+            model.add(SimpleRNN(input_dim=INPUT_DIM, units=HIDDEN_NODE, return_sequences=True, dropout=0.2,recurrent_dropout=0.2))
+            for i in range(layer - 1):
+                model.add(
+                    SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+        elif modelID == 'LSTM':
+            print("fuck you shape: ", train_xx.shape, train_yy.shape)
+            model.add(
+                LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
+                     kernel_initializer="glorot_uniform"))#, input_shape=train_xx.shape)
+            for i in range(layer - 1):
+                model.add(
+                    LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+        if modelID == 'DNN':
+            model.add(Dense(OUTPUT_DIM, init='uniform'))
+        else:
+            model.add(TimeDistributed(Dense(OUTPUT_DIM)))
         # model.add(Dropout(0.5)) # dropout does not add at output layer!!
         model.add(Activation('sigmoid'))  # need time distributed softmax??
 
         # try using different optimizers and different optimizer configs
-        # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+        #sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
         #sgd = SGD(lr=0.1, decay=0.002, momentum=0.5, nesterov=False)  # lr = self.lr * (1.0 / (1.0 + self.decay * self.iterations))
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+        model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10)  # set up early stopping
+        early_stopping = EarlyStopping(monitor='val_loss', patience=50)  # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
         # hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=3,validation_split=0.2, shuffle=True, verbose=1, show_accuracy=True, callbacks=[early_stopping])
-        hist = model.fit(train_xx, train_yy, batch_size=batch_size, nb_epoch=100, shuffle=True, verbose=1,
+        hist = model.fit(train_xx, train_yy, batch_size=50, epochs=300, shuffle=True, verbose=2,
                          validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer])  # for debug
         # plot(model, to_file='model.png') # draw fig of accuracy
         # score, acc = model.evaluate(valid_xx, valid_yy,
@@ -374,27 +402,7 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
         # print('Test score:', score)
         # print('Test accuracy:', acc)
         model = load_model(MODEL_NAME + ".hdf5")
-        '''scores, fakescores = evaluate_multi_label(model, valid_xx, valid_yy)
-        scores_test, fakescores_test = evaluate_multi_label(model, test_xx, test_yy)
-
-        print(' valid_acc: ', scores)
-        print(' test_acc: ', scores_test)
-        print(' note_valid_acc: ', fakescores)
-        print(' note_test_acc: ', fakescores_test)
-        cvscores.append(scores * 100)
-        cvscores_test.append(scores_test * 100)
-        fake_cvscores.append(fakescores * 100)
-        fake_cvscores_test.append(fakescores_test * 100)
-        # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
-    print(np.mean(cvscores), np.std(cvscores))
-    print(MODEL_NAME, file=cv_log)
-    print('valid:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
-    print('note_valid:', np.mean(fake_cvscores), '%', '±', np.std(fake_cvscores), '%', file=cv_log)
-    for i in range(len(cvscores_test)):
-        print('Test:', i, cvscores_test[i], '%', file=cv_log)
-        print('note_Test:', i, fake_cvscores_test[i], '%', file=cv_log)
-    print('Test:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
-    print('note_Test:', np.mean(fake_cvscores_test), '%', '±', np.std(fake_cvscores_test), '%', file=cv_log)'''
+        #plot_model(model, to_file=MODEL_NAME + 'png')
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
         scores_test = model.evaluate(test_xx, test_yy, verbose=0)
         print(' valid_acc: ', scores[1])
@@ -402,8 +410,8 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
         cvscores_test.append(scores_test[1] * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
 
-        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(model, valid_xx, valid_yy)
-        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh= evaluate_f1score(model, test_xx, test_yy)
+        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(model, valid_xx, valid_yy, modelID)
+        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh= evaluate_f1score(model, test_xx, test_yy, modelID)
         pre.append(precision*100)
         pre_test.append(precision_test * 100)
         rec.append(recall * 100)
@@ -418,6 +426,10 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
         tn.append(true_negative)
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
+    model = load_model(MODEL_NAME + ".hdf5")
+    #print(model.summary(), file=cv_log)
+
+    model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  #output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
     print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
     print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
@@ -439,33 +451,8 @@ def FineTuneDNN_non_chord_tone(layer, nodes, windowsize, portion, modelID):
     print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
     print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
     # visualize the result and put into file
-    '''predict_y = model.predict(test_xx, verbose=0)
-    list_of_chords = get_chord_list(predict_y.shape[1], 0)
-    list_of_chords.append('other')
-    fileName, numSalamiSlices = get_predict_file_name()
-    sum = 0
-    for i in range(len(numSalamiSlices)):
-        sum += numSalamiSlices[i]
-    #input(sum)
-    #input(predict_y.shape[0])
 
 
-    length = len(fileName)
-    a_counter = 0
-    for i in range(length):
-        f = open('predicted_result_' + fileName[i] + '.txt', 'w')
-        num_salami_slice = numSalamiSlices[i]
-        for j in range(num_salami_slice):
-            pointer = np.argmax(predict_y[a_counter])
-            currentchord = list_of_chords[pointer]
-            if(j%10==0):
-                print(currentchord, end='\n', file=f)
-            else:
-                print(currentchord, end=' ', file=f)
-            a_counter += 1
-        f.close()
-
-    #np.savetxt('predict_y_windowing_1' + '.txt', predict_yy, fmt='%.1e')'''
 def FineTuneDNN_non_chord_tone_shuffle(layer,nodes,windowsize,portion,shuffletimes):
     total_f1 = []
     total_f1_std = []

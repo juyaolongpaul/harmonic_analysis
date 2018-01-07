@@ -24,7 +24,7 @@ def change_length(pitch_class, transposed_pitch_class, mark):
         mark = -1
     return mark
 
-def write_back(tmp, i, j, c1, c2, displacement, flag, mark):
+def write_back(tmp, i, j, c1, c2, displacement, flag, mark, letter):
     """
     write the transposed value back to the original one
     :param tmp:
@@ -137,7 +137,7 @@ def transpose(c1, c2, displacement, pitch):
         return c1[target]
     else:
         return c2[target]
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\'):
 
             if file_name[-3:] == 'pop' or file_name[-3:] == 'not':
@@ -152,6 +152,53 @@ if __name__ == "__main__":
                 f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+file_name, 'r')
                 fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'transposed_' + file_name, 'w')
                 fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')
+                sign = 0 # to see how many files have upper letter!!!!
+                for line in f.readlines():
+                    #line = line.lower()
+                    print (line.split(' '))
+                    tmp = line.split(' ')
+                    for i, ele in enumerate(tmp):
+                        mark = 0 # mark incicates whether the length of this chord symbol changes its length
+                        for j, letter in enumerate(tmp[i]):
+                            if(mark == -1 and letter == 'b'):
+                                continue # bb is replaced into something else, the second b is skipped over
+                            if letter.lower() in c1:
+                                if(tmp[i][-1] != '\\n'): # should be \n, but this does not affect the correctness of the script
+                                    if len(tmp[i])>= j + mark + 2:
+                                        #print(len(ele))
+                                        mark = write_back(tmp, i, j, c1, c2, displacement, 1, mark)
+                                    else:
+                                        mark = write_back(tmp, i, j, c1, c2, displacement, 2, mark)
+                    for ele in tmp: # write the transposed version to the file
+                        print(ele, end = '', file = fnew)
+                        if(len(ele) != 0):
+                            if(ele[-1] != '\n'):
+                                print(' ', end='', file=fnew)'''
+def provide_path(input, f1, output, f2):
+    """
+    Provide the path for the input and output
+    :param input:
+    :param output:
+    :return:
+    """
+    #input = '\\bach-371-chorales-master-kern\\kern\\' + 'transposed_chor'
+    #f1 = '.krn'
+    #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    #f2 = '.txt'
+    for file_name in os.listdir(output):
+
+            if file_name[-3:] == 'txt':
+                #if(file_name[:3] != '369'):
+                    #continue
+                ptr = file_name.find('translated_') + 10
+                s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                k = s.analyze('key')
+                #print('acc ' + str(k.tonic._accidental.alter))
+                displacement = get_displacement(k)
+
+                f = open(output + file_name, 'r')
+                fnew = open(output + 'transposed_' + file_name, 'w')
+                #fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')
                 sign = 0 # to see how many files have upper letter!!!!
                 for line in f.readlines():
                     #line = line.lower()
@@ -175,17 +222,23 @@ if __name__ == "__main__":
                                 if(tmp[i][-1] != '\\n'): # should be \n, but this does not affect the correctness of the script
                                     if len(tmp[i])>= j + mark + 2:
                                         #print(len(ele))
-                                        mark = write_back(tmp, i, j, c1, c2, displacement, 1, mark)
+                                        mark = write_back(tmp, i, j, c1, c2, displacement, 1, mark, letter)
                                     else:
-                                        mark = write_back(tmp, i, j, c1, c2, displacement, 2, mark)
+                                        mark = write_back(tmp, i, j, c1, c2, displacement, 2, mark, letter)
                     for ele in tmp: # write the transposed version to the file
                         print(ele, end = '', file = fnew)
                         if(len(ele) != 0):
                             if(ele[-1] != '\n'):
                                 print(' ', end='', file=fnew)
 
-
-
+if __name__ == "__main__":
+    input = '.\\bach-371-chorales-master-kern\\kern\\' + 'chor'
+    f1 = '.krn'
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    f2 = '.txt'
+    provide_path(input, f1, output, f2)
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
+    #provide_path(input, f1, output, f2)
 
 
 

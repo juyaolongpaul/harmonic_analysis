@@ -510,6 +510,105 @@ def generate_data_windowing_no_y(counter1, string, string1, string2, x, inputdim
     # add zero to the matrix, so that it can be divided by 50
     np.savetxt(string + string1 + string2 + '_x_windowing_' + str(windowsize) + '_230.txt', x, fmt = '%.1e')
 
+def generate_data_windowing_non_chord_tone_new_annotation(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign):
+    """
+    The only difference with "generate_data_windowing_non_chord_tone"
+    :param counter1:
+    :param counter2:
+    :param string:
+    :param string1:
+    :param string2:
+    :param x:
+    :param y:
+    :param inputdim:
+    :param outputdim:
+    :param windowsize:
+    :param counter:
+    :param countermin:
+    :return:
+    """
+    file_counter = 0
+    slice_counter = 0
+    fn_total = []
+    for id, fn in enumerate(os.listdir(input)):
+        #print(fn)
+        if fn.find( 'transposed_chor') != -1 and fn[-4:] == f1:  # only look for the transposed one
+            fn_total.append(fn)
+    shuffle(fn_total)
+    print (fn_total)
+    #input('?')
+    for id, fn in enumerate(fn_total):
+            print(fn)
+            chorale_x = []
+            if (os.path.isfile(output + 'transposed_translated_' + fn[-7:-4] + sign + f2)):
+                f = open(output + 'transposed_translated_' + fn[-7:-4] + sign + f2,'r')
+                f_non = open(output + '\\transposed_non_chord_tone_'+ sign + fn[-7:-4] + f2,'w')
+            else:
+                continue  # skip the file which does not have chord labels
+            file_counter += 1
+            s = converter.parse(input + fn)
+            sChords = s.chordify()
+            slice_input = 0
+            #print(slice_input)
+            #length = len(sChords)
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                slice_input += 1
+                counter1 += 1
+                slice_counter += 1
+                pitchClass = [0] * inputdim
+                #pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
+                pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
+                #pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
+                #(thisChord.pitchClasses)
+                pitchClass = add_beat_into(pitchClass, thisChord.beatStr)  # add on/off beat info
+                if(i == 0):
+                    chorale_x = np.concatenate((chorale_x, pitchClass))
+                else:
+                    chorale_x = np.vstack((chorale_x, pitchClass))
+            chorale_x_window = adding_window_one_hot(chorale_x, windowsize)
+            if(file_counter == 1):
+                x = chorale_x_window
+            else:
+                x = np.concatenate((x, chorale_x_window))
+            slice_counter = 0  # remember what slice in order to get the pitch class info
+            for line in f.readlines():
+                line = get_chord_line(line, sign)
+
+                for chord in line.split():
+                    if(chord.find('g]') != -1):
+                        print(fn)
+                        input('wtf is that?')
+                    counter2 += 1
+                    #chord_class = [0] * outputdim
+                    #chord_class = y_non_chord_tone(chord, chord_class, list_of_chords)
+                    #chord_class = get_non_chord_tone(chorale_x[slice_counter],)
+                    chord_class = get_chord_tone(chord, output_dim)
+                    #chord_class = get_non_chord_tone(chorale_x[slice_counter], chord_class, output_dim)
+                    chord_class = get_non_chord_tone_4(chorale_x[slice_counter], chord_class, output_dim, f_non)
+
+                    slice_counter += 1
+                    if(counter2 == 1):
+                        y = np.concatenate((y, chord_class))
+                    else:
+                        y = np.vstack((y, chord_class))
+            print('slices of output: ', slice_counter, "slices of input", slice_input)
+            if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
+                print('asdasd')
+            # save x, y into file as "ground truth"
+
+    # add zero to the matrix, so that it can be divided by 50
+    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    print("original x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    yy = [0] * outputdim
+    yy[-1] = 1  # there should be a chord for these artificial slices, chord is 'other'
+    print('yy:', yy)
+    '''while(x.shape[0] % 50 !=0):
+        x = np.vstack((x, [0] * inputdim))
+        y = np.vstack((y, yy))'''
+    print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    np.savetxt(sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class_New_annotation.txt', x, fmt = '%.1e')
+    np.savetxt(sign + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class_New_annotation.txt', y, fmt = '%.1e')
 
 
 if __name__ == "__main__":
@@ -549,17 +648,13 @@ if __name__ == "__main__":
     # Get the encodings for input
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 0, counter, counterMin)
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 1,
-                                           counter, counterMin)
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 2,
-                                           counter, counterMin)
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 3,
-                                           counter, counterMin)
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 4,
-                                           counter, counterMin)
-    generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 5,
-                                           counter, counterMin)
+    input = '.\\bach-371-chorales-master-kern\\kern\\'
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    f1 = '.xml'
+    f2 = '.txt'
+    #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'valid', 'test', x, y, input_dim, output_dim, 0, counter, counterMin)
+    generate_data_windowing_non_chord_tone_new_annotation(counter1, counter2, x, y, input_dim, output_dim, 1,
+                                           counter, counterMin, input, f1, output, f2, 'melodic')
     #generate_data_windowing_non_chord_tone(counter1, counter2, 'train', 'train', 'train', x, y, input_dim, output_dim, 1,
                                            #counter, counterMin)
     #generate_data_windowing_non_chord_tone(counter1, counter2, 'valid', 'valid', 'valid', x, y, input_dim, output_dim,

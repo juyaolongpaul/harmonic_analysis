@@ -60,8 +60,8 @@ def divide_training_data(k, portion, times, trainxo, trainyo):
             train_y = np.vstack((trainyo[((times+2)%k)*placement2:times*placement2]))
     else:
         train_y = trainyo[((times+2)%k)*placement:]
-    train_x = train_x[:portion*train_x.shape[0]]
-    train_y = train_y[:portion * train_y.shape[0]]
+    train_x = train_x[:int(portion*train_x.shape[0])]
+    train_y = train_y[:int(portion * train_y.shape[0])]
     print('times' + str(times) + 'valid' + str(valid_x.shape[0]) + 'train' + str(train_x.shape[0]) + 'test' + str(test_x.shape[0]) + 'portion' + str(portion))
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 def FineTuneDNN(layer,nodes):

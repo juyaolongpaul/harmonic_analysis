@@ -346,6 +346,87 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
+def annotation_to_txt():
+    """
+    A function that extract chord labels from musicxml to txt and translate them
+    :return:
+
+    """
+    cwd_score = '.\\bach-371-chorales-master-kern\\kern\\'  # for new annotations, we have to use krn version,
+    # since it does not equal to the original midi version completely and mid cannot be visualized.
+    cwd_annotation = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'
+    cwd_annotation_m= '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
+    #print(os.listdir(cwd_annotation))
+    for fn in os.listdir(cwd_annotation):
+        if fn[-3:] == 'xml':
+            original = []
+            melodic = []
+            harmonic = []
+            print(fn)
+            s = converter.parse(cwd_annotation + fn)
+            sChords = s.parts[4]
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                #print(fn, i)
+
+                if(len(thisChord.lyrics)== 5):
+                    original.append(thisChord.lyrics[0].text)
+                    melodic.append(thisChord.lyrics[3].text)
+                    harmonic.append(thisChord.lyrics[4].text)
+                elif(len(thisChord.lyrics) == 4):  # multi is missing
+                    if len(thisChord.lyrics[1].text) == 3 and thisChord.lyrics[1].text.find('/') != -1 :  # confirm multi is missing
+                        original.append(thisChord.lyrics[0].text)
+                        melodic.append(thisChord.lyrics[2].text)
+                        harmonic.append(thisChord.lyrics[3].text)
+                    else:
+                        print('?')
+                elif(len(thisChord.lyrics) == 2):
+                    print(thisChord.lyrics[0].text)
+                    print(thisChord.lyrics[1].text)
+                    melodic.append(thisChord.lyrics[0].text)
+                    harmonic.append(thisChord.lyrics[1].text)
+                elif len(thisChord.lyrics)== 0:  # empty, probably the problem of the software
+                    print('?')
+                else:
+                    print('??')
+                    #melodic.append(thisChord.lyrics[2].text)
+                    #harmonic.append(thisChord.lyrics[3].text)
+                #elif(thisChord.lyrics.__len__ == 2)
+            melodic[0] = original[0]
+            harmonic[0] = original[0]
+            melodic = translate_annotation(original, melodic)
+            harmonic = translate_annotation(original, harmonic)
+            fmelodic = open(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt', 'w')
+            fharmonic = open(cwd_annotation_h + 'translated_' + fn[10:13] + 'harmonic.txt', 'w')
+            if len(melodic) != len(harmonic):
+                input('melodic and harmonic different lengths?!')
+            else:
+                for i, item in enumerate(melodic):
+                    print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
+                    print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
+def translate_annotation(ori, cur):
+    for i, item in enumerate(cur):  # translate melodic, harmonic into chord labels:
+        if cur[i] == '.' or cur[i] == '_':
+            cur[i] = ori[i]
+        if i < len(cur) - 1:
+            if(cur[i + 1] == '<'):
+                cur[i + 1] = cur[i]
+        if(cur[i] == '>'):
+            if cur[i + 1] == '.' or cur[i + 1] == '_':
+                cur[i] = ori[i + 1]
+            else:
+                cur[i] = cur[i + 1]
+    for i, item in enumerate(cur):
+        if(item in '._<>,' or item.find(',') != -1 or item.find('.') != -1 or item.find('_') != -1 or item.find('<') != -1 or item.find('>') != -1 or item.find('?') != -1):
+            print(i, item, cur)
+            input('?')
+
+    return cur
+    """
+    
+    translate < > . _ into chord labels
+    :return:
+    """
 def write_to_files(transposed='', multi=0):
     """
     A function that can either translate transposed files or not.
@@ -431,6 +512,7 @@ def write_to_files(transposed='', multi=0):
     print('number of samples = ' + str(num_of_samples))
     print('number of ambiguity = ' + str(num_of_ambiguity))
 if __name__ == "__main__":
-    multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
-    write_to_files(multi=multi)
+    #multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
+    #write_to_files(multi=multi)
+    annotation_to_txt()
     #write_to_files('transposed_')

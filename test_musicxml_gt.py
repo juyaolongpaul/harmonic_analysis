@@ -31,7 +31,11 @@ def get_chord_tone(i,outputdim):
     chordtone = [0] * (outputdim + 1)
     currentChord = i.encode('ansi')
     i = currentChord.decode('utf-8')
+    #print('this is original chord name: ' + i)
     i = translate_chord_name_into_music21(i)
+    #print('this is translated (music21 compatible) chord name: ' + i)
+    #if i == 'e7':
+        #print('eval 057!')
     if (i.find('nil') == -1 and i.find('+7+') == -1 and i.find('it') == -1 and i.find('.') == -1 and i.find('m7+') == -1
         and i.find('ee') == -1 and i.find('5+') == -1 and i.find('+6') == -1 and i.find('f#/o/a') == -1
         and i.find('f#c#s') == -1 and i.find('fis') == -1 and i.find('af') == -1 and i.find('d7f#') == -1

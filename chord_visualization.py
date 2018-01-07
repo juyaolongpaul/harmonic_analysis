@@ -266,12 +266,14 @@ def put_annotation_into_musicXML(sign, multi):
                     f = open('.\\useful_chord_symbols\\translated_'+ fn[4:7] + '.pop', 'r')
                 else:
                     f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop', 'r')
-                fprediction = open('.\\predicted_result\\transposed_predicted_result_'+ fn[4:7] + '.txt', 'r')
-
+                #fprediction = open('.\\predicted_result\\transposed_predicted_result_'+ fn[4:7] + '.txt', 'r')
             elif (
             os.path.isfile('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop.not', 'r')
-                fprediction = open('.\\predicted_result\\transposed_predicted_result_' + fn[4:7] + '.txt', 'r')
+                if multi == 0:
+                    f = open('.\\useful_chord_symbols\\translated_'+ fn[4:7] + '.pop.not', 'r')
+                else:
+                    f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop.not', 'r')
+                #fprediction = open('.\\predicted_result\\transposed_predicted_result_' + fn[4:7] + '.txt', 'r')
             else:
                 continue  # skip the file which does not have chord labels
             s = converter.parse(cwd + fn)
@@ -279,10 +281,10 @@ def put_annotation_into_musicXML(sign, multi):
             sChords = s.chordify()
             lineTotal = ''
             lineTotalNoInversion = ''
-            for linepre in fprediction.readlines():
-                linepre = get_chord_line(linepre, sign)
-                lineTotal += linepre
-            chordpreTotal = lineTotal.split()
+            #for linepre in fprediction.readlines():
+                #linepre = get_chord_line(linepre, sign)
+                #lineTotal += linepre
+            #chordpreTotal = lineTotal.split()
             lineTotal = ''
             for line in f.readlines():
                 line = get_chord_line(line, sign)
@@ -346,7 +348,7 @@ def put_annotation_into_musicXML(sign, multi):
 
                         lastChord = thisChord
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
-            s.write('musicxml', fp="C:\\Users\\User\\PycharmProjects\\harmonic_analysis\\predicted_result\\" + "annotation" + fn[4:7] + '.xml')
+            s.write('musicxml', fp=".\\predicted_result\\" + "annotation" + fn[4:7] + '.xml')
 if __name__ == "__main__":
     # Get input features
     #sign = input("do you want inversions or not? 1: yes, 0: no")
