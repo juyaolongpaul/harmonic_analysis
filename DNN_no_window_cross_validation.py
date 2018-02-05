@@ -33,7 +33,7 @@ import keras.callbacks as CB
 import sys
 import string
 import SaveModelLog
-def divide_training_data(k, portion, times, trainxo, trainyo):
+def divide_training_data(k, portion, times, trainxo, trainyo, testset = 'Y'):
     placement = int(trainxo.shape[0] / k)
     placement2 = int(trainxo.shape[0] / k)
     valid_x = trainxo[times*placement2:(times+1)*placement2]
@@ -60,8 +60,12 @@ def divide_training_data(k, portion, times, trainxo, trainyo):
             train_y = np.vstack((trainyo[((times+2)%k)*placement2:times*placement2]))
     else:
         train_y = trainyo[((times+2)%k)*placement:]
+     # we want test set
     train_x = train_x[:int(portion*train_x.shape[0])]
     train_y = train_y[:int(portion * train_y.shape[0])]
+    if(testset == "N"):  # We don't want test set
+        train_x = np.vstack((train_x, test_x))
+        train_y = np.vstack((train_y, test_y))
     print('times' + str(times) + 'valid' + str(valid_x.shape[0]) + 'train' + str(train_x.shape[0]) + 'test' + str(test_x.shape[0]) + 'portion' + str(portion))
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 def FineTuneDNN(layer,nodes):

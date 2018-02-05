@@ -359,6 +359,8 @@ def annotation_to_txt():
     cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
     #print(os.listdir(cwd_annotation))
     for fn in os.listdir(cwd_annotation):
+        if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt')):  # if files are already there, jump out
+            break
         if fn[-3:] == 'xml':
             original = []
             melodic = []

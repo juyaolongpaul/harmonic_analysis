@@ -4,7 +4,7 @@ import sys
 format = ['krn']
 cwd = '.\\bach-371-chorales-master-kern\\kern\\'
 from get_input_and_output import get_chord_line
-def put_non_chord_tone_into_musicXML(string, string1, string2, outputdim, sign):
+def put_non_chord_tone_into_musicXML(input, output, sign):
     """
 
     :param string:
@@ -12,16 +12,21 @@ def put_non_chord_tone_into_musicXML(string, string1, string2, outputdim, sign):
     :param string2:
     :return:
     """
-    for id, fn in enumerate(os.listdir(cwd)):
-        # print(fn)
-        if fn[-3:] == 'krn':
-            if (os.path.isfile('predicted_result_'+ fn[4:7] + '_non-chord_tone' + '.txt')):
-                f = open('.\\useful_chord_symbols\\Non-chord tone 140\\transposed_non_chord_tone' + fn[4:7] + '.txt', 'r')
-                if os.path.isfile('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop'):
-                    fchord = open('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop', 'r')
-                else:
-                    fchord = open('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop.not', 'r')
-                fprediction = open('predicted_result_'+ fn[4:7] + '_non-chord_tone' + '.txt', 'r')
+    fn_total = []
+    for id, fn in enumerate(os.listdir(input)):
+        #print(fn)
+        #if fn.find( 'KB') != -1 and fn[-4:] == f1 and fn.find('130') == -1 and fn.find('133') == -1 and fn.find('19') != -1:  # only look for the transposed one
+
+        if fn.find('KB') != -1:
+            if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
+                fn_total.append(fn)
+    for id, fn in enumerate(fn_total):
+        ptr = fn.find('chor')
+        if fn[-3:] == 'xml':
+            if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[-7:-4] + 'melodic' + '.txt')):
+                f = open(output + fn[:ptr] + 'non_chord_tone_'+ 'melodic' + fn[-7:-4] + '.txt','r')
+                fchord = open(output + fn[:ptr] + 'translated_' + fn[-7:-4] + 'melodic' + '.txt','r')
+                fprediction = open('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone.txt', 'r')
             else:
                 continue  # skip the file which does not have chord labels
             s = converter.parse(cwd + fn)
@@ -60,26 +65,26 @@ def put_non_chord_tone_into_musicXML(string, string1, string2, outputdim, sign):
                         thisChord.addLyric(realchord.decode('utf-8'))
                     else:
                         thisChord.addLyric(' ')
-                    if (chordTotal[i] != 'n/a'):
+                    if (chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
                         thisChord.addLyric(chordTotal[i])
                     else:
                         thisChord.addLyric(' ')
-                    if(chordpreTotal[i] != 'n/a'):
+                    if(chordpreTotal[i] != 'n/a' and chordpreTotal[i] != 'n'):
                         thisChord.addLyric(chordpreTotal[i])
                     else:
                         thisChord.addLyric(' ')
                     '''if(chordTotal[i] != chordpreTotal[i]):
-                        if(chordTotal[i] != 'n/a'):
+                        if(chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
                             thisChord.addLyric(chordTotal[i])
                         if (chordpreTotal[i] != 'n/a'):
                             thisChord.addLyric(chordpreTotal[i])#.decode('utf-8'))  # byte to string
-                    elif(chordTotal[i] != 'n/a'):
+                    elif(chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
                         thisChord.addLyric(chordTotal[i])
                         thisChord.addLyric(chordpreTotal[i])'''
                 else:
                     print('error')
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
-            s.write('musicxml', fp="C:\\Users\\User\\PycharmProjects\\harmonic_analysis\\predicted_result\\" + 'multi_' + fn[4:7] + 'non_chord_tone.xml')
+            s.write('musicxml', fp=".\\predicted_result\\" + 'multi_' + fn + 'non_chord_tone.xml')
 
 def translate_chord_name_into_music21(chordname):
     """
@@ -122,7 +127,94 @@ def translate_chord_name_into_music21(chordname):
             return i, 2, multi  # multiple but valid chords
     else:
         return i, 0, multi
-def put_chord_into_musicXML(sign, multi):
+
+def put_music21chord_into_musicXML(sign):
+    '''
+    Only put music21 chord into XML
+    :param sign:
+    :return:
+    '''
+    allowed_qualities = [[0,4,7], [0,3,6], [0,3,7], [0,4,8], [0,3,6,9], [0,3,6,10], [0,3,7,10],[0,4,7,10],[0,4,7,11]]
+    for id, fn in enumerate(os.listdir(cwd)):
+        # print(fn)
+        if fn[-3:] == 'krn':
+            if (os.path.isfile('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop''')):
+
+                f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop', 'r')
+                #fprediction = open('.\\predicted_result\\transposed_predicted_result_'+ fn[4:7] + '.txt', 'r')
+
+            elif (
+            os.path.isfile('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop.not', 'r')
+                #fprediction = open('.\\predicted_result\\transposed_predicted_result_' + fn[4:7] + '.txt', 'r')
+            else:
+                continue  # skip the file which does not have chord labels
+            s = converter.parse(cwd + fn)
+            sChords = s.chordify()
+            lineTotal = ''
+            for line in f.readlines():
+                line = get_chord_line(line, sign)
+                lineNoInversion = get_chord_line(line, '0')
+                lineTotal += line
+                #lineTotalNoInversion += lineNoInversion
+            chordTotal = lineTotal.split()
+            sum_of_slices = len(sChords.recurse().getElementsByClass('Chord'))
+            s.insert(0, sChords)
+            cor_music21 = 0
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                #print(len(chordTotal))
+                #print(i)
+                if(i < len(chordTotal)):
+                    currentChord = chordTotal[i].encode('ansi')  # string to byte
+                    thisChord.addLyric(currentChord.decode('utf-8'))  # byte to string
+                    music21_chord, valid_chord, multi_chord = translate_chord_name_into_music21(currentChord.decode('utf-8'))  #
+                    # check music21 harmonic analysis
+                    if chordTotal[i].find(',') != -1 :  # give a separate line for multiple interpretations
+                        thisChord.addLyric(multi_chord)
+                    else:
+                        thisChord.addLyric(' ')
+                        #cor_multi += 1
+                    if valid_chord == 1:  # output the harmonic analysis of music21
+                        #print('original chord in music21 readable format: ', music21_chord)
+                        print(thisChord.pitchedCommonName)
+                        print(thisChord.primeForm)
+                        print(thisChord.normalForm)
+                        print(thisChord.normalOrder)
+                        print('----------------')
+                        a = harmony.ChordSymbol(music21_chord)
+                        if (thisChord.normalForm in allowed_qualities or thisChord.pitchedCommonName.find(
+                                'incomplete') != -1
+                                or ((thisChord.pitchedCommonName.find(
+                                    'dominant') != -1 or thisChord.pitchedCommonName.find(
+                                    'diminished') != -1 or thisChord.pitchedCommonName.find('major') != -1
+                                     or thisChord.pitchedCommonName.find(
+                                            'half-diminished') != -1 or thisChord.pitchedCommonName.find('minor') != -1)
+                                    and thisChord.pitchedCommonName.find('seventh') != -1)): #or (music21_chord.lower() == currentChord.decode('utf-8').lower()):
+                            #thisChord.addLyric(a.normalOrder)
+                            #thisChord.addLyric(thisChord.normalOrder)
+                            thisChord.addLyric('✓')
+                            cor_music21 += 1
+                        else:
+                            #thisChord.addLyric(a.normalOrder)
+                            #thisChord.addLyric(thisChord.normalOrder)
+                            #thisChord.addLyric('music21 disagrees ')#thisChord.pitchedCommonName)
+                            '''if(thisChord.normalForm in allowed_qualities or thisChord.pitchedCommonName.find('incomplete') != -1
+                                    or ((thisChord.pitchedCommonName.find('dominant') != -1 or thisChord.pitchedCommonName.find('diminished') != -1 or thisChord.pitchedCommonName.find('major') != -1
+                                    or thisChord.pitchedCommonName.find('half-diminished') != -1 or thisChord.pitchedCommonName.find('minor') != -1)
+                                        and thisChord.pitchedCommonName.find('seventh') != -1)):
+                                print(thisChord.primeForm)
+                                thisChord.addLyric(thisChord.pitchedCommonName)
+                            else:'''
+                            thisChord.addLyric('ncts!')
+                    elif valid_chord == 0:  # invalid chord, it must be different for Rameau and music21 analysis
+                        thisChord.addLyric(thisChord.pitchedCommonName)
+                thisChord.closedPosition(forceOctave=4, inPlace=True)
+            thisChord.addLyric('num of slices:' + str(sum_of_slices))
+            thisChord.addLyric('music21 acc:' + str(cor_music21 / sum_of_slices))
+            #thisChord.addLyric('prediction acc:' + str(cor_prediction / sum_of_slices))
+            #thisChord.addLyric('% of ambiguity:' + str(1 - cor_multi / sum_of_slices))
+            s.write('musicxml', fp=".\\predicted_result\\" + fn[4:7] + 'music21.xml')
+def put_chord_into_musicXML(sign):
     """
 
     :param string:
@@ -133,16 +225,14 @@ def put_chord_into_musicXML(sign, multi):
     for id, fn in enumerate(os.listdir(cwd)):
         # print(fn)
         if fn[-3:] == 'krn':
-            if (os.path.isfile('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop''')):
-                if multi == 0:
-                    f = open('.\\useful_chord_symbols\\translated_'+ fn[4:7] + '.pop', 'r')
-                else:
-                    f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop', 'r')
+            if (os.path.isfile('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop''')):
+
+                f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop', 'r')
                 fprediction = open('.\\predicted_result\\transposed_predicted_result_'+ fn[4:7] + '.txt', 'r')
 
             elif (
-            os.path.isfile('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop.not''')):
-                f = open('.\\useful_chord_symbols\\translated_' + fn[4:7] + '.pop.not', 'r')
+            os.path.isfile('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop.not''')):
+                f = open('.\\useful_chord_symbols\\Multi_interpretation_156\\translated_multi' + fn[4:7] + '.pop.not', 'r')
                 fprediction = open('.\\predicted_result\\transposed_predicted_result_' + fn[4:7] + '.txt', 'r')
             else:
                 continue  # skip the file which does not have chord labels
@@ -151,7 +241,9 @@ def put_chord_into_musicXML(sign, multi):
             sChords = s.chordify()
             lineTotal = ''
             lineTotalNoInversion = ''
+            print(fprediction.readlines())
             for linepre in fprediction.readlines():
+
                 linepre = get_chord_line(linepre, sign)
                 lineTotal += linepre
             chordpreTotal = lineTotal.split()
@@ -353,5 +445,9 @@ if __name__ == "__main__":
     # Get input features
     #sign = input("do you want inversions or not? 1: yes, 0: no")
     #output_dim =  input('how many kinds of chords do you want to calculate?')
-    #put_chord_into_musicXML('1', 1)
-    put_annotation_into_musicXML('1', 1)
+    put_music21chord_into_musicXML('1')
+    #put_annotation_into_musicXML('1', 1)
+    input = '.\\bach-371-chorales-master-kern\\kern\\'
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    #put_non_chord_tone_into_musicXML(input, output, '1')
+    #put_chord_into_musicXML(sign, multi):

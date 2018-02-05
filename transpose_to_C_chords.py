@@ -174,6 +174,68 @@ def transpose(c1, c2, displacement, pitch):
                         if(len(ele) != 0):
                             if(ele[-1] != '\n'):
                                 print(' ', end='', file=fnew)'''
+def provide_path_12keys(input, f1, output, f2):
+    """
+    Provide the path for the input and output, and transpose the chorales into 12 keys
+    :param input:
+    :param output:
+    :return:
+    """
+    #input = '\\bach-371-chorales-master-kern\\kern\\' + 'transposed_chor'
+    #f1 = '.krn'
+    #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    #f2 = '.txt'
+    for file_name in os.listdir(output):
+        if (os.path.isfile(output + 'transposed_' + 'KBcKE' + file_name)):
+            break
+        if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1:
+                #if(file_name[:3] != '369'):
+                    #continue
+                ptr = file_name.find('translated_') + 10
+                s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                k = s.analyze('key')
+
+                #print('acc ' + str(k.tonic._accidental.alter))
+                displacement = get_displacement(k)
+                for key_transpose in range(12):
+                    key_name = c1[(displacement - key_transpose) % len(c1)]
+
+                    f = open(output + file_name, 'r')
+                    fnew = open(output + 'transposed_' + 'KB' + key_name + 'KE' + file_name, 'w')
+                    #fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')
+                    sign = 0 # to see how many files have upper letter!!!!
+                    for line in f.readlines():
+                        #line = line.lower()
+                        '''if (line[0].isupper()):
+                            if(sign == 0):
+                                print(file_name, file = fexception)
+                                sign = 1
+    
+                            for i, letter in enumerate(line):
+                                if(letter.isalpha()):
+                                    line = line[:i] + letter.lower() + line[i+1:]'''
+
+                        print (line.split(' '))
+                        tmp = line.split(' ')
+                        for i, ele in enumerate(tmp):
+                            mark = 0 # mark incicates whether the length of this chord symbol changes its length
+                            for j, letter in enumerate(tmp[i]):
+                                if(mark == -1 and letter == 'b' or (letter == 'b' and tmp[i][j - 1].isalpha() and j - 1 >= 0)):  # when bb is transposed with ab, the second b is skipped over!
+                                    continue # bb is replaced into something else, the second b is skipped over
+                                if letter.lower() in c1:
+                                    if(tmp[i][-1] != '\\n'): # should be \n, but this does not affect the correctness of the script
+                                        if len(tmp[i])>= j + mark + 2:
+                                            #print(len(ele))
+                                            mark = write_back(tmp, i, j, c1, c2, key_transpose, 1, mark, letter)
+                                        else:
+                                            mark = write_back(tmp, i, j, c1, c2, key_transpose, 2, mark, letter)
+                        for ele in tmp: # write the transposed version to the file
+                            print(ele, end = '', file = fnew)
+                            if(len(ele) != 0):
+                                if(ele[-1] != '\n'):
+                                    print(' ', end='', file=fnew)
+
+
 def provide_path(input, f1, output, f2):
     """
     Provide the path for the input and output
@@ -186,8 +248,7 @@ def provide_path(input, f1, output, f2):
     #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     #f2 = '.txt'
     for file_name in os.listdir(output):
-
-            if file_name[-3:] == 'txt':
+            if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1:
                 #if(file_name[:3] != '369'):
                     #continue
                 ptr = file_name.find('translated_') + 10
@@ -236,8 +297,8 @@ if __name__ == "__main__":
     f1 = '.krn'
     output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     f2 = '.txt'
-    provide_path(input, f1, output, f2)
-    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
+    provide_path_12keys(input, f1, output, f2)
+    #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
     #provide_path(input, f1, output, f2)
 
 

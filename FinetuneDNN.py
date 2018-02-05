@@ -1,7 +1,6 @@
 import DNN_no_window
 layer=[2]
 nodes=[200]
-#timpstep = 10
 for i in range(len(layer)):
     for j in range(len(nodes)):
         #DNN_no_window.FineTuneDNN(layer[i], nodes[j], 2, 0.1)
@@ -26,8 +25,22 @@ for i in range(len(layer)):
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 0.6)
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 0.7)
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 0.8)
-        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 1, 'DNN', 10)
-        #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 1, 'LSTM', 10)
+        #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 1, 'DNN', 10)
+
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 2, 1, 'DNN', 10)
+        '''DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 3, 1, 'DNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 4, 1, 'DNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 5, 1, 'DNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 2, 1, 'RNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 3, 1, 'RNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 4, 1, 'RNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 5, 1, 'RNN', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 0, 1, 'LSTM', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 1, 'LSTM', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 2, 1, 'LSTM', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 3, 1, 'LSTM', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 4, 1, 'LSTM', 10)
+        DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 5, 1, 'LSTM', 10)'''
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 0, 1, 'RNN', 10)
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 0, 1, 'DNN', 10)
         #DNN_no_window.FineTuneDNN_non_chord_tone(layer[i], nodes[j], 1, 0.5, 'DNN', 10)

@@ -1,0 +1,35 @@
+2layer200DNNwindow_size2training_data1timestep10y4_non-chord_tone_pitch_class_New_annotation_12keys__147batch_size256epochs200patience20bootstrap2
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+dense_1 (Dense)              (None, 200)               14200     
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 200)               0         
+_________________________________________________________________
+dense_2 (Dense)              (None, 200)               40200     
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 200)               0         
+_________________________________________________________________
+dense_3 (Dense)              (None, 4)                 804       
+_________________________________________________________________
+activation_1 (Activation)    (None, 4)                 0         
+=================================================================
+Total params: 55,204
+Trainable params: 55,204
+Non-trainable params: 0
+_________________________________________________________________
+valid accuracy: 97.0008601498 % ¡À 0.0 %
+valid precision: 89.4986536735 % ¡À 0.0 %
+valid recall: 81.809657759 % ¡À 0.0 %
+valid f1: 85.4815993623 % ¡À 0.0 %
+valid acc (validate previous): 97.0008601498 % ¡À 0.0 %
+valid tp number: 13960.0 ¡À 0.0
+valid fp number: 1638.0 ¡À 0.0
+valid fn number: 3104.0 ¡À 0.0
+valid tn number: 139410.0 ¡À 0.0
+Test f1: 0 80.80631020467146 %
+Test accuracy: 96.1659663866 % ¡À 0.0 %
+Test precision: 90.2152641878 % ¡À 0.0 %
+Test recall: 73.1746031746 % ¡À 0.0 %
+Test f1: 80.8063102047 % ¡À 0.0 %
+Test acc: 96.1659663866 % ¡À 0.0 %
