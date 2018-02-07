@@ -28,6 +28,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 import h5py
+import re
 import os
 import numpy as np
 import keras.callbacks as CB
@@ -39,16 +40,23 @@ from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
 from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
-from get_input_and_output import determine_middle_name
-def get_predict_file_name(input):
+from get_input_and_output import determine_middle_name, find_id
+def get_predict_file_name(input, data_id, augmentation):
     filename = []
     num_salami_slices = []
     for id, fn in enumerate(os.listdir(input)):
         if fn.find('KB') != -1:
-            if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
+            p = re.compile(r'\d{3}')  # find 3 digit in the file name
+            id_id = p.findall(fn)
+            if id_id[0] in data_id:  # if the digit found in the list, add this file
 
-                #if fn.find('cKE') != -1:
+                if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                    if (fn.find('cKE') != -1):  # only wants key c
+                        filename.append(fn)
+                else:
                     filename.append(fn)
+
+
 
     for id, fn in enumerate(filename):
         length = 0
@@ -61,7 +69,27 @@ def get_predict_file_name(input):
     return filename, num_salami_slices
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitchclass):
+def bootstrap_data(x, y, times):
+    """
+    bootstraping data
+    :param x:
+    :param y:
+    :param times:
+    :return:
+    """
+    xx = x
+    yy = y
+    for i in range(times):
+        xx = np.vstack((xx, x))
+        yy = np.vstack((yy, y))
+    return xx, yy
+
+
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitchclass, ratio, output, test_id):
+    id_sum = find_id(output)  # get 3 digit id of the chorale
+    num_of_chorale = len(id_sum)
+    train_num = int(num_of_chorale * ratio)
+    test_num = num_of_chorale - train_num
     keys, music21 = determine_middle_name(augmentation, sign)
     pre = []
     pre_test = []
@@ -82,22 +110,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     patience = 20
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime)
     print('Loading data...')
-    extension = 'y4_non-chord_tone_'+ pitchclass + '_New_annotation_' + keys + '_' +music21+ '_' + '147'
+    extension = 'y4_non-chord_tone_'+ pitchclass + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
     train_xxx_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_x_windowing_' + str(windowsize) + extension + '.txt')
     train_yyy_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_y_windowing_' + str(windowsize) + extension + '.txt')
-    train_xxx_ori_bootstrap = train_xxx_ori
-    train_yyy_ori_bootstrap = train_yyy_ori
-    for i in range(bootstraptime):
-        if(i == 0):
-            train_xxx_ori_bootstrap = np.concatenate((train_xxx_ori_bootstrap, train_xxx_ori))
-            train_yyy_ori_bootstrap = np.concatenate((train_yyy_ori_bootstrap, train_yyy_ori))
-        else:
-            train_xxx_ori_bootstrap = np.vstack((train_xxx_ori_bootstrap, train_xxx_ori))
-            train_yyy_ori_bootstrap = np.vstack((train_yyy_ori_bootstrap, train_yyy_ori))
-    print('bootstrap x shape:', train_xxx_ori_bootstrap.shape)
-    print('bootstrap y shape:', train_yyy_ori_bootstrap.shape)
-    train_xxx_ori = train_xxx_ori_bootstrap
-    train_yyy_ori = train_yyy_ori_bootstrap
     timestep = ts
     INPUT_DIM = train_xxx_ori.shape[1]
     OUTPUT_DIM = train_yyy_ori.shape[1]
@@ -109,9 +124,11 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     print('original train_xx shape:', train_xxx_ori.shape)
     print('original train_yy shape:', train_yyy_ori.shape)
     print('Build model...')
+    cv_log = open('.\\ML_result\\' + 'cv_log+' + MODEL_NAME + 'predict.txt', 'w')
     for times in range(0, cv + 1):
         train_xx, train_yy, valid_xx, valid_yy, rubbish_x, rubbish_y = divide_training_data(10, portion, times, train_xxx_ori, train_yyy_ori, testset='N')
-        cv_log = open('.\\ML_result\\' + 'cv_log+' + MODEL_NAME + 'predict.txt', 'w')  # only have valid result
+        train_xx, train_yy = bootstrap_data(train_xx, train_yy, bootstraptime)
+         # only have valid result
         if not (os.path.isfile(('.\\ML_result\\' + MODEL_NAME + ".hdf5"))):
             print('training and predicting...')
             print('train_xx shape:', train_xx.shape)
@@ -161,8 +178,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer])
         # visualize the result and put into file
-        test_xx = np.loadtxt('.\\data_for_ML\\' +sign +'_x_windowing_' + str(windowsize) + extension[:-3] + '6.txt')
-        test_yy = np.loadtxt('.\\data_for_ML\\' +sign +'_y_windowing_' + str(windowsize) + extension[:-3] + '6.txt')
+        test_xx = np.loadtxt('.\\data_for_ML\\' +sign +'_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitchclass + '_New_annotation_' + keys + '_' +music21+ '_' + 'testing' + str(test_num) + '.txt')
+        test_yy = np.loadtxt('.\\data_for_ML\\' +sign +'_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitchclass + '_New_annotation_' + keys + '_' +music21+ '_' + 'testing' + str(test_num) + '.txt')
         model = load_model('.\\ML_result\\' + MODEL_NAME + ".hdf5")
         predict_y = model.predict(test_xx, verbose=0)
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
@@ -223,7 +240,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             else:
                 i[j] = 0
     input = '.\\bach-371-chorales-master-kern\\kern\\'
-    fileName, numSalamiSlices = get_predict_file_name(input)
+    fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation)
     sum = 0
     for i in range(len(numSalamiSlices)):
         sum += numSalamiSlices[i]

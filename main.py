@@ -42,6 +42,10 @@ def main():
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
                         type=int, default=0)
+    parser.add_argument('-r', '--ratio',
+                        help='the portion of the trainig data you want to use (a float number between 0-1'
+                             ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
+                        type=float, default=0.9)
     args = parser.parse_args()
 
     #print('This script will guide you to train a neural network (identify non-chord tones) from scratch')
@@ -72,14 +76,10 @@ def main():
     input_dim = 12
     x = []
     y = []
-    generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
+    test_id = generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
                                                                  counter, counterMin, input, f1, output, f2, args.source,
-                                                                 'Y', args.augmentation, args.pitch)
-    generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
-                                                                 counter, counterMin, input, f1, output, f2,
-                                                                 args.source,
-                                                                 'N', args.augmentation, args.pitch)
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage, args.model, 10, args.bootstrap, args.source, args.augmentation, args.cross_validation, args.pitch)
+                                                                 args.augmentation, args.pitch, args.ratio)  # generate training and testing data, return the sequence of test id
+    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage, args.model, 10, args.bootstrap, args.source, args.augmentation, args.cross_validation, args.pitch, args.ratio, output, test_id)
     #put_music21chord_into_musicXML('1')
 if __name__ == "__main__":
     main()

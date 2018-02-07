@@ -680,49 +680,58 @@ def determine_middle_name(augmentation, source):
     else:
         keys = 'keyC'
     return keys, music21
-def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, predict, augmentation, pitch):
+
+def find_id(input):
     """
-    The only difference with "generate_data_windowing_non_chord_tone"
-    :param counter1:
-    :param counter2:
-    :param string:
-    :param string1:
-    :param string2:
-    :param x:
-    :param y:
-    :param inputdim:
-    :param outputdim:
-    :param windowsize:
-    :param counter:
-    :param countermin:
+    Find three digit of the labeled chorales in the folder
+    :param input:
     :return:
     """
+    import re
+
+    id_sum = []
+    p = re.compile(r'\d{3}')
+    for fn in os.listdir(input):
+        id = p.findall(fn)
+        if(id != []):
+            id_sum.append(id[0])
+            print(id[0])
+    id_sum_strip = []
+    [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
+    id_sum_strip.remove('130')
+    id_sum_strip.remove('133')  # remove these bad files where the input and output do not match
+    #id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
+    return id_sum_strip
+
+
+def generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, predict, augmentation, pitch, data_id):
+    fn_total = []
     file_counter = 0
     slice_counter = 0
-    fn_total = []
     keys, music21 = determine_middle_name(augmentation, sign)
-    if (predict == 'N'):
-        number = 147
+    number = len(data_id)
+    if(predict == 'N'):  # training
+        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '.txt'
+        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+            number) + '.txt'
     else:
-        number = 6
-    if not (os.path.isfile('.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + str(number) + '.txt')):
+        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'testing' + str(number) + '.txt'
+        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
+            number) + '.txt'
+    if not (os.path.isfile(search_file_x)):
 
         for id, fn in enumerate(os.listdir(input)):
-            #print(fn)
-            #if fn.find( 'KB') != -1 and fn[-4:] == f1 and fn.find('130') == -1 and fn.find('133') == -1 and fn.find('19') != -1:  # only look for the transposed one
-            if(predict == 'N'):
-                if fn.find('KB') != -1 and fn[-4:] == f1 and fn.find('130') == -1 and fn.find('133') == -1 and fn.find('340') == -1 and fn.find('358') == -1 and fn.find('362') == -1 and fn.find('003') == -1 and fn.find('008') == -1 and fn.find('014') == -1 :  # 001 173 371 as the test data
-                #if(fn.find('134') != -1 and fn.find('g#') != -1 ):
-                    if(augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                        if(fn.find('cKE') != -1):  # only wants key c
-                            fn_total.append(fn)
-                    else:
-                        fn_total.append(fn)
-            else:
-                if fn.find('KB') != -1:
-                    if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
-                        if (augmentation != 'Y'):
-                            if (fn.find('cKE') != -1):
+
+                if fn.find('KB') != -1 and fn[-4:] == f1:
+                    p = re.compile(r'\d{3}')  # find 3 digit in the file name
+                    id_id = p.findall(fn)
+
+                    if id_id[0] in data_id:  # if the digit found in the list, add this file
+
+                        if(augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                            if(fn.find('cKE') != -1):  # only wants key c
                                 fn_total.append(fn)
                         else:
                             fn_total.append(fn)
@@ -815,9 +824,39 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
         #np.savetxt('.//data_for_ML//' + sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class_New_annotation_12keys_150.txt', x, fmt = '%.1e')
 
 
-        np.savetxt('.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + str(number) + '.txt', x, fmt='%.1e')
-        np.savetxt('.\\data_for_ML\\' +sign + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + str(number) + '.txt', y, fmt = '%.1e')
+        np.savetxt(search_file_x, x, fmt='%.1e')
+        np.savetxt(search_file_y, y, fmt = '%.1e')
+def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio):
+    """
+    The only difference with "generate_data_windowing_non_chord_tone"
+    :param counter1:
+    :param counter2:
+    :param string:
+    :param string1:
+    :param string2:
+    :param x:
+    :param y:
+    :param inputdim:
+    :param outputdim:
+    :param windowsize:
+    :param counter:
+    :param countermin:
+    :return:
+    """
 
+
+
+    id_sum = find_id(output)  # get 3 digit id of the chorale
+    num_of_chorale = len(id_sum)
+    train_num = int(num_of_chorale * ratio)
+    shuffle(id_sum)  # randomize the list, and then get train and test set
+    train_id = id_sum[:train_num]
+    test_id = id_sum[train_num:]
+    generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, 'N', augmentation, pitch, train_id)  # generate training + validating data
+    generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                            output, f2, sign, 'Y', augmentation, pitch, test_id)  # generating test data
+
+    return test_id
 
 if __name__ == "__main__":
     counter = 0
