@@ -699,28 +699,58 @@ def find_id(input):
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
     id_sum_strip.remove('130')
-    id_sum_strip.remove('133')  # remove these bad files where the input and output do not match
+    id_sum_strip.remove('133')  # remove these bad files where the input and output do not match (version problem)
     #id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
     return id_sum_strip
 
 
-def generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, predict, augmentation, pitch, data_id):
+def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, predict, augmentation, pitch, data_id, times, portion):
+    """
+    Generate non-chord tone verserion of the annotations and put them into matrice for machine learning
+    as long as the file ID is given
+    :param counter1:
+    :param counter2:
+    :param x:
+    :param y:
+    :param inputdim:
+    :param outputdim:
+    :param windowsize:
+    :param counter:
+    :param countermin:
+    :param input:
+    :param f1:
+    :param output:
+    :param f2:
+    :param sign:
+    :param predict:
+    :param augmentation:
+    :param pitch:
+    :param data_id:
+    :return:
+    """
     fn_total = []
     file_counter = 0
     slice_counter = 0
     keys, music21 = determine_middle_name(augmentation, sign)
     number = len(data_id)
-    if(predict == 'N'):  # training
-        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '.txt'
+    if(portion == 'train'):  # training
+        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '_cv_' + str(times) + '.txt'
         search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-            number) + '.txt'
+            number) + '_cv_' + str(times) + '.txt'
+    elif(portion == 'valid'):
+        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'validing' + str(number) + '_cv_' + str(times) + '.txt'
+        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'validing' + str(
+            number) + '_cv_' + str(times) + '.txt'
     else:
-        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'testing' + str(number) + '.txt'
+        search_file_x = '.\\data_for_ML\\' + sign + '_x_windowing_' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
+            number) + '_cv_' + str(times) + '.txt'
         search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
-            number) + '.txt'
-    if not (os.path.isfile(search_file_x)):
+            number) + '_cv_' + str(times) + '.txt'
+    if not (os.path.isfile(search_file_x)): # if there matrix file is already there, no need to generate again. Although each shuffle, the content will be different
 
         for id, fn in enumerate(os.listdir(input)):
 
@@ -736,7 +766,7 @@ def generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windo
                         else:
                             fn_total.append(fn)
         if(predict == 'N'):
-            shuffle(fn_total)
+            shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
         print (fn_total)
         #input('?')
 
@@ -746,7 +776,8 @@ def generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windo
                 chorale_x = []
                 if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[-7:-4] + sign + f2)):
                     f = open(output + fn[:ptr] + 'translated_' + fn[-7:-4] + sign + f2,'r')
-                    f_non = open(output + fn[:ptr] + 'non_chord_tone_' + music21 + '_'+ sign + fn[-7:-4] + f2,'w')
+                    if(os.path.isfile(output + fn[:ptr] + 'non_chord_tone_' + music21 + '_'+ sign + fn[-7:-4] + f2)):
+                        f_non = open(output + fn[:ptr] + 'non_chord_tone_' + music21 + '_'+ sign + fn[-7:-4] + f2,'w')
                 else:
                     continue  # skip the file which does not have chord labels
                 file_counter += 1
@@ -826,7 +857,33 @@ def generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windo
 
         np.savetxt(search_file_x, x, fmt='%.1e')
         np.savetxt(search_file_y, y, fmt = '%.1e')
-def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio):
+
+def get_id(id_sum, num_of_chorale, times):
+    """
+    Get chorale ID for different batch of cross validation
+    :param id_sum:
+    :param num_of_chorale:
+    :param times:
+    :return:
+    """
+    placement = int(num_of_chorale / 10)
+    placement2 = int(num_of_chorale / 10)
+    valid_id = id_sum[times * placement2:(times + 1) * placement2]
+    if (times != 9):
+        test_id = id_sum[((times + 1)) * placement2:((times + 2)) * placement2]
+    else:
+        test_id = id_sum[((times + 1) % 10) * placement2:((times + 2) % 10) * placement2]
+    if (times * placement != 0):
+        if (times != 9):
+            train_id = id_sum[:times * placement] + id_sum[(times + 2) * placement:]
+        else:
+            train_id = id_sum[((times + 2) % 10) * placement2:times * placement2]
+    else:
+        train_id = id_sum[((times + 2) % 10) * placement:]
+    return train_id, valid_id, test_id
+
+
+def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv):
     """
     The only difference with "generate_data_windowing_non_chord_tone"
     :param counter1:
@@ -845,18 +902,21 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
     """
 
 
-
-    id_sum = find_id(output)  # get 3 digit id of the chorale
+    if(sign == 'melodic'):
+        id_sum = find_id(output)  # get 3 digit id of the chorale
+    else:
+        id_sum = find_id(input)
     num_of_chorale = len(id_sum)
-    train_num = int(num_of_chorale * ratio)
-    shuffle(id_sum)  # randomize the list, and then get train and test set
-    train_id = id_sum[:train_num]
-    test_id = id_sum[train_num:]
-    generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, 'N', augmentation, pitch, train_id)  # generate training + validating data
-    generate_tain_test_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                            output, f2, sign, 'Y', augmentation, pitch, test_id)  # generating test data
-
-    return test_id
+    #train_num = int(num_of_chorale * ratio)
+    for times in range(cv):  # do cross validation to get file ID
+        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
+        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                      output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
+        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
+        #print('debug')
 
 if __name__ == "__main__":
     counter = 0

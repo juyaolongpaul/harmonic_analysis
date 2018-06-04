@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
-                             'or harmonic (music21 Chordify module) (default: %(default))',
+                             'or rule (default: %(default))',
                         type=str, default='melodic')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
@@ -41,27 +41,19 @@ def main():
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
-                        type=int, default=0)
+                        type=int, default=10)
     parser.add_argument('-r', '--ratio',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
-                        type=float, default=0.9)
+                        type=float, default=0.8)
     args = parser.parse_args()
-
-    #print('This script will guide you to train a neural network (identify non-chord tones) from scratch')
-    #print('The process contains 5 steps: (1) Get chord labels from my maximally melodic and '
-         # 'harmonic annotation (2) Transpose the chorales and annotations to 12 keys '
-          #'(3) Turning the chorales and annotations as training data (4) Train NN '
-          #'(5) Visualization of the predicted non-chord tones in music score')
-
-    annotation_to_txt()
+    annotation_to_txt() # A function that extract chord labels from musicxml to txt and translate them
     input = '.\\bach-371-chorales-master-kern\\kern\\' + 'chor'
-    f1 = '.krn'
-    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
+    f1 = '.krn' # the version of chorales used
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\' # the corresponding annotations
     f2 = '.txt'
-
-    provide_path_12keys(input, f1, output, f2)
-    transpose_polyphony()
+    provide_path_12keys(input, f1, output, f2)  # Transpose the annotations into 12 keys
+    transpose_polyphony()  # Transpose the chorales into 12 keys
     input = '.\\bach-371-chorales-master-kern\\kern\\'
     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
@@ -76,10 +68,10 @@ def main():
     input_dim = 12
     x = []
     y = []
-    test_id = generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
+    generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
                                                                  counter, counterMin, input, f1, output, f2, args.source,
-                                                                 args.augmentation, args.pitch, args.ratio)  # generate training and testing data, return the sequence of test id
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage, args.model, 10, args.bootstrap, args.source, args.augmentation, args.cross_validation, args.pitch, args.ratio, output, test_id)
-    #put_music21chord_into_musicXML('1')
+                                                                 args.augmentation, args.pitch, args.ratio, args.cross_validation)  # generate training and testing data, return the sequence of test id
+    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage, args.model, 10, args.bootstrap, args.source, args.augmentation, args.cross_validation, args.pitch, args.ratio, output)
+
 if __name__ == "__main__":
     main()
