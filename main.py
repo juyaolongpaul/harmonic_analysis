@@ -1,6 +1,6 @@
 # This is the script to lead the user to train a neural network from scratch
 
-from translate_output import annotation_to_txt
+from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
@@ -8,12 +8,13 @@ from predict_result_for_140 import train_and_predict_non_chord_tone
 from chord_visualization import put_music21chord_into_musicXML
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule (default: %(default))',
-                        type=str, default='melodic')
+                        type=str, default='rule')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=2)
@@ -47,10 +48,10 @@ def main():
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
                         type=float, default=0.8)
     args = parser.parse_args()
-    annotation_to_txt() # A function that extract chord labels from musicxml to txt and translate them
+    annotation_translation(args.source)  # A function that extract chord labels from musicxml to txt and translate them
     input = '.\\bach-371-chorales-master-kern\\kern\\' + 'chor'
-    f1 = '.krn' # the version of chorales used
-    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\' # the corresponding annotations
+    f1 = '.krn'  # the version of chorales used
+    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'  # the corresponding annotations
     f2 = '.txt'
     provide_path_12keys(input, f1, output, f2)  # Transpose the annotations into 12 keys
     transpose_polyphony()  # Transpose the chorales into 12 keys
@@ -69,9 +70,14 @@ def main():
     x = []
     y = []
     generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
-                                                                 counter, counterMin, input, f1, output, f2, args.source,
-                                                                 args.augmentation, args.pitch, args.ratio, args.cross_validation)  # generate training and testing data, return the sequence of test id
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage, args.model, 10, args.bootstrap, args.source, args.augmentation, args.cross_validation, args.pitch, args.ratio, output)
+                                                                 counter, counterMin, input, f1, output, f2,
+                                                                 args.source,
+                                                                 args.augmentation, args.pitch, args.ratio,
+                                                                 args.cross_validation)  # generate training and testing data, return the sequence of test id
+    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+                                     args.model, 10, args.bootstrap, args.source, args.augmentation,
+                                     args.cross_validation, args.pitch, args.ratio, output)
+
 
 if __name__ == "__main__":
     main()

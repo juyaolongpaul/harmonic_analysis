@@ -14,6 +14,7 @@
 import re
 import os
 from music21 import *
+import string
 #replace = '-*!{}\n'
 replace = '{}\n'
 
@@ -346,9 +347,9 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
-def annotation_to_txt():
+def annotation_translation(source='melodic'):
     """
-    A function that extract chord labels from musicxml to txt and translate them
+    A function that extract chord labels from different sources to txt and translate them
     :return:
 
     """
@@ -357,55 +358,73 @@ def annotation_to_txt():
     cwd_annotation = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'
     cwd_annotation_m= '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
+    cwd_annotation_r_MaxMel = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
     #print(os.listdir(cwd_annotation))
+    corrupt_rule_chorale_ID = ['130','132','176','148','177','246','316'] # 130 is missing, other 6 are corrupted
     for fn in os.listdir(cwd_annotation):
-        if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt')):  # if files are already there, jump out
-            break
-        if fn[-3:] == 'xml':
-            original = []
-            melodic = []
-            harmonic = []
-            print(fn)
-            s = converter.parse(cwd_annotation + fn)
-            sChords = s.parts[4]
-            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                #print(fn, i)
+        if(source=='melodic'):
+            if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt')):  # if files are already there, jump out
+                continue
+            if fn[-3:] == 'xml':
+                original = []
+                melodic = []
+                harmonic = []
+                print(fn)
+                s = converter.parse(cwd_annotation + fn)
+                sChords = s.parts[4]
+                for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    #print(fn, i)
 
-                if(len(thisChord.lyrics)== 5):
-                    original.append(thisChord.lyrics[0].text)
-                    melodic.append(thisChord.lyrics[3].text)
-                    harmonic.append(thisChord.lyrics[4].text)
-                elif(len(thisChord.lyrics) == 4):  # multi is missing
-                    if len(thisChord.lyrics[1].text) == 3 and thisChord.lyrics[1].text.find('/') != -1 :  # confirm multi is missing
+                    if(len(thisChord.lyrics)== 5):
                         original.append(thisChord.lyrics[0].text)
-                        melodic.append(thisChord.lyrics[2].text)
-                        harmonic.append(thisChord.lyrics[3].text)
-                    else:
+                        melodic.append(thisChord.lyrics[3].text)
+                        harmonic.append(thisChord.lyrics[4].text)
+                    elif(len(thisChord.lyrics) == 4):  # multi is missing
+                        if len(thisChord.lyrics[1].text) == 3 and thisChord.lyrics[1].text.find('/') != -1 :  # confirm multi is missing
+                            original.append(thisChord.lyrics[0].text)
+                            melodic.append(thisChord.lyrics[2].text)
+                            harmonic.append(thisChord.lyrics[3].text)
+                        else:
+                            print('?')
+                    elif(len(thisChord.lyrics) == 2):
+                        print(thisChord.lyrics[0].text)
+                        print(thisChord.lyrics[1].text)
+                        melodic.append(thisChord.lyrics[0].text)
+                        harmonic.append(thisChord.lyrics[1].text)
+                    elif len(thisChord.lyrics)== 0:  # empty, probably the problem of the software
                         print('?')
-                elif(len(thisChord.lyrics) == 2):
-                    print(thisChord.lyrics[0].text)
-                    print(thisChord.lyrics[1].text)
-                    melodic.append(thisChord.lyrics[0].text)
-                    harmonic.append(thisChord.lyrics[1].text)
-                elif len(thisChord.lyrics)== 0:  # empty, probably the problem of the software
-                    print('?')
+                    else:
+                        print('??')
+                        #melodic.append(thisChord.lyrics[2].text)
+                        #harmonic.append(thisChord.lyrics[3].text)
+                    #elif(thisChord.lyrics.__len__ == 2)
+                melodic[0] = original[0]
+                harmonic[0] = original[0]
+                melodic = translate_annotation(original, melodic)
+                harmonic = translate_annotation(original, harmonic)
+                fmelodic = open(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt', 'w')
+                fharmonic = open(cwd_annotation_h + 'translated_' + fn[10:13] + 'harmonic.txt', 'w')
+                if len(melodic) != len(harmonic):
+                    input('melodic and harmonic different lengths?!')
                 else:
-                    print('??')
-                    #melodic.append(thisChord.lyrics[2].text)
-                    #harmonic.append(thisChord.lyrics[3].text)
-                #elif(thisChord.lyrics.__len__ == 2)
-            melodic[0] = original[0]
-            harmonic[0] = original[0]
-            melodic = translate_annotation(original, melodic)
-            harmonic = translate_annotation(original, harmonic)
-            fmelodic = open(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt', 'w')
-            fharmonic = open(cwd_annotation_h + 'translated_' + fn[10:13] + 'harmonic.txt', 'w')
-            if len(melodic) != len(harmonic):
-                input('melodic and harmonic different lengths?!')
-            else:
-                for i, item in enumerate(melodic):
-                    print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
-                    print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
+                    for i, item in enumerate(melodic):
+                        print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
+                        print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
+        elif(source=='rule'):
+            if (os.path.isfile(cwd_annotation_r_MaxMel + 'translated_' + fn[10:13] + 'rule_MaxMel.txt') or fn[10:13] in corrupt_rule_chorale_ID):  # if files are already there, jump out
+                continue
+            if fn[-3:] == 'xml':
+                f_r_MaxMel = open(cwd_annotation_r_MaxMel + 'chor' + fn[10:13] + '.txt', 'r')
+                r_MaxMel_ori= []
+                r_MaxMel_translated = []
+                for achord in f_r_MaxMel.readlines():
+                    r_MaxMel_ori.append(achord.strip())
+                #print(r_MaxMel_ori)
+                r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori)
+                fr_MaxMel = open(cwd_annotation_r_MaxMel + 'translated_' + fn[10:13] + '_rule_MaxMel.txt', 'w')
+                for i, item in enumerate(r_MaxMel_translated):
+                    print(r_MaxMel_translated[i].encode('utf-8').decode('ansi'), end=' ', file=fr_MaxMel)
+                #print(r_MaxMel_translated)
 def translate_annotation(ori, cur):
     for i, item in enumerate(cur):  # translate melodic, harmonic into chord labels:
         if cur[i] == '.' or cur[i] == '_':
@@ -513,8 +532,42 @@ def write_to_files(transposed='', multi=0):
     print('bad =' + str(bad))
     print('number of samples = ' + str(num_of_samples))
     print('number of ambiguity = ' + str(num_of_ambiguity))
+
+def translate_rule_based_annotation(ori):
+    """
+    Translate the original rule-based annotations into music21 compatible
+    :param ori:
+    :return:
+    """
+    ori_backup = ori
+    for i, item in enumerate(ori):
+        if item.find('(') != -1: # if there is ()
+            if item.find('?') != -1 or item.find('P') != -1: # if there is ? or P, discard the () part
+                ptr = item.find('(')
+                ori_backup[i] = item[:ptr]
+                item = ori_backup[i]
+            else: # only take () away
+                item = item.replace('(', '')
+                item = item.replace(')', '')
+                ori_backup[i] = item
+        if (item[0].islower() and len(item) == 1) or (item[0].islower() and len(item) == 2 and (item[1] == '#' or item[1] == 'b')): # 'g' is a minor chord
+            ori_backup[i] = item + 'm'
+        if item == 'N' or item == '??' or item == '.': # replace with the previous chord
+            if(i != 0):
+                ori_backup[i] = ori[i-1]
+            else:
+                ori_backup[i] = 'C' # assume it is a C chord
+        if item.find('^') != -1:
+            ori_backup[i] = item.replace('^', 'M') # ^ means major 7th
+        if item.find('o') != -1 and item.find('oo') == -1 and item.find('7') != -1: # go7 means half diminished
+            ori_backup[i] = item.replace('o','/o')
+        if item.find('oo') != -1: # oo means fully diminished
+            ori_backup[i] = item.replace('oo', 'o')
+        if item != '??' and item.find('??') != -1: # D?? is D
+            ori_backup[i] = item.replace('??', '')
+    return ori_backup
 if __name__ == "__main__":
     #multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
     #write_to_files(multi=multi)
-    annotation_to_txt()
+    annotation_translation()
     #write_to_files('transposed_')
