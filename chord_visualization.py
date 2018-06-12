@@ -4,7 +4,7 @@ import sys
 format = ['krn']
 cwd = '.\\bach-371-chorales-master-kern\\kern\\'
 from get_input_and_output import get_chord_line
-def put_non_chord_tone_into_musicXML(input, output, sign):
+def put_non_chord_tone_into_musicXML(input, output, sign, f1, f2, pitch):
     """
 
     :param string:
@@ -17,16 +17,16 @@ def put_non_chord_tone_into_musicXML(input, output, sign):
         #print(fn)
         #if fn.find( 'KB') != -1 and fn[-4:] == f1 and fn.find('130') == -1 and fn.find('133') == -1 and fn.find('19') != -1:  # only look for the transposed one
 
-        if fn.find('KB') != -1:
-            if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
+        if fn.find('KBcKE') != -1 and fn[-4:] == f1:
+            #if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
                 fn_total.append(fn)
     for id, fn in enumerate(fn_total):
         ptr = fn.find('chor')
         if fn[-3:] == 'xml':
-            if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[-7:-4] + 'melodic' + '.txt')):
-                f = open(output + fn[:ptr] + 'non_chord_tone_'+ 'melodic' + fn[-7:-4] + '.txt','r')
-                fchord = open(output + fn[:ptr] + 'translated_' + fn[-7:-4] + 'melodic' + '.txt','r')
-                fprediction = open('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone.txt', 'r')
+            if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[-7:-4] + '_'+ sign + f2) and os.path.isfile('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone_' + sign + '.txt')): # if the annotation file exists
+                f = open(output + fn[:ptr] + 'non_chord_tone_' + '_' + sign + fn[-7:-4] + f2,'r')
+                fchord = open(output + fn[:ptr] + 'translated_' + fn[-7:-4] + '_'+ sign + f2,'r')
+                fprediction = open('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone_' + sign + pitch + '.txt', 'r')
             else:
                 continue  # skip the file which does not have chord labels
             s = converter.parse(cwd + fn)
@@ -84,7 +84,7 @@ def put_non_chord_tone_into_musicXML(input, output, sign):
                 else:
                     print('error')
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
-            s.write('musicxml', fp=".\\predicted_result\\" + 'multi_' + fn + 'non_chord_tone.xml')
+            s.write('musicxml', fp=".\\predicted_result\\" + 'predicted_result_' + fn + 'non_chord_tone_' + sign + pitch + '.xml')
 
 def translate_chord_name_into_music21(chordname):
     """
@@ -445,9 +445,9 @@ if __name__ == "__main__":
     # Get input features
     #sign = input("do you want inversions or not? 1: yes, 0: no")
     #output_dim =  input('how many kinds of chords do you want to calculate?')
-    put_music21chord_into_musicXML('1')
+    #put_music21chord_into_musicXML('1')
     #put_annotation_into_musicXML('1', 1)
     input = '.\\bach-371-chorales-master-kern\\kern\\'
     output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
-    #put_non_chord_tone_into_musicXML(input, output, '1')
+    put_non_chord_tone_into_musicXML(input, output, '1')
     #put_chord_into_musicXML(sign, multi):

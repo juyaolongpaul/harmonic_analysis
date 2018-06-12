@@ -174,7 +174,7 @@ def transpose(c1, c2, displacement, pitch):
                         if(len(ele) != 0):
                             if(ele[-1] != '\n'):
                                 print(' ', end='', file=fnew)'''
-def provide_path_12keys(input, f1, output, f2):
+def provide_path_12keys(input, f1, output, f2, source):
     """
     Provide the path for the input and output, and transpose the chorales into 12 keys
     :param input:
@@ -185,14 +185,23 @@ def provide_path_12keys(input, f1, output, f2):
     #f1 = '.krn'
     #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     #f2 = '.txt'
+    import  re
     for file_name in os.listdir(output):
         if (os.path.isfile(output + 'transposed_' + 'KBcKE' + file_name)):
-            break
-        if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1:
+            continue
+        if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
                     #continue
-                ptr = file_name.find('translated_') + 10
-                s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                if source == 'melodic':
+                    ptr = file_name.find('translated_') + 10
+                    s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                elif source == 'rule_MaxMel':
+                    p = re.compile(r'\d{3}')
+                    ptr = p.findall(file_name)
+                    s = converter.parse(input + ptr[0] + f1)
+                elif source == 'Rameau':
+                    ptr = file_name.find('translated_') + 10
+                    s = converter.parse('.\\bach_chorales_scores\\original_midi+PDF\\' + file_name[ptr + 1:ptr + 4] + '.mid') # Use ly version
                 k = s.analyze('key')
 
                 #print('acc ' + str(k.tonic._accidental.alter))

@@ -5,7 +5,7 @@ from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
 from predict_result_for_140 import train_and_predict_non_chord_tone
-from chord_visualization import put_music21chord_into_musicXML
+from chord_visualization import put_music21chord_into_musicXML, put_non_chord_tone_into_musicXML
 import argparse
 
 
@@ -13,14 +13,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
-                             'or rule (default: %(default))',
-                        type=str, default='rule')
+                             'or rule_MaxMel (default: %(default)) or Rameau',
+                        type=str, default='rule_MaxMel')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
-                        type=int, default=2)
+                        type=int, default=12)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
                         type=int, default=2)
@@ -48,15 +48,24 @@ def main():
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
                         type=float, default=0.8)
     args = parser.parse_args()
-    annotation_translation(args.source)  # A function that extract chord labels from musicxml to txt and translate them
-    input = '.\\bach-371-chorales-master-kern\\kern\\' + 'chor'
-    f1 = '.krn'  # the version of chorales used
-    output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'  # the corresponding annotations
+    if args.source == 'Rameau':
+        input = '.\\bach_chorales_scores\\original_midi+PDF\\'
+        f1 = '.mid'
+    else:
+        input = '.\\bach-371-chorales-master-kern\\kern\\'
+        f1 = '.krn'  # the version of chorales used
+    if(args.source == 'melodic'):
+        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'  # the corresponding annotations
+    elif args.source == 'rule_MaxMel':
+        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
+    elif args.source == 'Rameau':
+        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
     f2 = '.txt'
-    provide_path_12keys(input, f1, output, f2)  # Transpose the annotations into 12 keys
-    transpose_polyphony()  # Transpose the chorales into 12 keys
-    input = '.\\bach-371-chorales-master-kern\\kern\\'
-    f1 = '.xml'
+    annotation_translation(input, output, args.source)  # A function that extract chord labels from musicxml to txt and translate them
+    provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
+    transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
+    if args.source != 'Rameau':
+        f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
     counter = 0
@@ -76,8 +85,8 @@ def main():
                                                                  args.cross_validation)  # generate training and testing data, return the sequence of test id
     train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, output)
+                                     args.cross_validation, args.pitch, args.ratio, input, output)
 
-
+    #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()

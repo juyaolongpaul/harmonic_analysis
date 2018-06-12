@@ -347,7 +347,7 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
-def annotation_translation(source='melodic'):
+def annotation_translation(input, output, source='melodic'):
     """
     A function that extract chord labels from different sources to txt and translate them
     :return:
@@ -355,12 +355,13 @@ def annotation_translation(source='melodic'):
     """
     cwd_score = '.\\bach-371-chorales-master-kern\\kern\\'  # for new annotations, we have to use krn version,
     # since it does not equal to the original midi version completely and mid cannot be visualized.
-    cwd_annotation = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'
+    cwd_annotation = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'  # only for 155 chorales
     cwd_annotation_m= '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
     cwd_annotation_r_MaxMel = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
+    cwd_annotation_ori = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
     #print(os.listdir(cwd_annotation))
-    corrupt_rule_chorale_ID = ['130','132','176','148','177','246','316'] # 130 is missing, other 6 are corrupted
+    corrupt_rule_chorale_ID = ['130','133'] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
     for fn in os.listdir(cwd_annotation):
         if(source=='melodic'):
             if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt')):  # if files are already there, jump out
@@ -410,7 +411,7 @@ def annotation_translation(source='melodic'):
                     for i, item in enumerate(melodic):
                         print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
                         print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
-        elif(source=='rule'):
+        elif(source=='rule_MaxMel'):
             if (os.path.isfile(cwd_annotation_r_MaxMel + 'translated_' + fn[10:13] + 'rule_MaxMel.txt') or fn[10:13] in corrupt_rule_chorale_ID):  # if files are already there, jump out
                 continue
             if fn[-3:] == 'xml':
@@ -425,6 +426,8 @@ def annotation_translation(source='melodic'):
                 for i, item in enumerate(r_MaxMel_translated):
                     print(r_MaxMel_translated[i].encode('utf-8').decode('ansi'), end=' ', file=fr_MaxMel)
                 #print(r_MaxMel_translated)
+    if(source=='Rameau'):
+        write_to_files(input=cwd_annotation, output=cwd_annotation_ori, source=source)
 def translate_annotation(ori, cur):
     for i, item in enumerate(cur):  # translate melodic, harmonic into chord labels:
         if cur[i] == '.' or cur[i] == '_':
@@ -448,7 +451,7 @@ def translate_annotation(ori, cur):
     translate < > . _ into chord labels
     :return:
     """
-def write_to_files(transposed='', multi=0):
+def write_to_files(input, output, source, transposed='', multi=0):
     """
     A function that can either translate transposed files or not.
     :param transposed:
@@ -459,6 +462,8 @@ def write_to_files(transposed='', multi=0):
     bad = 0
     num_of_samples = 0
     for fn in os.listdir(cwd):
+        if (os.path.isfile(output + 'translated_' + fn[0:3] + '_' + source + '.txt')):  # if files are already there, jump out
+            continue
         if fn[-3:] == 'mid':
             print(fn)
             if ((os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
@@ -466,7 +471,7 @@ def write_to_files(transposed='', multi=0):
                     (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
                                                                                                         0:3] + '.pop.not'''))):
 
-                s = converter.parse(cwd + fn)
+                s = converter.parse(cwd + fn) # Use ly version
                 sChords = s.chordify()
                 print(len(sChords.notes))
                 num_of_samples += len(sChords.notes)
@@ -478,57 +483,41 @@ def write_to_files(transposed='', multi=0):
                     if (len(thisChord.beatStr) != 1):
                         print('beat location is: ' + thisChord.beatStr)
 
-            if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop''')):
-                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop', 'r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop'
-                if(multi==0):
-                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
-                                                                                                                0:3] + '.pop',
-                            'w')
+                if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop''')):
+                    f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop', 'r')
+                    fnew = open(output + 'translated_' + fn[0:3] + '_Rameau.txt', 'w')
+                elif (
+                os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not''')):
+                    f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not', 'r')
+                    fnew = open(output + 'translated_' + fn[0:3] + '_Rameau.txt', 'w')
                 else:
-                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_multi' + transposed + fn[
-                                                                                                                 0:3] + '.pop',
-                                'w')
-            elif (
-            os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not''')):
-                f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not', 'r')
-                file_name = '.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not'
-                if(multi==0):
-                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_' + transposed + fn[
-                                                                                                                0:3] + '.pop.not',
-                            'w')
-                else:
-                    fnew = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + 'translated_multi' + transposed + fn[
-                                                                                                                 0:3] + '.pop.not',
-                                'w')
-            else:
-                print('no file is opened')
-            for line in f.readlines():
-                '''for i, letter in enumerate(line):
-                    if(letter not in ' ¸-#+°/[](){}\n'):
-                        if(letter.isalpha() == 0 and letter.isdigit() == 0):
-
-                            print('special' + letter)
-                            print(line)'''
-                line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity = translate_chord_line(num_of_salami_poly,
-                                                                                          num_of_salami_chord, line,
-                                                                                          replace, beat_poly, bad, fn, num_of_ambiguity, multi)
-                print(line)
-                if ('[' in line) or (']' in line) or ('(' in line) or (')' in line):
-                    print(fn)
+                    print('no file is opened')
+                for line in f.readlines():
+                    '''for i, letter in enumerate(line):
+                        if(letter not in ' ¸-#+°/[](){}\n'):
+                            if(letter.isalpha() == 0 and letter.isdigit() == 0):
+        
+                                print('special' + letter)
+                                print(line)'''
+                    line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity = translate_chord_line(num_of_salami_poly,
+                                                                                              num_of_salami_chord, line,
+                                                                                              replace, beat_poly, bad, fn, num_of_ambiguity, multi)
                     print(line)
-                    print('what do you think?')
-                    # input('[]() still exists, bug!')  # exmaine
-                    line = re.sub(r'\[\w\]', '', line)
-                    line = re.sub(r'\[\w\w]', '', line)
-                    line = re.sub(r'\[\w\W]', '', line)
+                    if ('[' in line) or (']' in line) or ('(' in line) or (')' in line):
+                        print(fn)
+                        print(line)
+                        print('what do you think?')
+                        # input('[]() still exists, bug!')  # exmaine
+                        line = re.sub(r'\[\w\]', '', line)
+                        line = re.sub(r'\[\w\w]', '', line)
+                        line = re.sub(r'\[\w\W]', '', line)
 
-                    line = re.sub(r'\[\w \w]', '', line)  # nesty exceptions
-                    print('new line:' + line)
-                    # input('what do you think?')
-                    # pattern = re.compile(r'\w[+]')
-                    # if(pattern):  # deal with  'c[d]' case
-                print(line, end='\n', file=fnew)
+                        line = re.sub(r'\[\w \w]', '', line)  # nesty exceptions
+                        print('new line:' + line)
+                        # input('what do you think?')
+                        # pattern = re.compile(r'\w[+]')
+                        # if(pattern):  # deal with  'c[d]' case
+                    print(line, end='\n', file=fnew)
     print('bad =' + str(bad))
     print('number of samples = ' + str(num_of_samples))
     print('number of ambiguity = ' + str(num_of_ambiguity))

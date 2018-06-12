@@ -39,9 +39,11 @@ def get_chord_tone(i,outputdim):
     if (i.find('nil') == -1 and i.find('+7+') == -1 and i.find('it') == -1 and i.find('.') == -1 and i.find('m7+') == -1
         and i.find('ee') == -1 and i.find('5+') == -1 and i.find('+6') == -1 and i.find('f#/o/a') == -1
         and i.find('f#c#s') == -1 and i.find('fis') == -1 and i.find('af') == -1 and i.find('d7f#') == -1
-        and i !='7/f#' and i.find(']') == -1 and i.find('7M') == -1 and i != '7' and i.find('g#7-') == -1):
+        and i !='7/f#' and i.find(']') == -1 and i.find('7M') == -1 and i != '7' and i.find('g#7-') == -1
+            and i.find('7-') == -1 and i.find('7/') == -1 and i.find('s') == -1 and i.find('/o/') == -1) and i.find('is') == -1:
         if i.find('7+') != -1:
             i = i.replace('7+','M7')
+        #print('chord:', i)
         d = harmony.ChordSymbol(i)
         for j in d.pitchClasses:
             chordtone[j] = 1

@@ -85,10 +85,11 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, output):
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output):
     id_sum = find_id(output)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
-    train_num = int(num_of_chorale * ratio)
+    train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
+    #train_num = int(num_of_chorale * ratio)
     test_num = int((num_of_chorale - train_num) / 2)
     keys, music21 = determine_middle_name(augmentation, sign)
     pre = []
@@ -110,7 +111,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     patience = 20
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime)
     print('Loading data...')
-    extension = 'y4_non-chord_tone_'+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
+    extension = sign + 'y4_non-chord_tone_'+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
     #train_xxx_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_x_windowing_' + str(windowsize) + extension + '.txt')
     #train_yyy_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_y_windowing_' + str(windowsize) + extension + '.txt')
     timestep = ts
@@ -125,7 +126,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     #print('original train_yy shape:', train_yyy_ori.shape)
     print('Build model...')
     cv_log = open('.\\ML_result\\' + 'cv_log+' + MODEL_NAME + 'predict.txt', 'w')
-    for times in range(10):
+    for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -237,7 +238,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     i[j] = 1
                 else:
                     i[j] = 0
-        input = '.\\bach-371-chorales-master-kern\\kern\\'
+        #input = '.\\bach-371-chorales-master-kern\\kern\\'
         fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
         sum = 0
         for i in range(len(numSalamiSlices)):
@@ -250,7 +251,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         a_counter_correct = 0
         pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
         for i in range(length):
-            f = open('.\\predicted_result\\' + 'predicted_result_' + fileName[i] + '_non-chord_tone' + '.txt', 'w')
+            f = open('.\\predicted_result\\' + 'predicted_result_' + fileName[i] + '_non-chord_tone_' + sign + pitch_class + '.txt', 'w')
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
             for j in range(num_salami_slice):

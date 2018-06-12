@@ -1,16 +1,24 @@
 from music21 import *
 import os
+import re
 from transpose_to_C_chords import get_displacement
-def transpose_polyphony():
-    format = ['mid']
+def transpose_polyphony(source, input):
     c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
     #for fn in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'):
-    for fn in os.listdir('.\\bach-371-chorales-master-kern\\kern\\'):
-        if (os.path.isfile('.\\bach-371-chorales-master-kern\\kern\\'+ 'transposed_' + 'KBcKE' + fn[:-3] + 'xml')):
-            break
-        if fn[-3:] == 'krn':
+    if source != 'Rameau':
+        format = '.xml'
+    else:
+        format = '.mid'
+    for fn in os.listdir(input):
+        p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        id_id = p.findall(fn)
+        if len(id_id) == 0:
+            continue
+        if (os.path.isfile(input + 'transposed_' + 'KBcKE' + id_id[0] + format)):
+            continue
+        if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
-            s = converter.parse('.\\bach-371-chorales-master-kern\\kern\\' + fn)
+            s = converter.parse(input + fn)
             k = s.analyze('key')
             displacement = get_displacement(k)
 
@@ -25,7 +33,10 @@ def transpose_polyphony():
                 key_name = c1[(displacement - key_transpose) % len(c1)]
 
                 sNew = s.transpose(i)
-                sNew.write('musicxml', '.\\bach-371-chorales-master-kern\\kern\\'+ 'transposed_' + 'KB' + key_name + 'KE' + fn[:-3] + 'xml')  # convert krn into xml
+                if(source == 'Rameau'):
+                    sNew.write('midi', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)
+                else:
+                    sNew.write('musicxml', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)  # convert krn into xml
 
 if __name__ == "__main__":
     transpose_polyphony()
