@@ -17,7 +17,7 @@ def main():
                         type=str, default='rule_MaxMel')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
-                        type=int, default=12)
+                        type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
                         type=str, default='Y')
@@ -48,8 +48,11 @@ def main():
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
                         type=float, default=0.8)
     parser.add_argument('-v', '--version',
-                        help='whether to use 153 chorales (same with Rameau) or 367 chorales (rule-based)',
+                        help='whether to use 153 chorales (same with Rameau) or 367 chorales (rule-based) (default: %(default))',
                         type=int, default=367)
+    parser.add_argument('-d', '--distributed',
+                        help='specify which cv set you want to generate (default: %(default))',
+                        type=int, default=0)
     args = parser.parse_args()
     if args.source == 'Rameau':
         input = '.\\bach_chorales_scores\\original_midi+PDF\\'
@@ -85,10 +88,11 @@ def main():
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version)  # generate training and testing data, return the sequence of test id
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                     args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output)
+                                                                 args.cross_validation, args.version, args.distributed)  # generate training and testing data, return the sequence of test id
+    if args.distributed == 0:  # only execute this when the CV matrices are complete
+        train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+                                         args.model, 10, args.bootstrap, args.source, args.augmentation,
+                                         args.cross_validation, args.pitch, args.ratio, input, output)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

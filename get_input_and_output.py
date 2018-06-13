@@ -702,7 +702,7 @@ def find_id(input, version):
             #print(id[0])
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
-
+    id_sum_strip.remove('316')  # this file does not align
     #id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
     # delete all these crap files
     if version == 153:
@@ -909,7 +909,7 @@ def get_id(id_sum, num_of_chorale, times):
     return train_id, valid_id, test_id
 
 
-def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv, version):
+def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv, version, distributed):
     """
     The only difference with "generate_data_windowing_non_chord_tone"
     :param counter1:
@@ -932,16 +932,25 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
     id_sum = find_id(output, version)
     num_of_chorale = len(id_sum)
     #train_num = int(num_of_chorale * ratio)
-    for times in range(cv):  # do cross validation to get file ID
-        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
-        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
-        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                      output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
-        generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
+    if distributed == 0: # generate CV matrices in a serialized way
+        for times in range(cv):  # do cross validation to get file ID
+            train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                          output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                    output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
         #print('debug')
-
+    else:
+        for times in range(distributed-1, distributed):  # do cross validation to get file ID
+            train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                          output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
+            generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                                    output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
 if __name__ == "__main__":
     counter = 0
     counterMin = 60
