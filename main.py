@@ -20,7 +20,7 @@ def main():
                         type=int, default=12)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
                         type=int, default=2)
@@ -47,6 +47,9 @@ def main():
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
                         type=float, default=0.8)
+    parser.add_argument('-v', '--version',
+                        help='whether to use 153 chorales (same with Rameau) or 367 chorales (rule-based)',
+                        type=int, default=367)
     args = parser.parse_args()
     if args.source == 'Rameau':
         input = '.\\bach_chorales_scores\\original_midi+PDF\\'
@@ -61,7 +64,7 @@ def main():
     elif args.source == 'Rameau':
         output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
     f2 = '.txt'
-    annotation_translation(input, output, args.source)  # A function that extract chord labels from musicxml to txt and translate them
+    annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
     if args.source != 'Rameau':
@@ -82,7 +85,7 @@ def main():
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation)  # generate training and testing data, return the sequence of test id
+                                                                 args.cross_validation, args.version)  # generate training and testing data, return the sequence of test id
     train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, output)

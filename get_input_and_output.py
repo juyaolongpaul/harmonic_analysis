@@ -680,7 +680,7 @@ def determine_middle_name(augmentation, source):
         keys = 'keyC'
     return keys, music21
 
-def find_id(input):
+def find_id(input, version):
     """
 
     Find three digit of the labeled chorales in the folder
@@ -702,15 +702,18 @@ def find_id(input):
             #print(id[0])
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
-    if '130' in id_sum_strip:
-        id_sum_strip.remove('130')
-    if '130' in id_sum_strip:
-        id_sum_strip.remove('133')  # remove these bad files where the input and output do not match (version problem)
+
     #id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
     # delete all these crap files
-    for i in rameau_crap:
-        if i in id_sum_strip:
-            id_sum_strip.remove(i)
+    if version == 153:
+        if '130' in id_sum_strip:
+            id_sum_strip.remove('130')
+        if '130' in id_sum_strip:
+            id_sum_strip.remove(
+                '133')  # remove these bad files where the input and output do not match (version problem)
+        for i in rameau_crap:
+            if i in id_sum_strip:
+                id_sum_strip.remove(i)
     return id_sum_strip
 
 
@@ -906,7 +909,7 @@ def get_id(id_sum, num_of_chorale, times):
     return train_id, valid_id, test_id
 
 
-def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv):
+def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv, version):
     """
     The only difference with "generate_data_windowing_non_chord_tone"
     :param counter1:
@@ -926,7 +929,7 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
 
 
 
-    id_sum = find_id(output)
+    id_sum = find_id(output, version)
     num_of_chorale = len(id_sum)
     #train_num = int(num_of_chorale * ratio)
     for times in range(cv):  # do cross validation to get file ID

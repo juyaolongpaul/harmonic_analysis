@@ -198,7 +198,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                 elif source == 'rule_MaxMel':
                     p = re.compile(r'\d{3}')
                     ptr = p.findall(file_name)
-                    s = converter.parse(input + ptr[0] + f1)
+                    s = converter.parse(input + 'chor' + ptr[0] + f1)
                 elif source == 'Rameau':
                     ptr = file_name.find('translated_') + 10
                     s = converter.parse('.\\bach_chorales_scores\\original_midi+PDF\\' + file_name[ptr + 1:ptr + 4] + '.mid') # Use ly version

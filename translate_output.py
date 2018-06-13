@@ -15,6 +15,7 @@ import re
 import os
 from music21 import *
 import string
+import re
 #replace = '-*!{}\n'
 replace = '{}\n'
 
@@ -347,7 +348,7 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
-def annotation_translation(input, output, source='melodic'):
+def annotation_translation(input, output, version, source='melodic', ):
     """
     A function that extract chord labels from different sources to txt and translate them
     :return:
@@ -360,11 +361,16 @@ def annotation_translation(input, output, source='melodic'):
     cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
     cwd_annotation_r_MaxMel = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
     cwd_annotation_ori = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
+    if version == 367:
+        cwd_annotation = cwd_annotation_r_MaxMel
     #print(os.listdir(cwd_annotation))
-    corrupt_rule_chorale_ID = ['130','133'] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
+    corrupt_rule_chorale_ID = [] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
+    p = re.compile(r'\d{3}')
     for fn in os.listdir(cwd_annotation):
-        if(source=='melodic'):
-            if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt')):  # if files are already there, jump out
+        ptr = p.search(fn).span()[0]  # return the starting place of "001"
+        ptr2 = p.search(fn).span()[1]
+        if(source=='melodic' and version == 153):
+            if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[ptr:ptr2] + 'melodic.txt')):  # if files are already there, jump out
                 continue
             if fn[-3:] == 'xml':
                 original = []
@@ -403,8 +409,8 @@ def annotation_translation(input, output, source='melodic'):
                 harmonic[0] = original[0]
                 melodic = translate_annotation(original, melodic)
                 harmonic = translate_annotation(original, harmonic)
-                fmelodic = open(cwd_annotation_m + 'translated_' + fn[10:13] + 'melodic.txt', 'w')
-                fharmonic = open(cwd_annotation_h + 'translated_' + fn[10:13] + 'harmonic.txt', 'w')
+                fmelodic = open(cwd_annotation_m + 'translated_' + fn[ptr:ptr2] + 'melodic.txt', 'w')
+                fharmonic = open(cwd_annotation_h + 'translated_' + fn[ptr:ptr2] + 'harmonic.txt', 'w')
                 if len(melodic) != len(harmonic):
                     input('melodic and harmonic different lengths?!')
                 else:
@@ -412,21 +418,21 @@ def annotation_translation(input, output, source='melodic'):
                         print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
                         print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
         elif(source=='rule_MaxMel'):
-            if (os.path.isfile(cwd_annotation_r_MaxMel + 'translated_' + fn[10:13] + 'rule_MaxMel.txt') or fn[10:13] in corrupt_rule_chorale_ID):  # if files are already there, jump out
+            if (os.path.isfile(cwd_annotation_r_MaxMel + 'translated_' + fn[ptr:ptr2] + 'rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
                 continue
-            if fn[-3:] == 'xml':
-                f_r_MaxMel = open(cwd_annotation_r_MaxMel + 'chor' + fn[10:13] + '.txt', 'r')
+            if (fn[-3:] == 'xml' and version == 153) or (fn == 'chor' + fn[ptr:ptr2] + '.txt' and version == 367):
+                f_r_MaxMel = open(cwd_annotation_r_MaxMel + 'chor' + fn[ptr:ptr2] + '.txt', 'r')
                 r_MaxMel_ori= []
                 r_MaxMel_translated = []
                 for achord in f_r_MaxMel.readlines():
                     r_MaxMel_ori.append(achord.strip())
                 #print(r_MaxMel_ori)
                 r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori)
-                fr_MaxMel = open(cwd_annotation_r_MaxMel + 'translated_' + fn[10:13] + '_rule_MaxMel.txt', 'w')
+                fr_MaxMel = open(cwd_annotation_r_MaxMel + 'translated_' + fn[ptr:ptr2] + '_rule_MaxMel.txt', 'w')
                 for i, item in enumerate(r_MaxMel_translated):
                     print(r_MaxMel_translated[i].encode('utf-8').decode('ansi'), end=' ', file=fr_MaxMel)
                 #print(r_MaxMel_translated)
-    if(source=='Rameau'):
+    if(source=='Rameau' and version == 153):
         write_to_files(input=cwd_annotation, output=cwd_annotation_ori, source=source)
 def translate_annotation(ori, cur):
     for i, item in enumerate(cur):  # translate melodic, harmonic into chord labels:
