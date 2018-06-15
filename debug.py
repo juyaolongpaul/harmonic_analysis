@@ -1,23 +1,19 @@
 from music21 import *
-'''import os
-for file_name in os.listdir('.\\bach_chorales_scores\\transposed_MIDI\\'):
-    print(file_name)
-    s = converter.parse('.\\bach_chorales_scores\\transposed_MIDI\\' + file_name)
-    k = s.analyze('key')
-    print(k.name)
-    if(k.name != 'C major' and k.name != 'A minor'):
-        print('error:' + k.name)
-'''
-s = converter.parse(r"F:\我的坚果云\Temp\Harmonic_analysis\annotation003_Yaolong.xml")
-#s = converter.parse(r"F:\PyCharmProjects\harmonic_analysis\predicted_result\115.xml")
+from get_input_and_output import get_pitch_class_for_four_voice
+s = converter.parse(r'G:\Projects\harmonic_analysis\transposed_KBfKE328_test.xml')
 sChords = s.chordify()
-#l = text.assembleAllLyrics(s)
-#print(l)
-#sChords.show()
-#s.show()
-sChords = s.parts[4]
-#bass.show()
-#for n in .recurse().getElementsByClass('Note'):
-for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+for thisChord in sChords.recurse().getElementsByClass('Chord'):
+    if len(thisChord.pitches) < 4:
+        list = get_pitch_class_for_four_voice(thisChord, s)
+        print(list)
+'''for thisChord in sChords.recurse().getElementsByClass('Chord'):
+    if len(thisChord.pitches) < 4:
+        for j, part in enumerate(s.parts):
+            for i, note in enumerate(part.measure(thisChord.measureNumber).notes):
 
-    print(thisChord.lyrics[3].text)
+                if note.beatStr == thisChord.beatStr:
+                    print(j, note.pitch)
+                else:
+                    if part.measure(thisChord.measureNumber).notes[i].beatStr < thisChord.beatStr and \
+                            part.measure(thisChord.measureNumber).notes[i + 1].beatStr > thisChord.beatStr:
+                        print(j, part.measure(thisChord.measureNumber).notes[i].pitch)   '''

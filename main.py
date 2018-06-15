@@ -31,8 +31,8 @@ def main():
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
-                        help='use pitch or pitch class as input feature (default: %(default), the other option is pitch_class)',
-                        type=str, default='pitch_class')
+                        help='use pitch or pitch class or pitch class binary as input feature (default: %(default)',
+                        type=str, default='pitch_class_binary')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=2)
@@ -53,6 +53,7 @@ def main():
     parser.add_argument('-d', '--distributed',
                         help='specify which cv set you want to generate (default: %(default))',
                         type=int, default=0)
+
     args = parser.parse_args()
     if args.source == 'Rameau':
         input = '.\\bach_chorales_scores\\original_midi+PDF\\'
@@ -89,10 +90,10 @@ def main():
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
                                                                  args.cross_validation, args.version, args.distributed)  # generate training and testing data, return the sequence of test id
-    if args.distributed == 0:  # only execute this when the CV matrices are complete
-        train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                         args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                         args.cross_validation, args.pitch, args.ratio, input, output)
+      # only execute this when the CV matrices are complete
+    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+                                     args.model, 10, args.bootstrap, args.source, args.augmentation,
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

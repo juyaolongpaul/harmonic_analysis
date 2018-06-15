@@ -85,8 +85,8 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output):
-    id_sum = find_id(output)  # get 3 digit id of the chorale
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed):
+    id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
     #train_num = int(num_of_chorale * ratio)
