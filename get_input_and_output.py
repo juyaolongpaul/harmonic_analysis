@@ -193,7 +193,31 @@ def get_pitch_class_for_four_voice(thisChord, s):
     return pitch_class_four_voice
 
 
-def fill_in_pitch_class_binary(pitchclass, list, thisChord, s):
+def fill_in_pitch_class_4_voices(pitchclass, list, thisChord, s):
+    """
+    Generate one-hot encoding for 4 voices using pitch classes
+    :param pitchclass:
+    :param list:
+    :param thisChord:
+    :param s:
+    :return:
+    """
+    pitchclass = [0] * 48
+    if len(list) <4:
+        list_ori = list
+        print('originally unique pitch is less than 4', list)
+        list = get_pitch_class_for_four_voice(thisChord, s) # in case there are only less then 4 voices
+        print('after processing', list)
+        for item in list: # TODO: solve this hacky fix later! you function above do not work perfectly!
+            if item not in list_ori:
+                list.remove(item)
+        if len(list) > 4:
+            list = list[:(4-len(list))]
+    for i, item in enumerate(list):
+        pitchclass[i*12 + item] = 1
+    return pitchclass
+
+def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     """
     Encode pitch-class information for each voice in a binary encoding
     :param pitchclass: Pitch class binary encodings for each voice
@@ -208,9 +232,10 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s):
         for item in list: # TODO: solve this hacky fix later! you function above do not work perfectly!
             if item not in list_ori:
                 list.remove(item)
-
+                bad += 1
         if len(list) > 4:
             list = list[:(4-len(list))]
+            bad += 1
 
     #print('list length:', len(list), 'content of the list:', list)
     for i, item in enumerate(list):
@@ -218,7 +243,7 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s):
         for j, item2 in enumerate(binary_encoding): # each bin goes to the pitchclass vector
             #print(j, '+', 4*i, 'binary encoding:', binary_encoding)
             pitchclass[j + 4*i] = int(item2)
-    return pitchclass
+    return pitchclass, bad
 
 def fill_in_pitch_class(pitchclass, list):
     """
@@ -890,7 +915,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
         print (fn_total)
         #input('?')
-
+        bad_voice_finding_slice = 0
         for id, fn in enumerate(fn_total):
                 print(fn)
                 ptr = p.search(fn).span()[0]  # return the starting place of "001"
@@ -925,6 +950,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                             pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                         elif pitch == 'pitch_class':
                             pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
+                        elif pitch == 'pitch_class_4_voices':
+                            pitchClass = fill_in_pitch_class_4_voices(pitchClass, thisChord.pitchClasses, thisChord, s)
                         pc_counter = 0
                         for ii in pitchClass:
                             if ii == 1:
@@ -941,7 +968,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         else:
                             input('input_dim is not within [8,16]!')
 
-                        pitchClass = fill_in_pitch_class_binary(pitchClass, thisChord.pitchClasses, thisChord, s)  # pitchClass is sorted in SATB, respectively
+                        pitchClass, bad_voice_finding_slice = fill_in_pitch_class_binary(pitchClass, thisChord.pitchClasses, thisChord, s, bad_voice_finding_slice)  # pitchClass is sorted in SATB, respectively
                         counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
                         # pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
                         # (thisChord.pitchClasses)
@@ -1001,7 +1028,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
 
         np.savetxt(search_file_x, x, fmt='%.1e')
         np.savetxt(search_file_y, y, fmt = '%.1e')
-
+        print('number of bad slices', bad_voice_finding_slice)
 def get_id(id_sum, num_of_chorale, times):
     """
     Get chorale ID for different batch of cross validation

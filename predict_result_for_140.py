@@ -134,6 +134,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
+
         #train_xx, train_yy, valid_xx, valid_yy, rubbish_x, rubbish_y = divide_training_data(10, portion, times, train_xxx_ori, train_yyy_ori, testset='N')
          # only have valid result
         valid_xx = np.loadtxt('.\\data_for_ML\\' + sign + '_x_windowing_' + str(
@@ -151,7 +152,11 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
+
             train_xx, train_yy = bootstrap_data(train_xx, train_yy, bootstraptime)
+            train_xx = train_xx[
+                      :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+            train_yy = train_yy[:int(portion * train_yy.shape[0])]
             print('training and predicting...')
             print('train_xx shape:', train_xx.shape)
             print('train_yy shape:', train_yy.shape)
@@ -232,7 +237,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         fn.append(false_negative)
         tn.append(true_negative)
         # prediction put into files
-        for i in predict_y:  # regulate the prediction
+        '''for i in predict_y:  # regulate the prediction
             for j, item in enumerate(i):
                 if (item > 0.5):
                     i[j] = 1
@@ -290,7 +295,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             print('num of correct answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
                   file=f)
             print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f)
-            f.close()
+            f.close()'''
 
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)

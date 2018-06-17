@@ -23,19 +23,19 @@ def main():
                         type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
-                        type=int, default=2)
+                        type=int, default=3)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=200)
+                        type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
-                        help='use pitch or pitch class or pitch class binary as input feature (default: %(default)',
-                        type=str, default='pitch_class_binary')
+                        help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature (default: %(default)',
+                        type=str, default='pitch_class_4_voices')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=2)
+                        type=int, default=1)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -85,13 +85,14 @@ def main():
     input_dim = 12
     x = []
     y = []
-    generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, 2,
+    generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
                                                                  args.cross_validation, args.version, args.distributed)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+    if args.distributed == 0:
+        train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, output, args.distributed)
 

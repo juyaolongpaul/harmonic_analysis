@@ -364,9 +364,11 @@ def annotation_translation(input, output, version, source='melodic', ):
     if version == 367:
         cwd_annotation = cwd_annotation_r_MaxMel
     #print(os.listdir(cwd_annotation))
-    corrupt_rule_chorale_ID = [] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
+    corrupt_rule_chorale_ID = ['130'] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
     p = re.compile(r'\d{3}')
     for fn in os.listdir(cwd_annotation):
+        if fn.find('.') == -1: # skip folder
+            continue
         ptr = p.search(fn).span()[0]  # return the starting place of "001"
         ptr2 = p.search(fn).span()[1]
         if(source=='melodic' and version == 153):
