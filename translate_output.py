@@ -354,13 +354,14 @@ def annotation_translation(input, output, version, source='melodic', ):
     :return:
 
     """
-    cwd_score = '.\\bach-371-chorales-master-kern\\kern\\'  # for new annotations, we have to use krn version,
+
+    cwd_score = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')  # for new annotations, we have to use krn version,
     # since it does not equal to the original midi version completely and mid cannot be visualized.
-    cwd_annotation = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'  # only for 155 chorales
-    cwd_annotation_m= '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
-    cwd_annotation_h = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Harmonic\\'
-    cwd_annotation_r_MaxMel = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
-    cwd_annotation_ori = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
+    cwd_annotation = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation')
+    cwd_annotation_m = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Melodic')
+    cwd_annotation_h = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Harmonic')
+    cwd_annotation_r_MaxMel = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Chords_MaxMel')
+    cwd_annotation_ori = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Rameau')
     if version == 367:
         cwd_annotation = cwd_annotation_r_MaxMel
     #print(os.listdir(cwd_annotation))
@@ -372,14 +373,14 @@ def annotation_translation(input, output, version, source='melodic', ):
         ptr = p.search(fn).span()[0]  # return the starting place of "001"
         ptr2 = p.search(fn).span()[1]
         if(source=='melodic' and version == 153):
-            if (os.path.isfile(cwd_annotation_m + 'translated_' + fn[ptr:ptr2] + 'melodic.txt')):  # if files are already there, jump out
+            if (os.path.isfile(os.path.join(cwd_annotation_m, 'translated_') + fn[ptr:ptr2] + 'melodic.txt')):  # if files are already there, jump out
                 continue
             if fn[-3:] == 'xml':
                 original = []
                 melodic = []
                 harmonic = []
                 print(fn)
-                s = converter.parse(cwd_annotation + fn)
+                s = converter.parse(os.path.join(cwd_annotation,fn))
                 sChords = s.parts[4]
                 for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     #print(fn, i)
@@ -411,8 +412,8 @@ def annotation_translation(input, output, version, source='melodic', ):
                 harmonic[0] = original[0]
                 melodic = translate_annotation(original, melodic)
                 harmonic = translate_annotation(original, harmonic)
-                fmelodic = open(cwd_annotation_m + 'translated_' + fn[ptr:ptr2] + 'melodic.txt', 'w')
-                fharmonic = open(cwd_annotation_h + 'translated_' + fn[ptr:ptr2] + 'harmonic.txt', 'w')
+                fmelodic = open(os.path.join(cwd_annotation_m, 'translated_') + fn[ptr:ptr2] + 'melodic.txt', 'w')
+                fharmonic = open(os.path.join(cwd_annotation_h, 'translated_') + fn[ptr:ptr2] + 'harmonic.txt', 'w')
                 if len(melodic) != len(harmonic):
                     input('melodic and harmonic different lengths?!')
                 else:
@@ -420,19 +421,19 @@ def annotation_translation(input, output, version, source='melodic', ):
                         print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
                         print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
         elif(source=='rule_MaxMel'):
-            if (os.path.isfile(cwd_annotation_r_MaxMel + 'translated_' + fn[ptr:ptr2] + 'rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
+            if (os.path.isfile(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + 'rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
                 continue
             if (fn[-3:] == 'xml' and version == 153) or (fn == 'chor' + fn[ptr:ptr2] + '.txt' and version == 367):
-                f_r_MaxMel = open(cwd_annotation_r_MaxMel + 'chor' + fn[ptr:ptr2] + '.txt', 'r')
+                f_r_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'chor') + fn[ptr:ptr2] + '.txt', 'r')
                 r_MaxMel_ori= []
                 r_MaxMel_translated = []
                 for achord in f_r_MaxMel.readlines():
                     r_MaxMel_ori.append(achord.strip())
                 #print(r_MaxMel_ori)
                 r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori)
-                fr_MaxMel = open(cwd_annotation_r_MaxMel + 'translated_' + fn[ptr:ptr2] + '_rule_MaxMel.txt', 'w')
+                fr_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + '_rule_MaxMel.txt', 'w')
                 for i, item in enumerate(r_MaxMel_translated):
-                    print(r_MaxMel_translated[i].encode('utf-8').decode('ansi'), end=' ', file=fr_MaxMel)
+                    print(r_MaxMel_translated[i], end=' ', file=fr_MaxMel)
                 #print(r_MaxMel_translated)
     if(source=='Rameau' and version == 153):
         write_to_files(input=cwd_annotation, output=cwd_annotation_ori, source=source)
@@ -466,18 +467,17 @@ def write_to_files(input, output, source, transposed='', multi=0):
     :param multi: a switch that whether generate multiple interpretation or not
     :return: 
     """
+    base_directory = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales')
     num_of_ambiguity = 0
     bad = 0
     num_of_samples = 0
     for fn in os.listdir(cwd):
-        if (os.path.isfile(output + 'translated_' + fn[0:3] + '_' + source + '.txt')):  # if files are already there, jump out
+        if (os.path.isfile(os.path.join(output, 'translated_') + fn[0:3] + '_' + source + '.txt')):  # if files are already there, jump out
             continue
         if fn[-3:] == 'mid':
             print(fn)
-            if ((os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
-                                                                                                    0:3] + '.pop''')) or
-                    (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[
-                                                                                                        0:3] + '.pop.not'''))):
+            if ((os.path.isfile(os.path.join(base_directory, transposed) + fn[0:3] + '.pop''')) or
+                    (os.path.isfile(os.path.join(os.path.join(base_directory, transposed) + fn[0:3] + '.pop.not''')))):
 
                 s = converter.parse(cwd + fn) # Use ly version
                 sChords = s.chordify()
@@ -491,13 +491,13 @@ def write_to_files(input, output, source, transposed='', multi=0):
                     if (len(thisChord.beatStr) != 1):
                         print('beat location is: ' + thisChord.beatStr)
 
-                if (os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop''')):
-                    f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop', 'r')
-                    fnew = open(output + 'translated_' + fn[0:3] + '_Rameau.txt', 'w')
+                if (os.path.isfile(os.path.join(base_directory, transposed) + fn[0:3] + '.pop''')):
+                    f = open(os.path.join(base_directory, transposed) + fn[0:3] + '.pop', 'r')
+                    fnew = open(os.path.join(output, 'translated_') + fn[0:3] + '_Rameau.txt', 'w')
                 elif (
-                os.path.isfile('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not''')):
-                    f = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\' + transposed + fn[0:3] + '.pop.not', 'r')
-                    fnew = open(output + 'translated_' + fn[0:3] + '_Rameau.txt', 'w')
+                os.path.isfile(os.path.join(base_directory, transposed) + fn[0:3] + '.pop.not''')):
+                    f = open(os.path.join(base_directory, transposed) + fn[0:3] + '.pop.not', 'r')
+                    fnew = open(os.path.join(output, 'translated_') + fn[0:3] + '_Rameau.txt', 'w')
                 else:
                     print('no file is opened')
                 for line in f.readlines():

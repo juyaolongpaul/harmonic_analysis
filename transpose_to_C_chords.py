@@ -187,21 +187,21 @@ def provide_path_12keys(input, f1, output, f2, source):
     #f2 = '.txt'
     import  re
     for file_name in os.listdir(output):
-        if (os.path.isfile(output + 'transposed_' + 'KBcKE' + file_name)):
+        if  os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name):
             continue
         if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
                     #continue
                 if source == 'melodic':
                     ptr = file_name.find('translated_') + 10
-                    s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                    s = converter.parse(os.path.join(input, file_name[ptr + 1:ptr + 4]) + f1)
                 elif source == 'rule_MaxMel':
                     p = re.compile(r'\d{3}')
                     ptr = p.findall(file_name)
-                    s = converter.parse(input + 'chor' + ptr[0] + f1)
+                    s = converter.parse(os.path.join(input, 'chor') + ptr[0] + f1)
                 elif source == 'Rameau':
                     ptr = file_name.find('translated_') + 10
-                    s = converter.parse('.\\bach_chorales_scores\\original_midi+PDF\\' + file_name[ptr + 1:ptr + 4] + '.mid') # Use ly version
+                    s = converter.parse(os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF', file_name[ptr + 1:ptr + 4]) + '.mid') # Use ly version
                 k = s.analyze('key')
 
                 #print('acc ' + str(k.tonic._accidental.alter))
@@ -209,8 +209,8 @@ def provide_path_12keys(input, f1, output, f2, source):
                 for key_transpose in range(12):
                     key_name = c1[(displacement - key_transpose) % len(c1)]
 
-                    f = open(output + file_name, 'r')
-                    fnew = open(output + 'transposed_' + 'KB' + key_name + 'KE' + file_name, 'w')
+                    f = open(os.path.join(output, file_name), 'r')
+                    fnew = open(os.path.join(output, 'transposed_') + 'KB' + key_name + 'KE' + file_name, 'w')
                     #fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')
                     sign = 0 # to see how many files have upper letter!!!!
                     for line in f.readlines():
@@ -261,14 +261,11 @@ def provide_path(input, f1, output, f2):
                 #if(file_name[:3] != '369'):
                     #continue
                 ptr = file_name.find('translated_') + 10
-                s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                s = converter.parse(os.path.join(input, file_name[ptr + 1:ptr + 4]) + f1)
                 k = s.analyze('key')
-                #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)
-
-                f = open(output + file_name, 'r')
-                fnew = open(output + 'transposed_' + file_name, 'w')
-                #fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')
+                f = open(os.path.join(output, file_name), 'r')
+                fnew = open(os.path.join(output, 'transposed_') + file_name, 'w')
                 sign = 0 # to see how many files have upper letter!!!!
                 for line in f.readlines():
                     #line = line.lower()

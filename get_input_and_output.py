@@ -877,23 +877,23 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     keys, music21 = determine_middle_name(augmentation, sign)
     number = len(data_id)
     if sign == 'Rameau':
-        input1 =  '.\\bach_chorales_scores\\original_midi+PDF\\'
+        input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
     if(portion == 'train'):  # training
-        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '_cv_' + str(times) + '.txt'
-        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '_cv_' + str(times) + '.txt'
+        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
             number) + '_cv_' + str(times) + '.txt'
     elif(portion == 'valid'):
-        search_file_x = '.\\data_for_ML\\' +sign + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'validing' + str(number) + '_cv_' + str(times) + '.txt'
-        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(windowsize) + 'y4_non-chord_tone_'+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'validing' + str(number) + '_cv_' + str(times) + '.txt'
+        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'validing' + str(
             number) + '_cv_' + str(times) + '.txt'
     else:
-        search_file_x = '.\\data_for_ML\\' + sign + '_x_windowing_' + str(
+        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
             number) + '_cv_' + str(times) + '.txt'
-        search_file_y = '.\\data_for_ML\\' + sign + '_y_windowing_' + str(
+        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
             number) + '_cv_' + str(times) + '.txt'
     if not (os.path.isfile(search_file_x)): # if there matrix file is already there, no need to generate again. Although each shuffle, the content will be different
@@ -921,10 +921,10 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 ptr = p.search(fn).span()[0]  # return the starting place of "001"
                 ptr2 = p.search(fn).span()[1]
                 chorale_x = []
-                if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[ptr:ptr2] + '_'+ sign + f2)):
-                    f = open(output + fn[:ptr] + 'translated_' + fn[ptr:ptr2] + '_' + sign + f2,'r')
+                if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_'+ sign + f2)):
+                    f = open(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_' + sign + f2,'r')
 
-                    f_non = open(output + fn[:ptr] + 'non_chord_tone_' + music21 + '_' + sign + pitch + fn[ptr:ptr2] + f2, 'w')
+                    f_non = open(os.path.join(output, fn[:ptr]) + 'non_chord_tone_' + music21 + '_' + sign + pitch + fn[ptr:ptr2] + f2, 'w')
                 else:
                     continue  # skip the file which does not have chord labels
                 file_counter += 1
@@ -932,7 +932,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     #s = converter.parse(
                         #'.\\bach_chorales_scores\\original_midi+PDF\\' + fn[-7:-4] + '.mid')
                 #else:
-                s = converter.parse(input1 + fn)
+                s = converter.parse(os.path.join(input1, fn))
                 sChords = s.chordify()
                 slice_input = 0
                 #print(slice_input)

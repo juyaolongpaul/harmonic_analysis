@@ -6,6 +6,7 @@ from transpose_to_C_polyphony import transpose_polyphony
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
 from predict_result_for_140 import train_and_predict_non_chord_tone
 from chord_visualization import put_music21chord_into_musicXML, put_non_chord_tone_into_musicXML
+import os
 import argparse
 
 
@@ -20,19 +21,19 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
-                        type=int, default=3)
+                        type=int, default=2)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=300)
+                        type=int, default=200)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature (default: %(default)',
-                        type=str, default='pitch_class_4_voices')
+                        type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -55,18 +56,21 @@ def main():
                         type=int, default=0)
 
     args = parser.parse_args()
+    package_root = os.path.abspath(os.path.dirname(__file__))
     if args.source == 'Rameau':
-        input = '.\\bach_chorales_scores\\original_midi+PDF\\'
+        input = os.path.join(package_root, 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
     else:
-        input = '.\\bach-371-chorales-master-kern\\kern\\'
+        input = os.path.join(package_root,'bach-371-chorales-master-kern', 'kern')
         f1 = '.krn'  # the version of chorales used
     if(args.source == 'melodic'):
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'  # the corresponding annotations
+        output = os.path.join(package_root,'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Melodic')  # the corresponding annotations
     elif args.source == 'rule_MaxMel':
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
+        output = os.path.join(package_root, 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation',
+                              'Chords_MaxMel')
     elif args.source == 'Rameau':
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
+        output = os.path.join(package_root, 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation',
+                              'Rameau')
     f2 = '.txt'
     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
