@@ -187,7 +187,7 @@ def provide_path_12keys(input, f1, output, f2, source):
     #f2 = '.txt'
     import  re
     for file_name in os.listdir(output):
-        if (os.path.isfile(output + 'transposed_' + 'KBcKE' + file_name)):
+        if (os.path.isfile(output + 'transposed_' + 'KBcKE' + file_name) or os.path.isfile(input + 'transposed_' + 'KBc_oriKE' + file_name)):
             continue
         if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
@@ -207,8 +207,13 @@ def provide_path_12keys(input, f1, output, f2, source):
                 #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)
                 for key_transpose in range(12):
+                    if k.mode == 'minor':
+                        i = interval.Interval(k.tonic, pitch.Pitch(c1[(displacement - key_transpose - 3) % len(c1)]))
+                    else:
+                        i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                     key_name = c1[(displacement - key_transpose) % len(c1)]
-
+                    if i.directedName == 'P1':
+                        key_name = key_name + '_ori'
                     f = open(output + file_name, 'r')
                     fnew = open(output + 'transposed_' + 'KB' + key_name + 'KE' + file_name, 'w')
                     #fexception = open('.\\genos-corpus\\answer-sheets\\bach-chorales\\'+ 'log.txt', 'a+')

@@ -23,16 +23,16 @@ def main():
                         type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
-                        type=int, default=3)
+                        type=int, default=4)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=300)
+                        type=int, default=400)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature (default: %(default)',
-                        type=str, default='pitch_class_4_voices')
+                        type=str, default='pitch_4_octaves')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)

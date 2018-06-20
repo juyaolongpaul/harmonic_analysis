@@ -14,7 +14,7 @@ def transpose_polyphony(source, input):
         id_id = p.findall(fn)
         if len(id_id) == 0:
             continue
-        if (os.path.isfile(input + 'transposed_' + 'KBcKE' + id_id[0] + format)):
+        if (os.path.isfile(input + 'transposed_' + 'KBcKE' + id_id[0] + format) or os.path.isfile(input + 'transposed_' + 'KBc_oriKE' + id_id[0] + format)):
             continue
         if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
@@ -31,7 +31,8 @@ def transpose_polyphony(source, input):
                     i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                 print(i)
                 key_name = c1[(displacement - key_transpose) % len(c1)]
-
+                if i.directedName == 'P1':
+                    key_name = key_name + '_ori'
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):
                     sNew.write('midi', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)
