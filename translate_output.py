@@ -421,7 +421,7 @@ def annotation_translation(input, output, version, source='melodic', ):
                         print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
                         print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
         elif(source=='rule_MaxMel'):
-            if (os.path.isfile(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + 'rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
+            if (os.path.isfile(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + '_rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
                 continue
             if (fn[-3:] == 'xml' and version == 153) or (fn == 'chor' + fn[ptr:ptr2] + '.txt' and version == 367):
                 f_r_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'chor') + fn[ptr:ptr2] + '.txt', 'r')

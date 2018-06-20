@@ -40,9 +40,9 @@ def write_back(tmp, i, j, c1, c2, displacement, flag, mark, letter):
         if tmp[i][j + mark + 1] == '#' or tmp[i][j + mark + 1] == 'b':
             pitch_class = tmp[i][j + mark:j + mark + 2]
             pitch_class = pitch_class.lower()
-            print(pitch_class)
+            #print(pitch_class)
             transposed_pitch_class = transpose(c1, c2, displacement, pitch_class)
-            print(transposed_pitch_class)
+            #print(transposed_pitch_class)
             tmp[i] = tmp[i][:j + mark] + transposed_pitch_class + tmp[i][j + mark + 2:]
             mark = change_length(pitch_class, transposed_pitch_class, mark) # if the length changes, mark it
 
@@ -60,23 +60,23 @@ def write_back(tmp, i, j, c1, c2, displacement, flag, mark, letter):
                 else:
 
                     pitch_class = letter.lower()
-                    print(pitch_class)
+                    #print(pitch_class)
                     transposed_pitch_class = transpose(c1, c2, displacement, pitch_class)
                     tmp[i] = tmp[i][:j + mark] + transposed_pitch_class + tmp[i][j + mark + 1:]
                     mark = change_length(pitch_class, transposed_pitch_class, mark)
-                    print(transposed_pitch_class)
+                    #print(transposed_pitch_class)
     elif(flag == 2): # the end of the element, no accidentials
 
             if j>=1 and tmp[i][j - 1 + mark] == 'b' :
                 print('checkout')
             else:
                 pitch_class = letter.lower()
-                print(pitch_class)
+                #print(pitch_class)
                 transposed_pitch_class = transpose(c1, c2, displacement, pitch_class)
                 tmp[i] = tmp[i][:j + mark] + transposed_pitch_class + tmp[i][j + mark + 1:]
                 mark = change_length(pitch_class, transposed_pitch_class, mark)
 
-                print(transposed_pitch_class)
+                #print(transposed_pitch_class)
     return mark
 def get_displacement(k):
     """
@@ -187,8 +187,9 @@ def provide_path_12keys(input, f1, output, f2, source):
     #f2 = '.txt'
     import  re
     for file_name in os.listdir(output):
-        if (os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBc_oriKE' + file_name)):
+        if os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(os.path.join(output, 'transposed_') + 'KBc_oriKE' + file_name):
             continue
+        print(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) # print what's the current file you are transposing
         if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
                     #continue
@@ -229,7 +230,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                                 if(letter.isalpha()):
                                     line = line[:i] + letter.lower() + line[i+1:]'''
 
-                        print (line.split(' '))
+                        #print (line.split(' '))
                         tmp = line.split(' ')
                         for i, ele in enumerate(tmp):
                             mark = 0 # mark incicates whether the length of this chord symbol changes its length
