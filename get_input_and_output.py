@@ -935,7 +935,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     id_id = p.findall(fn)
                     if id_id[0] in data_id:  # if the digit found in the list, add this file
                         if(augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                            if(fn.find('cKE') != -1):  # only wants key c
+                            if(fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
                                 fn_total.append(fn)
                         elif augmentation == 'Y' and portion == 'train':
                             fn_total.append(fn)  # we want 12 keys on training set
