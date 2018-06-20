@@ -25,7 +25,7 @@ from keras.datasets import imdb
 from scipy.io import loadmat
 from keras.optimizers import SGD, RMSprop
 from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 import h5py
 import re
@@ -40,7 +40,7 @@ from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
 from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
-from get_input_and_output import determine_middle_name, find_id, get_id
+from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 def get_predict_file_name(input, data_id, augmentation):
     filename = []
     num_salami_slices = []
@@ -91,7 +91,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
     #train_num = int(num_of_chorale * ratio)
     test_num = int((num_of_chorale - train_num) / 2)
-    keys, music21 = determine_middle_name(augmentation, sign)
+    #keys, music21 = determine_middle_name(augmentation, sign, portion)
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign)
     pre = []
     pre_test = []
     rec = []
@@ -126,6 +127,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     #print('original train_yy shape:', train_yyy_ori.shape)
     print('Build model...')
     cv_log = open(os.path.join('.', 'ML_result') + 'cv_log+' + MODEL_NAME + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result') + 'cv_log+' + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
     for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
@@ -138,10 +140,10 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         #train_xx, train_yy, valid_xx, valid_yy, rubbish_x, rubbish_y = divide_training_data(10, portion, times, train_xxx_ori, train_yyy_ori, testset='N')
          # only have valid result
         valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + 'keyC' + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + 'keyC' + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         if not (os.path.isfile((os.path.join('.', 'data_for_ML', MODEL_NAME) + ".hdf5"))):
             train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
@@ -201,17 +203,17 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
             early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
             print("Train...")
-            checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result') + MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
+            checkpointer = ModelCheckpoint(filepath='.\\ML_result\\' + MODEL_NAME + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
             hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer])
         # visualize the result and put into file
         test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + 'keyC' + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + 'keyC' + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
-        model = load_model(os.path.join('.', 'data_for_ML', MODEL_NAME) + ".hdf5")
+        model = load_model('.\\ML_result\\' + MODEL_NAME + ".hdf5")
         predict_y = model.predict(test_xx, verbose=0)
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
         scores_test = model.evaluate(test_xx, test_yy, verbose=0)
@@ -299,7 +301,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
 
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
-    model = load_model(os.path.join('.', 'ML_result') + MODEL_NAME + ".hdf5")
+    model = load_model('.\\ML_result\\' + MODEL_NAME + ".hdf5")
     # print(model.summary(), file=cv_log)
 
     model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file

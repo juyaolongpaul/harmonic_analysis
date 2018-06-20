@@ -14,11 +14,11 @@ def transpose_polyphony(source, input):
         id_id = p.findall(fn)
         if len(id_id) == 0:
             continue
-        if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBcKE' + id_id[0] + format)):
+        if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBcKE' + id_id[0] + format) or os.path.isfile(input + 'transposed_' + 'KBc_oriKE' + id_id[0] + format)):
             continue
         if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
-            s = converter.parse(os.path.join(input, fn))
+            s = converter.parse(input + fn)
             k = s.analyze('key')
             displacement = get_displacement(k)
 
@@ -34,9 +34,9 @@ def transpose_polyphony(source, input):
 
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):
-                    sNew.write('midi', os.path.join(input, 'transposed_') + 'KB' + key_name + 'KE' + id_id[0] + format)
+                    sNew.write('midi', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)
                 else:
-                    sNew.write('musicxml', os.path.join(input, 'transposed_') + 'KB' + key_name + 'KE' + id_id[0] + format)  # convert krn into xml
+                    sNew.write('musicxml', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)  # convert krn into xml
 
 if __name__ == "__main__":
     transpose_polyphony()

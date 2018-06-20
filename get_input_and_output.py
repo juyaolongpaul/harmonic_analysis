@@ -121,14 +121,22 @@ def fill_in_pitch_class_with_bass(pitchclass, list, counter):
 
 def fill_in_pitch_class_with_octave(list):
     """
-
+    Put pitch in a compressed range
     :param pitchclass: The pitch class vector that needs to label
     :param list: The pitch class encoded in number
     :return: the modified pitch class that need to store
     """
-    pitchclass = [0] * 72 # calculate by pitch_distribution
+    LOWEST_PITCH_CONSIDERED = 36
+    PITCH_RANGE = 48
+    SEMITONE_IN_OCTAVE = 12
+    pitchclass = [0] * PITCH_RANGE # calculate by pitch_distribution
     for i in list:
-        pitchclass[(i.midi-24)] = 1  # the lowest is 28, compressed
+        midi = i.midi
+        while midi-LOWEST_PITCH_CONSIDERED >= len(pitchclass):
+            midi -= SEMITONE_IN_OCTAVE # move an octave lower until it falls into the range
+        while midi < LOWEST_PITCH_CONSIDERED:
+            midi += SEMITONE_IN_OCTAVE # move an octave higher until it falls into the range
+        pitchclass[midi-LOWEST_PITCH_CONSIDERED] = 1  # the lowest is 28, compressed
     return pitchclass
 
 
@@ -217,6 +225,7 @@ def fill_in_pitch_class_4_voices(pitchclass, list, thisChord, s):
         pitchclass[i*12 + item] = 1
     return pitchclass
 
+
 def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     """
     Encode pitch-class information for each voice in a binary encoding
@@ -245,9 +254,9 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
             pitchclass[j + 4*i] = int(item2)
     return pitchclass, bad
 
+
 def fill_in_pitch_class(pitchclass, list):
     """
-
     :param pitchclass: The pitch class vector that needs to label
     :param list: The pitch class encoded in number
     :return: the modified pitch class that need to store
@@ -791,7 +800,7 @@ def generate_data_windowing_non_chord_tone_new_annotation(counter1, counter2, x,
     np.savetxt('.\\data_for_ML\\' +sign + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class_New_annotation.txt', y, fmt = '%.1e')
 
 
-def determine_middle_name(augmentation, source):
+def determine_middle_name(augmentation, source, portion):
     '''
     Determine the file name of whether using augmentation, pitch or pitch-class and melodic or harmonic
     :param augmentation:
@@ -804,10 +813,33 @@ def determine_middle_name(augmentation, source):
 
 
     if (augmentation == 'Y'):
-        keys = '12keys'
+        if portion ==  'train':
+            keys = '12keys'
+        else:
+            keys = 'keyOri'
     else:
         keys = 'keyC'
     return keys, music21
+
+def determine_middle_name2(augmentation, source):
+    '''
+    Only used for finding right np file for training ML model
+    :param augmentation:
+    :param pitch:
+    :param source:
+    :return:
+    '''
+
+    music21 = ''
+
+
+    if (augmentation == 'Y'):
+            keys = '12keys'
+            keys1 = 'keyOri'
+    else:
+        keys = 'keyC'
+        keys1 = 'keyC'
+    return keys, keys1, music21
 
 def find_id(input, version):
     """
@@ -874,7 +906,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     fn_total = []
     file_counter = 0
     slice_counter = 0
-    keys, music21 = determine_middle_name(augmentation, sign)
+    keys, music21 = determine_middle_name(augmentation, sign, portion)
     number = len(data_id)
     if sign == 'Rameau':
         input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
@@ -897,20 +929,20 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             windowsize) + 'y4_non-chord_tone_' + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
             number) + '_cv_' + str(times) + '.txt'
     if not (os.path.isfile(search_file_x)): # if there matrix file is already there, no need to generate again. Although each shuffle, the content will be different
-
         for id, fn in enumerate(os.listdir(input1)):
-
                 if fn.find('KB') != -1 and fn[-4:] == f1:
                     p = re.compile(r'\d{3}')  # find 3 digit in the file name
                     id_id = p.findall(fn)
-
                     if id_id[0] in data_id:  # if the digit found in the list, add this file
-
                         if(augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                             if(fn.find('cKE') != -1):  # only wants key c
                                 fn_total.append(fn)
-                        else:
-                            fn_total.append(fn)
+                        elif augmentation == 'Y' and portion == 'train':
+                            fn_total.append(fn)  # we want 12 keys on training set
+                        elif augmentation == 'Y' and (portion == 'valid' or portion == 'test'): # original keys on the valid and test set:
+                            if (fn.find('_ori') != -1): # only add original key
+                                fn_total.append(fn)
+
         if(predict == 'N'):
             shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
         print (fn_total)
@@ -946,7 +978,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     if pitch != 'pitch_class_binary':
                         pitchClass = [0] * inputdim
                         #pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
-                        if(pitch == 'pitch'):
+                        if(pitch == 'pitch' or pitch.find('octaves') != -1):
                             pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                         elif pitch == 'pitch_class':
                             pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
@@ -1071,9 +1103,6 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
     :param countermin:
     :return:
     """
-
-
-
     id_sum = find_id(output, version)
     num_of_chorale = len(id_sum)
     #train_num = int(num_of_chorale * ratio)
@@ -1083,9 +1112,9 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                                     output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                          output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
+                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid')  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
+                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test')  # generating test data
         #print('debug')
     else:
         for times in range(distributed-1, distributed):  # do cross validation to get file ID
@@ -1093,9 +1122,9 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                                     output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train')  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                          output, f2, sign, 'N', 'N', pitch, valid_id, times+1, 'valid')  # generate training + validating data
+                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid')  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'Y', 'N', pitch, test_id, times+1, 'test')  # generating test data
+                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test')  # generating test data
 if __name__ == "__main__":
     counter = 0
     counterMin = 60
