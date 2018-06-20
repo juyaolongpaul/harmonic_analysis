@@ -29,8 +29,8 @@ def get_chord_tone(i,outputdim):
     :return:
     """
     chordtone = [0] * (outputdim + 1)
-    currentChord = i.encode('ansi')
-    i = currentChord.decode('utf-8')
+    #currentChord = i.encode('ansi')
+    #i = currentChord.decode('utf-8')
     #print('this is original chord name: ' + i)
     i = translate_chord_name_into_music21(i)
     #print('this is translated (music21 compatible) chord name: ' + i)

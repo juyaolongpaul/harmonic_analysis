@@ -368,7 +368,7 @@ def annotation_translation(input, output, version, source='melodic', ):
     corrupt_rule_chorale_ID = ['130'] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
     p = re.compile(r'\d{3}')
     for fn in os.listdir(cwd_annotation):
-        if fn.find('.') == -1: # skip folder
+        if fn.find('.') == -1 or fn.find('DS_Store') != -1: # skip folder and Mac os file
             continue
         ptr = p.search(fn).span()[0]  # return the starting place of "001"
         ptr2 = p.search(fn).span()[1]
@@ -479,7 +479,7 @@ def write_to_files(input, output, source, transposed='', multi=0):
             if ((os.path.isfile(os.path.join(base_directory, transposed) + fn[0:3] + '.pop''')) or
                     (os.path.isfile(os.path.join(os.path.join(base_directory, transposed) + fn[0:3] + '.pop.not''')))):
 
-                s = converter.parse(cwd + fn) # Use ly version
+                s = converter.parse(os.path.join(cwd, fn)) # Use ly version
                 sChords = s.chordify()
                 print(len(sChords.notes))
                 num_of_samples += len(sChords.notes)

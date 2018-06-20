@@ -7,7 +7,7 @@ from get_input_and_output import generate_data_windowing_non_chord_tone_new_anno
 from predict_result_for_140 import train_and_predict_non_chord_tone
 from chord_visualization import put_music21chord_into_musicXML, put_non_chord_tone_into_musicXML
 import argparse
-
+import os
 
 def main():
     parser = argparse.ArgumentParser()
@@ -20,7 +20,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
                         type=int, default=2)
@@ -55,18 +55,19 @@ def main():
                         type=int, default=0)
 
     args = parser.parse_args()
+
     if args.source == 'Rameau':
-        input = '.\\bach_chorales_scores\\original_midi+PDF\\'
+        input = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
     else:
-        input = '.\\bach-371-chorales-master-kern\\kern\\'
+        input = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')
         f1 = '.krn'  # the version of chorales used
     if(args.source == 'melodic'):
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'  # the corresponding annotations
+        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Melodic')  # the corresponding annotations
     elif args.source == 'rule_MaxMel':
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Chords_MaxMel\\'
+        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Chords_MaxMel')
     elif args.source == 'Rameau':
-        output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Rameau\\'
+        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Rameau')
     f2 = '.txt'
     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys

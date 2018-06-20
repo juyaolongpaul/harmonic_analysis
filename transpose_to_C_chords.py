@@ -187,26 +187,30 @@ def provide_path_12keys(input, f1, output, f2, source):
     #f2 = '.txt'
     import  re
     for file_name in os.listdir(output):
-        if (os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(input + 'transposed_' + 'KBc_oriKE' + file_name)):
+        if (os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBc_oriKE' + file_name)):
             continue
         if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
                     #continue
                 if source == 'melodic':
                     ptr = file_name.find('translated_') + 10
-                    s = converter.parse(input + file_name[ptr + 1:ptr + 4] + f1)
+                    s = converter.parse(os.path.join(input, file_name[ptr + 1:ptr + 4]) + f1)
                 elif source == 'rule_MaxMel':
                     p = re.compile(r'\d{3}')
                     ptr = p.findall(file_name)
-                    s = converter.parse(input + 'chor' + ptr[0] + f1)
+                    s = converter.parse(os.path.join(input, 'chor') + ptr[0] + f1)
                 elif source == 'Rameau':
                     ptr = file_name.find('translated_') + 10
-                    s = converter.parse('.\\bach_chorales_scores\\original_midi+PDF\\' + file_name[ptr + 1:ptr + 4] + '.mid') # Use ly version
+                    s = converter.parse(os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF', file_name[ptr + 1:ptr + 4]) + '.mid') # Use ly version
                 k = s.analyze('key')
 
                 #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)
                 for key_transpose in range(12):
+                    if k.mode == 'minor':
+                        i = interval.Interval(k.tonic, pitch.Pitch(c1[(displacement - key_transpose - 3) % len(c1)]))
+                    else:
+                        i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                     key_name = c1[(displacement - key_transpose) % len(c1)]
                     if i.directedName == 'P1':
                         key_name = key_name + '_ori'

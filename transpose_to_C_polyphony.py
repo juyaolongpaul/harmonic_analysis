@@ -18,25 +18,27 @@ def transpose_polyphony(source, input):
             continue
         if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
-            s = converter.parse(input + fn)
+            s = converter.parse(os.path.join(input, fn))
             k = s.analyze('key')
             displacement = get_displacement(k)
 
             #print(i)
 
             for key_transpose in range(12):
+
                 if k.mode == 'minor':
                     i = interval.Interval(k.tonic, pitch.Pitch(c1[(displacement - key_transpose - 3) % len(c1)]))
                 else:
                     i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                 print(i)
                 key_name = c1[(displacement - key_transpose) % len(c1)]
-
+                if i.directedName == 'P1':
+                    key_name += '_ori'
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):
-                    sNew.write('midi', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)
+                    sNew.write('midi', os.path.join(input,'transposed_') + 'KB' + key_name + 'KE' + id_id[0] + format)
                 else:
-                    sNew.write('musicxml', input + 'transposed_' + 'KB' + key_name + 'KE' + id_id[0] + format)  # convert krn into xml
+                    sNew.write('musicxml', os.path.join(input,'transposed_') + 'KB' + key_name + 'KE' + id_id[0] + format)  # convert krn into xml
 
 if __name__ == "__main__":
     transpose_polyphony()
