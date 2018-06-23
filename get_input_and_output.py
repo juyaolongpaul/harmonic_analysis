@@ -266,6 +266,35 @@ def fill_in_pitch_class(pitchclass, list):
     return pitchclass
 
 
+def fill_in_pitch_class_7(pitchclass, list):
+    """
+    Ignore accidentals
+    :param pitchclass: The pitch class vector that needs to label
+    :param list: The pitch class encoded in number
+    :return: the modified pitch class that need to store
+    """
+    NUM_OF_GENERIC_PITCH_CLASS = 7
+    pitchclass = [0] * NUM_OF_GENERIC_PITCH_CLASS
+    for i in list:
+        if i == 0 or i == 1:
+            pitchclass[0] = 1
+        elif i == 2 or i == 3:
+            pitchclass[1] = 1
+        elif i == 4:
+            pitchclass[2] = 1
+        elif i == 5 or i == 6:
+            pitchclass[3] = 1
+        elif i == 7 or i == 8:
+            pitchclass[4] = 1
+        elif i == 9 or i == 10:
+            pitchclass[5] = 1
+        elif i == 11:
+            pitchclass[6] = 1
+        else:
+            input('pitch class cannot compress into 7?')
+    return pitchclass
+
+
 def get_chord_list(output_dim, sign):
     dic = {}
     for file_name in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales'):
@@ -487,6 +516,74 @@ def get_non_chord_tone_4(x,y,outputdim, f):
                     #print('debug')
                 yy[yyptr] = 1
                 nonchordpitchclassptr[yyptr] = i%12
+    if(nonchordpitchclassptr == [-1] * 4):
+        print('n/a', end= ' ', file=f)
+    else:
+        #if(2 in nonchordpitchclassptr):
+            #print('debug')
+        for item in nonchordpitchclassptr:
+            if(item != -1):
+                print(pitchclass[item], end='', file=f) # we want dfg, not d f g!
+        print(end=' ', file=f)
+    return yy
+
+
+def pitch_class_7_to_12(ori):
+    """
+    Return the id of pitch class from generic pitch class
+    :param ori:
+    :return:
+    """
+    if ori == 0:
+        return [0,1]
+    elif ori == 1:
+        return [2,3]
+    elif ori == 2:
+        return [4]
+    elif ori == 3:
+        return [5,6]
+    elif ori == 4:
+        return [7,8]
+    elif ori == 5:
+        return [9,10]
+    elif ori == 6:
+        return [11]
+
+
+def get_non_chord_tone_4_pitch_class_7(x,y,outputdim, f):
+    """
+    Take out chord tones, only leave with non-chord tone
+
+    :param x: it is the X
+    :param y: it is all the chord tones in pitch-class ID
+    :return:
+    """
+    pitchclass = ['c','d','e','f','g','a','b']
+    nonchordpitchclassptr = [-1] * 4
+    yori = y
+    y = y[:12]
+    yy = [0] * 4
+    yyptr = -1
+    for i in range(len(x) - 2):
+        if(yori[-1] == 1): # broken chord, assume there is no non-chord tone!
+            break
+        if(x[i] == 1):  # go through the present pitch class
+            yyptr += 1
+            real_i = pitch_class_7_to_12(i)
+            if len(real_i) == 1:
+                if(y[real_i[0]%12] == 0):  # the present pitch class is a chord tone or not
+                    #print('yyptr:' , yyptr)
+                    #if(yyptr == 4):
+                        #print('debug')
+                    yy[yyptr] = 1
+                    nonchordpitchclassptr[yyptr] = i%12
+            elif len(real_i) == 2:
+                if (y[real_i[0] % 12] == 0 and y[real_i[1] % 12] == 0):  # the present pitch class is a chord tone or not
+                    # print('yyptr:' , yyptr)
+                    # if(yyptr == 4):
+                    # print('debug')
+                    yy[yyptr] = 1
+                    nonchordpitchclassptr[yyptr] = i % 12
     if(nonchordpitchclassptr == [-1] * 4):
         print('n/a', end= ' ', file=f)
     else:
@@ -984,6 +1081,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                             pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                         elif pitch == 'pitch_class_4_voices':
                             pitchClass = fill_in_pitch_class_4_voices(pitchClass, thisChord.pitchClasses, thisChord, s)
+                        elif pitch == 'pitch_7':
+                            pitchClass = fill_in_pitch_class_7(pitchClass, thisChord.pitchClasses)
                         pc_counter = 0
                         for ii in pitchClass:
                             if ii == 1:
@@ -1030,7 +1129,11 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         chord_class = get_chord_tone(chord, outputdim)
                         #chord_class = get_non_chord_tone(chorale_x[slice_counter], chord_class, output_dim)
                         if pitch != 'pitch_class_binary':
-                            chord_class = get_non_chord_tone_4(chorale_x[slice_counter], chord_class, outputdim, f_non)
+                            if pitch != 'pitch_7':
+                                chord_class = get_non_chord_tone_4(chorale_x[slice_counter], chord_class, outputdim, f_non)
+                            else:
+                                chord_class = get_non_chord_tone_4_pitch_class_7(chorale_x[slice_counter], chord_class, outputdim,
+                                                                   f_non)
                         else:
                             chord_class = get_non_chord_tone_4_binary(chorale_x[slice_counter], chord_class, outputdim, f_non)
                         #else:

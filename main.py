@@ -23,19 +23,19 @@ def main():
                         type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
-                        type=int, default=2)
+                        type=int, default=3)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=200)
+                        type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
-                        help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature (default: %(default)',
+                        help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature or pitch 7 (default: %(default)',
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=2)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',

@@ -108,8 +108,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     fp = []
     fn = []
     batch_size = 256
-    epochs = 200
-    patience = 20
+    epochs = 500
+    patience = 100
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime)
     print('Loading data...')
     extension = sign + 'y4_non-chord_tone_'+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
