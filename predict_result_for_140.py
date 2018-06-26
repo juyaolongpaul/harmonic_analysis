@@ -92,7 +92,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     #train_num = int(num_of_chorale * ratio)
     test_num = int((num_of_chorale - train_num) / 2)
     #keys, music21 = determine_middle_name(augmentation, sign, portion)
-    keys, keys1, music21 = determine_middle_name2(augmentation, sign)
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
     pre = []
     pre_test = []
     rec = []

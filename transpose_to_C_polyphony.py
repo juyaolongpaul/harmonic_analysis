@@ -33,7 +33,7 @@ def transpose_polyphony(source, input):
                     i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                 print(i)
                 key_name = c1[(displacement - key_transpose) % len(c1)]
-                if i.directedName == 'P1':
+                if i.directedName == 'P1' or i.directedName == 'd-2':  # account for pitch spelling
                     key_name += '_ori'
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):

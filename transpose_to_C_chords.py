@@ -213,7 +213,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                     else:
                         i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
                     key_name = c1[(displacement - key_transpose) % len(c1)]
-                    if i.directedName == 'P1':
+                    if i.directedName == 'P1' or i.directedName == 'd-2':
                         key_name = key_name + '_ori'
                     f = open(os.path.join(output, file_name), 'r')
                     fnew = open(os.path.join(output, 'transposed_') + 'KB' + key_name + 'KE' + file_name, 'w')

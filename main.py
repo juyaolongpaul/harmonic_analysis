@@ -31,13 +31,14 @@ def main():
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
-                        help='use pitch or pitch class or pitch class binary or pitch class 4 voices as input feature or pitch 7 (default: %(default)',
+                        help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
+                             'input feature or pitch 7 (default: %(default)',
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=2)
     parser.add_argument('-pp', '--percentage',
-                        help='the portion of the trainig data you want to use (a float number between 0-1'
+                        help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',

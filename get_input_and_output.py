@@ -897,7 +897,7 @@ def generate_data_windowing_non_chord_tone_new_annotation(counter1, counter2, x,
     np.savetxt('.\\data_for_ML\\' +sign + '_y_windowing_' + str(windowsize) + 'y4_non-chord_tone_pitch_class_New_annotation.txt', y, fmt = '%.1e')
 
 
-def determine_middle_name(augmentation, source, portion):
+def determine_middle_name(augmentation, source, portion, pitch):
     '''
     Determine the file name of whether using augmentation, pitch or pitch-class and melodic or harmonic
     :param augmentation:
@@ -914,11 +914,13 @@ def determine_middle_name(augmentation, source, portion):
             keys = '12keys'
         else:
             keys = 'keyOri'
-    else:
+    elif pitch.find('oriKey') == -1:
         keys = 'keyC'
+    else:
+        keys = 'keyOri'
     return keys, music21
 
-def determine_middle_name2(augmentation, source):
+def determine_middle_name2(augmentation, source, pitch):
     '''
     Only used for finding right np file for training ML model
     :param augmentation:
@@ -933,9 +935,11 @@ def determine_middle_name2(augmentation, source):
     if (augmentation == 'Y'):
             keys = '12keys'
             keys1 = 'keyOri'
-    else:
+    elif pitch.find('oriKey') == -1:
         keys = 'keyC'
         keys1 = 'keyC'
+    else:
+        keys = keys1 = 'keyOri'
     return keys, keys1, music21
 
 def find_id(input, version):
@@ -1003,7 +1007,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     fn_total = []
     file_counter = 0
     slice_counter = 0
-    keys, music21 = determine_middle_name(augmentation, sign, portion)
+    keys, music21 = determine_middle_name(augmentation, sign, portion, pitch)
     number = len(data_id)
     if sign == 'Rameau':
         input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
@@ -1032,8 +1036,12 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     id_id = p.findall(fn)
                     if id_id[0] in data_id:  # if the digit found in the list, add this file
                         if(augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                            if(fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
-                                fn_total.append(fn)
+                            if pitch.find('oriKey') == -1: # we want transposed key
+                                if(fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                                    fn_total.append(fn)
+                            else:
+                                if fn.find('_ori') != -1:  # no transposition
+                                    fn_total.append(fn)
                         elif augmentation == 'Y' and portion == 'train':
                             fn_total.append(fn)  # we want 12 keys on training set
                         elif augmentation == 'Y' and (portion == 'valid' or portion == 'test'): # original keys on the valid and test set:
@@ -1077,7 +1085,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         #pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
                         if(pitch == 'pitch' or pitch.find('octaves') != -1):
                             pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
-                        elif pitch == 'pitch_class':
+                        elif pitch == 'pitch_class' or pitch == 'pitch_class_oriKey':
                             pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                         elif pitch == 'pitch_class_4_voices':
                             pitchClass = fill_in_pitch_class_4_voices(pitchClass, thisChord.pitchClasses, thisChord, s)
