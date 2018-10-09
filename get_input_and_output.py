@@ -190,14 +190,14 @@ def get_pitch_class_for_four_voice(thisChord, s):
             # "thisChord.beatStr", thisChord.beatStr)
             if part.measure(thisChord.measureNumber).notes[i].beatStr == thisChord.beatStr:
 
-                pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitchClass)
+                pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
             else:
                 if part.measure(thisChord.measureNumber).notes[i].beatStr < thisChord.beatStr:
                     if len(part.measure(thisChord.measureNumber).notes) == i + 1:
-                        pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitchClass)
+                        pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
                     elif i + 1 < len(part.measure(thisChord.measureNumber).notes):
                         if part.measure(thisChord.measureNumber).notes[i + 1].beatStr > thisChord.beatStr:
-                            pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitchClass)
+                            pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
     return pitch_class_four_voice
 
 
@@ -296,7 +296,7 @@ def fill_in_pitch_class_7(list, name):
                 elif 'E-' in name:
                     pitchclass[octave_or_voice * NUM_OF_GENERIC_PITCH_CLASS + 2] = 1
                 else:
-                    input('no correct pitch spelling for 3?')
+                    input('no correct pitch spelling for 3?')  #  one exception: might be d## or F-
             elif i%NUM_OF_PITCH_CLASS == 4:
                 pitchclass[octave_or_voice*NUM_OF_GENERIC_PITCH_CLASS+2] = 1
             elif i%NUM_OF_PITCH_CLASS == 5:
