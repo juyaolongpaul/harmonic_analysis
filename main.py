@@ -32,8 +32,9 @@ def main():
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
-                             'input feature or pitch 7 (default: %(default)',
-                        type=str, default='pitch_class')
+                             'input feature. You can also append 7 in the end to use '
+                             'do the generic pitch(default: %(default)',
+                        type=str, default='pitch_class_4_voices_7')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=2)
