@@ -38,6 +38,7 @@ import time
 import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
+from imblearn.over_sampling import RandomOverSampler
 from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
@@ -69,6 +70,40 @@ def get_predict_file_name(input, data_id, augmentation):
     return filename, num_salami_slices
 
 
+def binary_decode(arr):
+    """
+    Translate binary encoding into decimal
+    :param arr:
+    :return:
+    """
+    arr_decoded = []
+    for i, item in enumerate(arr):
+        total = 0
+        for index, val in enumerate(reversed(item)):
+            total += (val * 2**index)
+        arr_decoded.append(int(total))
+
+    return arr_decoded
+
+
+def binary_encode(arr):
+    """
+    Translate decimal into binary
+    :param arr:
+    :return:
+    """
+    arr_encoded = []
+    for i, item in enumerate(arr):
+        row = np.array(list(np.binary_repr(item).zfill(4))).astype(float)
+        # https://stackoverflow.com/questions/22227595/convert-integer-to-binary-array-with-suitable-padding
+        if i == 0:
+            arr_encoded = np.concatenate((arr_encoded, row))
+        else:
+            arr_encoded = np.vstack((arr_encoded, row))
+    return arr_encoded
+
+
+
 def bootstrap_data(x, y, times):
     """
     bootstraping data
@@ -85,7 +120,7 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed):
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
@@ -110,7 +145,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     batch_size = 256
     epochs = 500
     patience = 50
-    extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime)
+    extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
     extension = sign + 'y4_non-chord_tone_'+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
     #train_xxx_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_x_windowing_' + str(windowsize) + extension + '.txt')
@@ -159,6 +194,18 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             train_xx = train_xx[
                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
             train_yy = train_yy[:int(portion * train_yy.shape[0])]
+            if balanced: # re-balance the data
+                # http://imbalanced-learn.org/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets
+                train_yy_encoded = binary_decode(train_yy)
+                ros = RandomOverSampler(ratio='minority')
+                train_xx_imbalanced = train_xx
+                train_yy_imbalanced = train_yy
+                ros_statistics = ros.fit(train_xx, train_yy_encoded)
+                train_xx, train_yy_balanced = ros.fit_sample(train_xx, train_yy_encoded)
+
+                train_xx = train_xx[:int(1.5*train_xx_imbalanced.shape[0])]
+                train_yy_balanced = train_yy_balanced[:int(1.5 * train_yy_imbalanced.shape[0])]
+                train_yy = binary_encode(train_yy_balanced)
             print('training and predicting...')
             print('train_xx shape:', train_xx.shape)
             print('train_yy shape:', train_yy.shape)

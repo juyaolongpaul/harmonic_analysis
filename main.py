@@ -34,7 +34,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_4_voices_7')
+                        type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=2)
@@ -97,7 +97,7 @@ def main():
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed)
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
