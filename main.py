@@ -55,6 +55,12 @@ def main():
     parser.add_argument('-d', '--distributed',
                         help='specify which cv set you want to generate (default: %(default))',
                         type=int, default=0)
+    parser.add_argument('-bal', '--balanced',
+                        help='specify whether you want to make the dataset balanced (default: %(default))',
+                        type=int, default=0)
+    parser.add_argument('-o', '--output',
+                        help='specify whether you want output non-chord tone (NCT) or chord labels (CL) directly (default: %(default))',
+                        type=str, default='CL')
 
     args = parser.parse_args()
 
@@ -92,12 +98,12 @@ def main():
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version, args.distributed)  # generate training and testing data, return the sequence of test id
+                                                                 args.cross_validation, args.version, args.distributed, args.output)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced)
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

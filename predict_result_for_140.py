@@ -103,6 +103,37 @@ def binary_encode(arr):
     return arr_encoded
 
 
+def onehot_decode(arr):
+    """
+    Translate onehot encoding into decimal
+    :param arr:
+    :return:
+    """
+    arr_decoded = []
+    for i, item in enumerate(arr):
+        for ii, itemitem in enumerate(item):
+            if itemitem == 1:
+                arr_decoded.append(ii)
+
+    return arr_decoded
+
+
+def onehot_encode(arr, dim):
+    """
+    Translate int into one hot encoding
+    :param arr:
+    :return:
+    """
+    arr_encoded = []
+    for i, item in enumerate(arr):
+        print('progress:',i,'/',arr.shape[0])
+        row = [0] * dim
+        # https://stackoverflow.com/questions/22227595/convert-integer-to-binary-array-with-suitable-padding
+        row[item] = 1
+        arr_encoded.append(row)
+    return arr_encoded
+
+
 
 def bootstrap_data(x, y, times):
     """
@@ -120,7 +151,7 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced):
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
@@ -147,7 +178,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     patience = 50
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
-    extension = sign + 'y4_non-chord_tone_'+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
+    extension = sign + outputtype+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
     #train_xxx_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_x_windowing_' + str(windowsize) + extension + '.txt')
     #train_yyy_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_y_windowing_' + str(windowsize) + extension + '.txt')
     timestep = ts
@@ -175,17 +206,17 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         #train_xx, train_yy, valid_xx, valid_yy, rubbish_x, rubbish_y = divide_training_data(10, portion, times, train_xxx_ori, train_yyy_ori, testset='N')
          # only have valid result
         valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         if not (os.path.isfile((os.path.join('.', 'data_for_ML', MODEL_NAME) + ".hdf5"))):
             train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-                windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+                windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-                windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+                windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
@@ -195,17 +226,26 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
             train_yy = train_yy[:int(portion * train_yy.shape[0])]
             if balanced: # re-balance the data
-                # http://imbalanced-learn.org/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets
-                train_yy_encoded = binary_decode(train_yy)
-                ros = RandomOverSampler(ratio='minority')
-                train_xx_imbalanced = train_xx
-                train_yy_imbalanced = train_yy
-                ros_statistics = ros.fit(train_xx, train_yy_encoded)
-                train_xx, train_yy_balanced = ros.fit_sample(train_xx, train_yy_encoded)
+                if outputtype == "NCT":
+                    # http://imbalanced-learn.org/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets
+                    train_yy_encoded = binary_decode(train_yy)
+                    ros = RandomOverSampler(ratio='minority')
+                    train_xx_imbalanced = train_xx
+                    train_yy_imbalanced = train_yy
+                    ros_statistics = ros.fit(train_xx, train_yy_encoded)
+                    train_xx, train_yy_balanced = ros.fit_sample(train_xx, train_yy_encoded)
 
-                train_xx = train_xx[:int(1.5*train_xx_imbalanced.shape[0])]
-                train_yy_balanced = train_yy_balanced[:int(1.5 * train_yy_imbalanced.shape[0])]
-                train_yy = binary_encode(train_yy_balanced)
+                    train_xx = train_xx[:int(1.5*train_xx_imbalanced.shape[0])]
+                    train_yy_balanced = train_yy_balanced[:int(1.5 * train_yy_imbalanced.shape[0])]
+                    train_yy = binary_encode(train_yy_balanced)
+                else:
+                    ros = RandomOverSampler()
+                    train_xx_imbalanced = train_xx
+                    train_yy_imbalanced = train_yy
+                    train_yy_encoded = onehot_decode(train_yy)
+                    train_xx, train_yy_balanced = ros.fit_sample(train_xx, train_yy_encoded)
+                    train_yy = onehot_encode(train_yy_balanced, train_yy_imbalanced.shape[1])
+                    train_yy = np.asarray(train_yy)
             print('training and predicting...')
             print('train_xx shape:', train_xx.shape)
             print('train_yy shape:', train_yy.shape)
@@ -246,19 +286,23 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 model.add(Dense(OUTPUT_DIM, init='uniform'))
             else:
                 model.add(TimeDistributed(Dense(OUTPUT_DIM)))
-            model.add(Activation('sigmoid'))
-            model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
-            early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
+            if outputtype == "NCT":
+                model.add(Activation('sigmoid'))
+                model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+            elif outputtype == "CL":
+                model.add(Activation('softmax'))
+                model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+            early_stopping = EarlyStopping(monitor='val_acc', patience=patience)  # set up early stopping
             print("Train...")
-            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
+            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_acc')
             hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
         # visualize the result and put into file
         test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + 'y4_non-chord_tone_' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
         predict_y = model.predict(test_xx, verbose=0)
@@ -268,23 +312,23 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         cvscores.append(scores[1] * 100)
         cvscores_test.append(scores_test[1] * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
-
-        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
-            model, valid_xx, valid_yy, modelID)
-        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model, test_xx,
-                                                                                                        test_yy, modelID)
-        pre.append(precision * 100)
-        pre_test.append(precision_test * 100)
-        rec.append(recall * 100)
-        rec_test.append(recall_test * 100)
-        f1.append(f1score * 100)
-        f1_test.append(f1score_test * 100)
-        acc.append(accuracy * 100)
-        acc_test.append(accuracy_test * 100)
-        tp.append(true_positive)
-        fp.append(false_positive)
-        fn.append(false_negative)
-        tn.append(true_negative)
+        if outputtype == "NCT":
+            precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+                model, valid_xx, valid_yy, modelID)
+            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model, test_xx,
+                                                                                                            test_yy, modelID)
+            pre.append(precision * 100)
+            pre_test.append(precision_test * 100)
+            rec.append(recall * 100)
+            rec_test.append(recall_test * 100)
+            f1.append(f1score * 100)
+            f1_test.append(f1score_test * 100)
+            acc.append(accuracy * 100)
+            acc_test.append(accuracy_test * 100)
+            tp.append(true_positive)
+            fp.append(false_positive)
+            fn.append(false_negative)
+            tn.append(true_negative)
         # prediction put into files
         '''for i in predict_y:  # regulate the prediction
             for j, item in enumerate(i):
@@ -349,29 +393,28 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
-    # print(model.summary(), file=cv_log)
-
     model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
-    print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
-    print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
-    print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
-    print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
-    print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
-    print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
-    print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
-    print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
-    for i in range(len(cvscores_test)):
-        # print('Test accuracy:', i, cvscores_test[i], '%', file=cv_log)
-        # print('Test precision:', i, pre_test[i], '%', file=cv_log)
-        # print('Test reall:', i, rec_test[i], '%', file=cv_log)
-        print('Test f1:', i, f1_test[i], '%', file=cv_log)
-        # print('Test acc:', i, acc_test[i], '%', file=cv_log)
+    if outputtype == 'NCT':
+        print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
+        print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
+        print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
+        print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
+        print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
+        print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
+        print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
+        print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+        for i in range(len(cvscores_test)):
+            print('Test f1:', i, f1_test[i], '%', file=cv_log)
+    elif outputtype == "CL":
+        for i in range(len(cvscores_test)):
+            print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
     print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
-    print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
-    print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
-    print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
-    print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
+    if outputtype == 'NCT':
+        print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
+        print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
+        print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
 
 
 
