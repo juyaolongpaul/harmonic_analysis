@@ -38,6 +38,7 @@ import time
 import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
+from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
 from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
@@ -211,7 +212,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
-        if not (os.path.isfile((os.path.join('.', 'data_for_ML', MODEL_NAME) + ".hdf5"))):
+        if not (os.path.isfile((os.path.join('.', 'ML_result', MODEL_NAME) + ".hdf5"))):
             train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
                 windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
@@ -292,9 +293,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             elif outputtype == "CL":
                 model.add(Activation('softmax'))
                 model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
-            early_stopping = EarlyStopping(monitor='val_acc', patience=patience)  # set up early stopping
+            early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
             print("Train...")
-            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_acc')
+            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
             hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
         # visualize the result and put into file
@@ -305,13 +306,19 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
-        predict_y = model.predict(test_xx, verbose=0)
+        test_yy_int = np.asarray(onehot_decode(test_yy))
+        predict_y = model.predict_classes(test_xx, verbose=0)
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
         scores_test = model.evaluate(test_xx, test_yy, verbose=0)
         print(' valid_acc: ', scores[1])
         cvscores.append(scores[1] * 100)
         cvscores_test.append(scores_test[1] * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
+        with open('chord_name.txt') as f:
+            chord_name = f.read().splitlines()
+        # matrix = confusion_matrix(test_yy_int, predict_y, labels=chord_name)
+        # print(matrix, file=cv_log)
+        print(classification_report(test_yy_int, predict_y), file=cv_log)
         if outputtype == "NCT":
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
                 model, valid_xx, valid_yy, modelID)

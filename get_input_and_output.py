@@ -789,7 +789,17 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         list_of_chords = []
         for i, word in enumerate(li):
             list_of_chords.append(word[0]) # Get all the chords
-        print(list_of_chords)
+        if os.path.isfile('chord_freq.txt') != 1:
+            f_chord = open('chord_freq.txt', 'w')
+            for item in li:
+                print(item, file=f_chord)
+            f_chord.close()
+        if os.path.isfile('chord_name.txt') != 1:
+            f_chord2 = open('chord_name.txt', 'w')
+            for item in list_of_chords:
+                print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
+                # confusion matrix
+            f_chord2.close()
         for id, fn in enumerate(fn_total):
                 print(fn)
                 ptr = p.search(fn).span()[0]  # return the starting place of "001"
