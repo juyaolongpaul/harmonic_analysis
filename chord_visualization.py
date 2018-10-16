@@ -4,6 +4,91 @@ import sys
 format = ['krn']
 cwd = '.\\bach-371-chorales-master-kern\\kern\\'
 from get_input_and_output import get_chord_line
+
+
+def put_chord_label_into_musicXML(input, output, sign, f1, f2, pitch):
+    """
+    Put only chord labels into musicXML
+    :param string:
+    :param string1:
+    :param string2:
+    :return:
+    """
+    fn_total = []
+    for id, fn in enumerate(os.listdir(input)):
+        #print(fn)
+        #if fn.find( 'KB') != -1 and fn[-4:] == f1 and fn.find('130') == -1 and fn.find('133') == -1 and fn.find('19') != -1:  # only look for the transposed one
+
+        if (fn.find('KBcKE') != -1 or fn.find('KBc_oriKE') != -1) and fn[-4:] == f1:
+            #if fn.find('340') != -1 or fn.find('358') != -1 or fn.find('362') != -1 or fn.find('003') != -1 or fn.find('008') != -1 or fn.find('014') != -1:
+                fn_total.append(fn)
+    for id, fn in enumerate(fn_total):
+        ptr = fn.find('chor')
+        if fn[-3:] == 'xml':
+            if (os.path.isfile(output + fn[:ptr] + 'translated_' + fn[-7:-4] + '_'+ sign + f2) and os.path.isfile('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone_' + sign + '.txt')): # if the annotation file exists
+                f = open(output + fn[:ptr] + 'non_chord_tone_' + '_' + sign + fn[-7:-4] + f2,'r')
+                fchord = open(output + fn[:ptr] + 'translated_' + fn[-7:-4] + '_'+ sign + f2,'r')
+                fprediction = open('.\\predicted_result\\' + 'predicted_result_' + fn + '_non-chord_tone_' + sign + pitch + '.txt', 'r')
+            else:
+                continue  # skip the file which does not have chord labels
+            s = converter.parse(cwd + fn)
+            print(fn[4:7])
+            sChords = s.chordify()
+            lineTotal = ''
+            lineTotalNoInversion = ''
+            linechordtotal = ''
+            for linepre in fprediction.readlines():
+                linepre = get_chord_line(linepre, sign)
+                lineTotal += linepre
+            chordpreTotal = lineTotal.split()
+            lineTotal = ''
+            for line in f.readlines():
+                line = get_chord_line(line, sign)
+                lineNoInversion = get_chord_line(line, '0')
+                lineTotal += line
+                lineTotalNoInversion += lineNoInversion
+            chordTotal = lineTotal.split()
+            chordTotalNoInversion = lineTotalNoInversion.split()
+            s.insert(0, sChords)
+            for linechord in fchord.readlines():
+                linechordtotal += linechord
+            realchordtotal = linechordtotal.split()
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                #print(len(chordTotal))
+                #print(i)
+                if(i < len(chordTotal)):
+                    currentChord = chordTotal[i]#.encode('ansi')  # string to byte
+                    #print(currentChord)
+                    if(realchordtotal[i] != realchordtotal[i-1]):
+                        realchord = realchordtotal[i].encode('ansi')
+                        thisChord.addLyric(realchord.decode('utf-8'))
+                    elif i == 0:
+                        realchord = realchordtotal[i].encode('ansi')
+                        thisChord.addLyric(realchord.decode('utf-8'))
+                    else:
+                        thisChord.addLyric(' ')
+                    if (chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
+                        thisChord.addLyric(chordTotal[i])
+                    else:
+                        thisChord.addLyric(' ')
+                    if(chordpreTotal[i] != 'n/a' and chordpreTotal[i] != 'n'):
+                        thisChord.addLyric(chordpreTotal[i])
+                    else:
+                        thisChord.addLyric(' ')
+                    '''if(chordTotal[i] != chordpreTotal[i]):
+                        if(chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
+                            thisChord.addLyric(chordTotal[i])
+                        if (chordpreTotal[i] != 'n/a'):
+                            thisChord.addLyric(chordpreTotal[i])#.decode('utf-8'))  # byte to string
+                    elif(chordTotal[i] != 'n/a' and chordTotal[i] != 'n'):
+                        thisChord.addLyric(chordTotal[i])
+                        thisChord.addLyric(chordpreTotal[i])'''
+                else:
+                    print('error')
+                thisChord.closedPosition(forceOctave=4, inPlace=True)
+            s.write('musicxml', fp=".\\predicted_result\\" + 'predicted_result_' + fn + 'non_chord_tone_' + sign + pitch + '.xml')
+
+
 def put_non_chord_tone_into_musicXML(input, output, sign, f1, f2, pitch):
     """
 

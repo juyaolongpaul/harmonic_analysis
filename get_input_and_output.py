@@ -23,7 +23,8 @@ def get_chord_line(line, sign):
     for letter in '!':
         line = line.replace(letter, '')
     #if(sign == '0'):  # now, no inversions what so ever
-    line = re.sub(r'/\w[b#]*', '', line)  # remove inversions + shapr + flat
+    #line = re.sub(r'/\w[b#]*', '', line)  # remove inversions + shapr + flat
+    # careful that / can either represent inversions as well as half diminished sign!
     return line
 
 

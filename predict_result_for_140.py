@@ -53,7 +53,7 @@ def get_predict_file_name(input, data_id, augmentation):
             if id_id[0] in data_id:  # if the digit found in the list, add this file
 
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                    if (fn.find('cKE') != -1):  # only wants key c
+                    if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
                         filename.append(fn)
                 else:
                     filename.append(fn)
@@ -62,7 +62,7 @@ def get_predict_file_name(input, data_id, augmentation):
 
     for id, fn in enumerate(filename):
         length = 0
-        s = converter.parse(input + fn)
+        s = converter.parse(os.path.join(input, fn))
         sChords = s.chordify()
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
 
@@ -342,13 +342,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             fn.append(false_negative)
             tn.append(true_negative)
         # prediction put into files
-        '''for i in predict_y:  # regulate the prediction
-            for j, item in enumerate(i):
-                if (item > 0.5):
-                    i[j] = 1
-                else:
-                    i[j] = 0
-        #input = '.\\bach-371-chorales-master-kern\\kern\\'
         fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
         sum = 0
         for i in range(len(numSalamiSlices)):
@@ -359,48 +352,42 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         length = len(fileName)
         a_counter = 0
         a_counter_correct = 0
-        pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+        if os.path.isfile('.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt'):
+            f_all = open(
+            '.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+            'a') # create this file to track every type of mistakes
+        else:
+            f_all = open(
+                '.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+                'w')  # create this file to track every type of mistakes
         for i in range(length):
-            f = open('.\\predicted_result\\' + 'predicted_result_' + fileName[i] + '_non-chord_tone_' + sign + pitch_class + '.txt', 'w')
+            print(fileName[i][:-4], file=f_all)
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
-            for j in range(num_salami_slice):
-                gt = test_yy[a_counter]
-                prediction = predict_y[a_counter]
-                correct_bit = 0
-                for i in range(len(gt)):
-                    if (gt[i] == prediction[i]):  # the label is correct
-                        correct_bit += 1
-                if (correct_bit == len(gt)):
+            s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+            sChords = s.chordify()
+            s.insert(0, sChords)
+            for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                thisChord.addLyric(chord_name[test_yy_int[a_counter]])
+                thisChord.addLyric(chord_name[predict_y[a_counter]])
+                thisChord.closedPosition(forceOctave=4, inPlace=True)
+                if test_yy_int[a_counter] == predict_y[a_counter]:
                     correct_num += 1
+                    print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
                 else:
-                    print('error')
-                nonchordpitchclassptr = [-1] * 4
-                yyptr = -1
-                dimension = test_xx.shape[1]
-                realdimension = int(dimension / (2 * windowsize + 1))
-                x = test_xx[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
-                for i in range(len(x) - 2):
-                    if (x[i] == 1):  # non-chord tone
-                        yyptr += 1
-                        if (prediction[yyptr] == 1):
-                            nonchordpitchclassptr[yyptr] = i % 12
-
-                if (nonchordpitchclassptr == [-1] * 4):
-                    print('n/a', end=' ', file=f)
-                else:
-                    for item in nonchordpitchclassptr:
-                        if (item != -1):
-                            print(pitchclass[item], end='', file=f)
-                    print(end=' ', file=f)
+                    print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ', file=f_all)
                 a_counter += 1
             a_counter_correct += correct_num
-            print(end='\n', file=f)
-            print('accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f)
+            print(end='\n', file=f_all)
+            print('accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
             print('num of correct answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
-                  file=f)
-            print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f)
-            f.close()'''
+                  file=f_all)
+            print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
+            s.write('musicxml',
+                    fp='.\\predicted_result\\' + 'predicted_result_' + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
+            # output result in musicXML
+        f_all.close()
+
 
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
