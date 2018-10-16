@@ -316,9 +316,14 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
         with open('chord_name.txt') as f:
             chord_name = f.read().splitlines()
-        # matrix = confusion_matrix(test_yy_int, predict_y, labels=chord_name)
+        with open('chord_name.txt') as f:
+            chord_name2 = f.read().splitlines() # delete all the chords which do not appear in the test set
         # print(matrix, file=cv_log)
-        print(classification_report(test_yy_int, predict_y), file=cv_log)
+        for i, item in enumerate(chord_name):
+            if i not in test_yy_int and i not in predict_y:
+                chord_name2.remove(item)
+        matrix = confusion_matrix(test_yy_int, predict_y)
+        print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
         if outputtype == "NCT":
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
                 model, valid_xx, valid_yy, modelID)
