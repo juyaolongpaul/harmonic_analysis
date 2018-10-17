@@ -27,6 +27,7 @@ from keras.optimizers import SGD, RMSprop
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
+from collections import Counter
 import h5py
 import re
 import os
@@ -195,6 +196,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     print('Build model...')
     cv_log = open(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
+    error_list = [] # save all the errors to calculate frequencies
     for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
@@ -376,6 +378,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
                 else:
                     print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                    error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
                 a_counter += 1
             a_counter_correct += correct_num
             print(end='\n', file=f_all)
@@ -386,9 +389,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             s.write('musicxml',
                     fp='.\\predicted_result\\' + 'predicted_result_' + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
             # output result in musicXML
-        f_all.close()
-
-
+    counts = Counter(error_list)
+    print(counts, file=f_all)
+    f_all.close()
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
