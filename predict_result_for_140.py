@@ -153,6 +153,43 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
+def output_NCT_to_XML(x, y, thisChord, predict_chord='N'):
+    """
+    Translate 4-bit nct encoding and map the pitch classes and output the result into XML
+    If you want to predict_chord, set this parameter to 'Y'
+    :param x:
+    :param gt:
+    :param f_all:
+    :param thisChord:
+    :return:
+    """
+    yyptr = -1
+    nonchordpitchclassptr = [-1] * 4
+    pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+    chord_tone = x
+    for i in range(len(x) - 2):
+        if (x[i] == 1):  # non-chord tone
+            yyptr += 1
+            if (y[yyptr] == 1):
+                nonchordpitchclassptr[yyptr] = i % 12
+    if nonchordpitchclassptr != [-1] * 4:
+        nct = [] # there are NCTs
+        for item in nonchordpitchclassptr:
+            if (item != -1):
+                nct.append(pitchclass[item])
+                chord_tone[item] = 0
+        thisChord.addLyric(nct)
+    else:
+        thisChord.addLyric(' ')
+
+    if predict_chord == 'Y': # we need to translate the chord tone into chord label
+        chord_pitch_class_ID = []
+        for i, item in enumerate(chord_tone):
+            if item == 1:
+                chord_pitch_class_ID.append(i)
+
+
+
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
@@ -175,14 +212,13 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     tn = []
     fp = []
     fn = []
+    frame_acc = []
     batch_size = 256
     epochs = 500
     patience = 50
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
     extension = sign + outputtype+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
-    #train_xxx_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_x_windowing_' + str(windowsize) + extension + '.txt')
-    #train_yyy_ori = np.loadtxt('.\\data_for_ML\\' + sign +'_y_windowing_' + str(windowsize) + extension + '.txt')
     timestep = ts
     #INPUT_DIM = train_xxx_ori.shape[1]
     #OUTPUT_DIM = train_yyy_ori.shape[1]
@@ -191,8 +227,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                  str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                  + str(timestep) + extension + extension2
     print('Loading data...')
-    #print('original train_xx shape:', train_xxx_ori.shape)
-    #print('original train_yy shape:', train_yyy_ori.shape)
     print('Build model...')
     cv_log = open(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
@@ -205,9 +239,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
-
-        #train_xx, train_yy, valid_xx, valid_yy, rubbish_x, rubbish_y = divide_training_data(10, portion, times, train_xxx_ori, train_yyy_ori, testset='N')
-         # only have valid result
         valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
@@ -307,9 +338,21 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
+        test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
+            windowsize) + 'CL' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            test_num) + '_cv_' + str(times + 1) + '.txt')
         model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
-        test_yy_int = np.asarray(onehot_decode(test_yy))
-        predict_y = model.predict_classes(test_xx, verbose=0)
+        if outputtype == 'CL':
+            predict_y = model.predict_classes(test_xx, verbose=0)  # we can directly output the chord class ID
+        elif outputtype == 'NCT':
+            predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
+            for i in predict_y:  # regulate the prediction
+                for j, item in enumerate(i):
+                    if (item > 0.5):
+                        i[j] = 1
+                    else:
+                        i[j] = 0
+        test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
         scores = model.evaluate(valid_xx, valid_yy, verbose=0)
         scores_test = model.evaluate(test_xx, test_yy, verbose=0)
         print(' valid_acc: ', scores[1])
@@ -318,14 +361,14 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
         with open('chord_name.txt') as f:
             chord_name = f.read().splitlines()
-        with open('chord_name.txt') as f:
-            chord_name2 = f.read().splitlines() # delete all the chords which do not appear in the test set
-        # print(matrix, file=cv_log)
-        for i, item in enumerate(chord_name):
-            if i not in test_yy_int and i not in predict_y:
-                chord_name2.remove(item)
-        matrix = confusion_matrix(test_yy_int, predict_y)
-        print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
+        if outputtype == 'CL':  # NCT does not make a lot of sense to use classification report
+            with open('chord_name.txt') as f:
+                chord_name2 = f.read().splitlines() # delete all the chords which do not appear in the test set
+            # print(matrix, file=cv_log)
+            for i, item in enumerate(chord_name):
+                if i not in test_yy_int and i not in predict_y:
+                    chord_name2.remove(item)
+            print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
         if outputtype == "NCT":
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
                 model, valid_xx, valid_yy, modelID)
@@ -354,6 +397,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         length = len(fileName)
         a_counter = 0
         a_counter_correct = 0
+
         if os.path.isfile('.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt'):
             f_all = open(
             '.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
@@ -370,15 +414,33 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             sChords = s.chordify()
             s.insert(0, sChords)
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                thisChord.addLyric(chord_name[test_yy_int[a_counter]])
-                thisChord.addLyric(chord_name[predict_y[a_counter]])
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
-                if test_yy_int[a_counter] == predict_y[a_counter]:
-                    correct_num += 1
-                    print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
-                else:
-                    print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ', file=f_all)
-                    error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
+                if outputtype == 'CL':
+                    thisChord.addLyric(chord_name[test_yy_int[a_counter]])
+                    thisChord.addLyric(chord_name[predict_y[a_counter]])
+                    if test_yy_int[a_counter] == predict_y[a_counter]:
+                        correct_num += 1
+                        print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                    else:
+                        print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                        error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
+                elif outputtype == 'NCT':
+                    thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
+                    # pitch spelling does not affect the final results
+                    gt = test_yy[a_counter]
+                    prediction = predict_y[a_counter]
+                    correct_bit = 0
+                    for ii in range(len(gt)):
+                        if (gt[ii] == prediction[ii]):  # the label is correct
+                            correct_bit += 1
+                    if (correct_bit == len(gt)):
+                        correct_num += 1
+                    dimension = test_xx.shape[1]
+                    realdimension = int(dimension / (2 * windowsize + 1))
+                    x = test_xx[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
+                    output_NCT_to_XML(x, gt, thisChord)
+                    output_NCT_to_XML(x, prediction, thisChord)
+
                 a_counter += 1
             a_counter_correct += correct_num
             print(end='\n', file=f_all)
@@ -389,6 +451,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             s.write('musicxml',
                     fp='.\\predicted_result\\' + 'predicted_result_' + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
             # output result in musicXML
+        frame_acc.append((a_counter_correct / a_counter) * 100)
     counts = Counter(error_list)
     print(counts, file=f_all)
     f_all.close()
@@ -407,7 +470,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
         for i in range(len(cvscores_test)):
-            print('Test f1:', i, f1_test[i], '%', file=cv_log)
+            print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', file=cv_log)
     elif outputtype == "CL":
         for i in range(len(cvscores_test)):
             print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
@@ -417,7 +480,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
         print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-
+        print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
 
 
 if __name__ == "__main__":
