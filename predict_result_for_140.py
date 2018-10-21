@@ -153,7 +153,7 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def output_NCT_to_XML(x, y, thisChord, predict_chord='N'):
+def output_NCT_to_XML(x, y, thisChord):
     """
     Translate 4-bit nct encoding and map the pitch classes and output the result into XML
     If you want to predict_chord, set this parameter to 'Y'
@@ -166,7 +166,10 @@ def output_NCT_to_XML(x, y, thisChord, predict_chord='N'):
     yyptr = -1
     nonchordpitchclassptr = [-1] * 4
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
-    chord_tone = x
+    chord_tone = list(x[:-2])
+    chord_tone = [round(x) for x in chord_tone]
+    # https://stackoverflow.com/questions/35651470/rounding-a-list-of-floats-into-integers-in-python
+    #
     for i in range(len(x) - 2):
         if (x[i] == 1):  # non-chord tone
             yyptr += 1
@@ -181,13 +184,72 @@ def output_NCT_to_XML(x, y, thisChord, predict_chord='N'):
         thisChord.addLyric(nct)
     else:
         thisChord.addLyric(' ')
+    return chord_tone
 
-    if predict_chord == 'Y': # we need to translate the chord tone into chord label
-        chord_pitch_class_ID = []
-        for i, item in enumerate(chord_tone):
-            if item == 1:
+
+def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list):
+    """
+    Record all the chord tones and chord labels predicted by the model, which are used to finalize the un-determined
+    chord
+    :param thisChord:
+    :param chord_tone:
+    :param chord_tone_list:
+    :param chord_label_list:
+    :return:
+    """
+    chord_pitch_class_ID = []
+    if int(chord_tone[thisChord.bass().pitchClass]) == 1: # If bass is a chord tone
+        chord_pitch_class_ID.append(thisChord.bass().pitchClass)  # add the bass note first
+    for i, item in enumerate(chord_tone):
+        if item == 1:
+            if i != thisChord.bass().pitchClass: # bass note has been added
                 chord_pitch_class_ID.append(i)
+    chord_label = chord.Chord(chord_pitch_class_ID)
+    chord_tone_list.append(chord_pitch_class_ID)
+    allowed_chord_quality = ['incomplete major-seventh chord', 'major seventh chord',
+                             'incomplete minor-seventh chord', 'minor seventh chord',
+                             'incomplete half-diminished seventh chord', 'half-diminished seventh chord',
+                             'diminished seventh chord',
+                             'incomplete dominant-seventh chord', 'dominant seventh chord',
+                             'major triad',
+                             'minor triad',
+                             'diminished triad']
+    if chord_tone != [0] * len(chord_tone): # there must be a slice having at least one chord tone
+        if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
+            # This is the chord we can output directly
+            # https://python-forum.io/Thread-Ho-to-check-if-string-contains-substring-from-list
+            #thisChord.addLyric(chord_label.pitchedCommonName)
+            chord_label_list.append(chord_label.pitchedCommonName)
+        else: # undetermined chord
+            #thisChord.addLyric('un-determined')
+            chord_label_list.append('un-determined')
+    else: # no chord tone, this slice is undetermined as well
+        #thisChord.addLyric('un-determined')
+        chord_label_list.append('un-determined')
+    return chord_tone_list, chord_label_list
 
+
+def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
+    """
+    Compare the preceding and following chord labels and the one sharing the most chord tone with the current one will
+    be considered as the final chord.
+    :param j:
+    :param thisChord:
+    :param chord_label_list:
+    :param chord_tone_list:
+    :return:
+    """
+    for jj, itemitem in enumerate(chord_label_list[j + 1:]):
+        if itemitem != 'un-determined':  # Find the next real chord
+            break
+    jj += j + 1
+    common_tone1 = list(set(chord_tone_list[j]).intersection(chord_tone_list[j - 1]))
+    common_tone2 = list(set(chord_tone_list[j]).intersection(chord_tone_list[jj]))
+    if len(common_tone1) >= len(common_tone2):
+        chord_label_list[j] = chord_label_list[j - 1]
+    else:
+        chord_label_list[j] = chord_label_list[jj]
+    thisChord.addLyric(chord_label_list[j])
 
 
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype):
@@ -408,12 +470,18 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 'w')  # create this file to track every type of mistakes
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
+            print(fileName[i][-7:-4])
+            if fileName[i][-7:-4] == '047':
+                print('debug')
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
             s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
             sChords = s.chordify()
             s.insert(0, sChords)
+            chord_tone_list = []  # store all the chord tones predicted by the model
+            chord_label_list = [] # store all the chord labels predicted by the model
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                print('slice', j)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
                 if outputtype == 'CL':
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])
@@ -439,10 +507,16 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     realdimension = int(dimension / (2 * windowsize + 1))
                     x = test_xx[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                     output_NCT_to_XML(x, gt, thisChord)
-                    output_NCT_to_XML(x, prediction, thisChord)
-
+                    chord_tone = output_NCT_to_XML(x, prediction, thisChord)
+                    chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                 a_counter += 1
             a_counter_correct += correct_num
+            for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
+                    # chord is un-determined because there are only two tones!
+                    infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list) # determine the final chord
+                else:
+                    thisChord.addLyric(chord_label_list[j])
             print(end='\n', file=f_all)
             print('accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
             print('num of correct answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
