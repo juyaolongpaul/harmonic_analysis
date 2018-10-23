@@ -481,6 +481,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             chord_tone_list = []  # store all the chord tones predicted by the model
             chord_label_list = [] # store all the chord labels predicted by the model
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                if(j == 65):
+                    print('debug')
                 print('slice', j)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
                 if outputtype == 'CL':
