@@ -6,6 +6,7 @@ from transpose_to_C_polyphony import transpose_polyphony
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
 from predict_result_for_140 import train_and_predict_non_chord_tone
 from chord_visualization import put_music21chord_into_musicXML, put_non_chord_tone_into_musicXML
+from kernscore import extract_chord_labels
 import argparse
 import os
 
@@ -14,7 +15,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='rule_MaxMel')
+                        type=str, default='MostChords')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -70,13 +71,9 @@ def main():
     else:
         input = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')
         f1 = '.krn'  # the version of chorales used
-    if(args.source == 'melodic'):
-        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Melodic')  # the corresponding annotations
-    elif args.source == 'rule_MaxMel':
-        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Chords_MaxMel')
-    elif args.source == 'Rameau':
-        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Rameau')
+    output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
     f2 = '.txt'
+    extract_chord_labels(output, f1)
     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys

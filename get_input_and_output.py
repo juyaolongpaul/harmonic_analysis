@@ -722,23 +722,12 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     if sign == 'Rameau':
         input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
-    if(portion == 'train'):  # training
-        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'training' + str(number) + '_cv_' + str(times) + '.txt'
-        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-            number) + '_cv_' + str(times) + '.txt'
-    elif(portion == 'valid'):
-        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + 'validing' + str(number) + '_cv_' + str(times) + '.txt'
-        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'validing' + str(
-            number) + '_cv_' + str(times) + '.txt'
-    else:
-        search_file_x = os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
-            number) + '_cv_' + str(times) + '.txt'
-        search_file_y = os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + 'testing' + str(
-            number) + '_cv_' + str(times) + '.txt'
+    if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
+        os.mkdir(os.path.join('.', 'data_for_ML', sign))
+    search_file_x = os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + portion + 'ing' + str(number) + '_cv_' + str(times) + '.txt'
+    search_file_y = os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
+        windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + portion + 'ing' + str(
+        number) + '_cv_' + str(times) + '.txt'
     if not (os.path.isfile(search_file_x)): # if there matrix file is already there, no need to generate again. Although each shuffle, the content will be different
         for id, fn in enumerate(os.listdir(input1)):
                 if fn.find('KB') != -1 and fn[-4:] == f1:
@@ -779,8 +768,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         for id, fn in enumerate(fn_total_all):
             ptr = p.search(fn).span()[0]  # return the starting place of "001"
             ptr2 = p.search(fn).span()[1]
-            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_' + sign + f2)):
-                f = open(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_' + sign + f2, 'r')
+            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2)):
+                f = open(os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2, 'r')
             else:
                 continue  # skip the file which does not have chord labels
             for line in f.readlines():
@@ -790,17 +779,15 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         list_of_chords = []
         for i, word in enumerate(li):
             list_of_chords.append(word[0]) # Get all the chords
-        if os.path.isfile('chord_freq.txt') != 1:
-            f_chord = open('chord_freq.txt', 'w')
-            for item in li:
-                print(item, file=f_chord)
-            f_chord.close()
-        if os.path.isfile('chord_name.txt') != 1:
-            f_chord2 = open('chord_name.txt', 'w')
-            for item in list_of_chords:
-                print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
-                # confusion matrix
-            f_chord2.close()
+        f_chord = open('chord_freq.txt', 'w')
+        for item in li:
+            print(item, file=f_chord)
+        f_chord.close()
+        f_chord2 = open('chord_name.txt', 'w')
+        for item in list_of_chords:
+            print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
+            # confusion matrix
+        f_chord2.close()
         for id, fn in enumerate(fn_total):
                 print(fn)
                 ptr = p.search(fn).span()[0]  # return the starting place of "001"
@@ -808,10 +795,13 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 chorale_x = []
                 chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
                 # pitch class is used. This one is used to indicate which one is NCT.
-                if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_'+ sign + f2)):
-                    f = open(os.path.join(output, fn[:ptr]) + 'translated_' + fn[ptr:ptr2] + '_' + sign + f2,'r')
-
-                    f_non = open(os.path.join(output, fn[:ptr]) + 'non_chord_tone_' + music21 + '_' + sign + pitch + fn[ptr:ptr2] + f2, 'w')
+                if (os.path.isfile(
+                        os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2)):
+                    f = open(
+                        os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2,
+                        'r')
+                    f_non = open(os.path.join(output, fn[:ptr]) + 'Chorales_Bach_' + 'non_chord_tone_' + music21 + '_' + sign + pitch
+                                 + fn[ptr:ptr2] + f2, 'w')
                 else:
                     continue  # skip the file which does not have chord labels
                 file_counter += 1

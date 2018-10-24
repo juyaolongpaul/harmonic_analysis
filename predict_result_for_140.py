@@ -290,8 +290,10 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                  + str(timestep) + extension + extension2
     print('Loading data...')
     print('Build model...')
-    cv_log = open(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
-    csv_logger = CSVLogger(os.path.join('.', 'ML_result', 'cv_log+') + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
+        os.mkdir(os.path.join('.', 'ML_result', sign))
+    cv_log = open(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
     error_list = [] # save all the errors to calculate frequencies
     for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -301,17 +303,17 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
-        valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
+        valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
-        valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
+        valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
-        if not (os.path.isfile((os.path.join('.', 'ML_result', MODEL_NAME) + ".hdf5"))):
-            train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
+        if not (os.path.isfile((os.path.join('.', 'ML_result',sign, MODEL_NAME) + ".hdf5"))):
+            train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
                 windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
-            train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
+            train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
                 windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             INPUT_DIM = train_xx.shape[1]
@@ -390,20 +392,20 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
             early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
             print("Train...")
-            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
+            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
             hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
         # visualize the result and put into file
-        test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_x_windowing_' + str(
+        test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
-        test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
+        test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
-        test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign) + '_y_windowing_' + str(
+        test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + 'CL' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + '.txt')
-        model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
+        model = load_model(os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5")
         if outputtype == 'CL':
             predict_y = model.predict_classes(test_xx, verbose=0)  # we can directly output the chord class ID
         elif outputtype == 'NCT':
@@ -459,14 +461,15 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         length = len(fileName)
         a_counter = 0
         a_counter_correct = 0
-
-        if os.path.isfile('.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt'):
+        if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+            os.mkdir(os.path.join('.', 'predicted_result', sign))
+        if os.path.isfile(os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt'):
             f_all = open(
-            '.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+            os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
             'a') # create this file to track every type of mistakes
         else:
             f_all = open(
-                '.\\predicted_result\\' + 'predicted_result_' + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+                os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
                 'w')  # create this file to track every type of mistakes
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
@@ -525,7 +528,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                   file=f_all)
             print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
             s.write('musicxml',
-                    fp='.\\predicted_result\\' + 'predicted_result_' + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
+                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
             # output result in musicXML
         frame_acc.append((a_counter_correct / a_counter) * 100)
     counts = Counter(error_list)
@@ -533,7 +536,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     f_all.close()
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
-    model = load_model(os.path.join('.','ML_result', MODEL_NAME) + ".hdf5")
+    model = load_model(os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5")
     model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
     if outputtype == 'NCT':

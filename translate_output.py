@@ -348,7 +348,7 @@ def translate_chord_line(num_of_salami_poly, num_of_salami_chord, line, replace,
     return line, num_of_salami_poly, num_of_salami_chord, bad, num_of_ambiguity
 
 
-def annotation_translation(input, output, version, source='melodic', ):
+def annotation_translation(input, output, version, source):
     """
     A function that extract chord labels from different sources to txt and translate them
     :return:
@@ -360,7 +360,7 @@ def annotation_translation(input, output, version, source='melodic', ):
     cwd_annotation = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation')
     cwd_annotation_m = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Melodic')
     cwd_annotation_h = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Harmonic')
-    cwd_annotation_r_MaxMel = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Chords_MaxMel')
+    cwd_annotation_r_MaxMel = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', source)
     cwd_annotation_ori = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', 'Rameau')
     if version == 367:
         cwd_annotation = cwd_annotation_r_MaxMel
@@ -372,6 +372,7 @@ def annotation_translation(input, output, version, source='melodic', ):
             continue
         ptr = p.search(fn).span()[0]  # return the starting place of "001"
         ptr2 = p.search(fn).span()[1]
+        file_name = fn[:ptr]
         if(source=='melodic' and version == 153):
             if (os.path.isfile(os.path.join(cwd_annotation_m, 'translated_') + fn[ptr:ptr2] + 'melodic.txt')):  # if files are already there, jump out
                 continue
@@ -420,18 +421,20 @@ def annotation_translation(input, output, version, source='melodic', ):
                     for i, item in enumerate(melodic):
                         print(melodic[i].encode('utf-8').decode('ansi'), end=' ', file=fmelodic)
                         print(harmonic[i].encode('utf-8').decode('ansi'), end=' ', file=fharmonic)
-        elif(source=='rule_MaxMel'):
-            if (os.path.isfile(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + '_rule_MaxMel.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
+        else:
+            if (os.path.isfile(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + source + '.txt') or fn[ptr:ptr2] in corrupt_rule_chorale_ID):  # if files are already there, jump out
                 continue
-            if (fn[-3:] == 'xml' and version == 153) or (fn == 'chor' + fn[ptr:ptr2] + '.txt' and version == 367):
-                f_r_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'chor') + fn[ptr:ptr2] + '.txt', 'r')
+            if (fn[-3:] == 'xml' and version == 153) or (fn == file_name + fn[ptr:ptr2] + '.txt' and version == 367):
+                f_r_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, file_name) + fn[ptr:ptr2] + '.txt', 'r')
+                if fn[ptr:ptr2] == '309':
+                    print('debug')
                 r_MaxMel_ori= []
                 r_MaxMel_translated = []
                 for achord in f_r_MaxMel.readlines():
                     r_MaxMel_ori.append(achord.strip())
                 #print(r_MaxMel_ori)
                 r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori)
-                fr_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + fn[ptr:ptr2] + '_rule_MaxMel.txt', 'w')
+                fr_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + file_name + fn[ptr:ptr2] + source + '.txt', 'w')
                 for i, item in enumerate(r_MaxMel_translated):
                     print(r_MaxMel_translated[i], end=' ', file=fr_MaxMel)
                 #print(r_MaxMel_translated)
@@ -536,7 +539,7 @@ def translate_rule_based_annotation(ori):
     :param ori:
     :return:
     """
-    ori_backup = ori
+    ori_backup = list(ori)
     for i, item in enumerate(ori):
         if item.find('(') != -1: # if there is ()
             if item.find('?') != -1 or item.find('P') != -1: # if there is ? or P, discard the () part
@@ -554,14 +557,29 @@ def translate_rule_based_annotation(ori):
                 ori_backup[i] = ori[i-1]
             else:
                 ori_backup[i] = 'C' # assume it is a C chord
-        if item.find('^') != -1:
-            ori_backup[i] = item.replace('^', 'M') # ^ means major 7th
-        if item.find('o') != -1 and item.find('oo') == -1 and item.find('7') != -1: # go7 means half diminished
-            ori_backup[i] = item.replace('o','/o')
-        if item.find('oo') != -1: # oo means fully diminished
-            ori_backup[i] = item.replace('oo', 'o')
-        if item != '??' and item.find('??') != -1: # D?? is D
-            ori_backup[i] = item.replace('??', '')
+        if ori_backup[i].find('^') != -1:
+            ori_backup[i] = ori_backup[i].replace('^', 'M') # ^ means major 7th
+        if ori_backup[i].find('o') != -1 and ori_backup[i].find('oo') == -1 and ori_backup[i].find('7') != -1: # go7 means half diminished
+            ori_backup[i] = ori_backup[i].replace('o','/o')
+        if ori_backup[i].find('oo') != -1: # oo means fully diminished
+            ori_backup[i] = ori_backup[i].replace('oo', 'o')
+        if ori_backup[i] != '??' and ori_backup[i].find('??') != -1: # D?? is D
+            ori_backup[i] = ori_backup[i].replace('??', '')
+        if ori_backup[i].find('d') != -1 and len(ori_backup[i]) > 1 and ori_backup[i].find('dd') == -1 \
+                and ori_backup[i].find('dm') == -1: # d means diminished
+            ori_backup[i] = ori_backup[i].replace('d', 'o')
+        if ori_backup[i].find('dd') != -1: # dd means fully-diminished
+            ori_backup[i] = ori_backup[i].replace('dd', 'o7')
+        if ori_backup[i].find('dm') != -1: # dm means half-diminished
+            ori_backup[i] = ori_backup[i].replace('dm', '/o7')
+        if ori_backup[i].find('MM') != -1: # MM means major seventh
+            ori_backup[i] = ori_backup[i].replace('MM', 'M7')
+        if ori_backup[i].find('mm') != -1: # mm means minor seventh
+            ori_backup[i] = ori_backup[i].replace('mm', 'm7')
+        if ori_backup[i].find('Mm') != -1: # Mm means dominant-seventh
+            ori_backup[i] = ori_backup[i].replace('Mm', '7')
+        if ori_backup[i].find('-') != -1: # Mm means flat
+            ori_backup[i] = ori_backup[i].replace('-', 'b') # ^ means major 7th
     return ori_backup
 if __name__ == "__main__":
     #multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
