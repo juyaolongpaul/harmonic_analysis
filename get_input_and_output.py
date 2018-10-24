@@ -722,6 +722,10 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     if sign == 'Rameau':
         input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
+    if sign == 'rule_MaxMel':
+        label = 'chor'
+    else:
+        label = 'Chorales_Bach_'
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
     search_file_x = os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + portion + 'ing' + str(number) + '_cv_' + str(times) + '.txt'
@@ -768,8 +772,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         for id, fn in enumerate(fn_total_all):
             ptr = p.search(fn).span()[0]  # return the starting place of "001"
             ptr2 = p.search(fn).span()[1]
-            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2)):
-                f = open(os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2, 'r')
+            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
+                f = open(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2, 'r')
             else:
                 continue  # skip the file which does not have chord labels
             for line in f.readlines():
@@ -796,11 +800,11 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
                 # pitch class is used. This one is used to indicate which one is NCT.
                 if (os.path.isfile(
-                        os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2)):
+                        os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
                     f = open(
-                        os.path.join(output, fn[:ptr]) + 'translated_' + 'Chorales_Bach_' + fn[ptr:ptr2] + sign + f2,
+                        os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
                         'r')
-                    f_non = open(os.path.join(output, fn[:ptr]) + 'Chorales_Bach_' + 'non_chord_tone_' + music21 + '_' + sign + pitch
+                    f_non = open(os.path.join(output, fn[:ptr]) + label + 'non_chord_tone_' + music21 + '_' + sign + pitch
                                  + fn[ptr:ptr2] + f2, 'w')
                 else:
                     continue  # skip the file which does not have chord labels

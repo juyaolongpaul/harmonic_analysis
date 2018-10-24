@@ -426,14 +426,12 @@ def annotation_translation(input, output, version, source):
                 continue
             if (fn[-3:] == 'xml' and version == 153) or (fn == file_name + fn[ptr:ptr2] + '.txt' and version == 367):
                 f_r_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, file_name) + fn[ptr:ptr2] + '.txt', 'r')
-                if fn[ptr:ptr2] == '309':
-                    print('debug')
                 r_MaxMel_ori= []
                 r_MaxMel_translated = []
                 for achord in f_r_MaxMel.readlines():
                     r_MaxMel_ori.append(achord.strip())
                 #print(r_MaxMel_ori)
-                r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori)
+                r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori, source)
                 fr_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + file_name + fn[ptr:ptr2] + source + '.txt', 'w')
                 for i, item in enumerate(r_MaxMel_translated):
                     print(r_MaxMel_translated[i], end=' ', file=fr_MaxMel)
@@ -533,7 +531,7 @@ def write_to_files(input, output, source, transposed='', multi=0):
     print('number of samples = ' + str(num_of_samples))
     print('number of ambiguity = ' + str(num_of_ambiguity))
 
-def translate_rule_based_annotation(ori):
+def translate_rule_based_annotation(ori, source):
     """
     Translate the original rule-based annotations into music21 compatible
     :param ori:
@@ -550,36 +548,38 @@ def translate_rule_based_annotation(ori):
                 item = item.replace('(', '')
                 item = item.replace(')', '')
                 ori_backup[i] = item
-        if (item[0].islower() and len(item) == 1) or (item[0].islower() and len(item) == 2 and (item[1] == '#' or item[1] == 'b')): # 'g' is a minor chord
-            ori_backup[i] = item + 'm'
         if item == 'N' or item == '??' or item == '.': # replace with the previous chord
             if(i != 0):
                 ori_backup[i] = ori[i-1]
             else:
                 ori_backup[i] = 'C' # assume it is a C chord
-        if ori_backup[i].find('^') != -1:
-            ori_backup[i] = ori_backup[i].replace('^', 'M') # ^ means major 7th
-        if ori_backup[i].find('o') != -1 and ori_backup[i].find('oo') == -1 and ori_backup[i].find('7') != -1: # go7 means half diminished
-            ori_backup[i] = ori_backup[i].replace('o','/o')
-        if ori_backup[i].find('oo') != -1: # oo means fully diminished
-            ori_backup[i] = ori_backup[i].replace('oo', 'o')
-        if ori_backup[i] != '??' and ori_backup[i].find('??') != -1: # D?? is D
+        if ori_backup[i] != '??' and ori_backup[i].find('??') != -1:  # D?? is D
             ori_backup[i] = ori_backup[i].replace('??', '')
-        if ori_backup[i].find('d') != -1 and len(ori_backup[i]) > 1 and ori_backup[i].find('dd') == -1 \
-                and ori_backup[i].find('dm') == -1: # d means diminished
-            ori_backup[i] = ori_backup[i].replace('d', 'o')
-        if ori_backup[i].find('dd') != -1: # dd means fully-diminished
-            ori_backup[i] = ori_backup[i].replace('dd', 'o7')
-        if ori_backup[i].find('dm') != -1: # dm means half-diminished
-            ori_backup[i] = ori_backup[i].replace('dm', '/o7')
-        if ori_backup[i].find('MM') != -1: # MM means major seventh
-            ori_backup[i] = ori_backup[i].replace('MM', 'M7')
-        if ori_backup[i].find('mm') != -1: # mm means minor seventh
-            ori_backup[i] = ori_backup[i].replace('mm', 'm7')
-        if ori_backup[i].find('Mm') != -1: # Mm means dominant-seventh
-            ori_backup[i] = ori_backup[i].replace('Mm', '7')
-        if ori_backup[i].find('-') != -1: # Mm means flat
-            ori_backup[i] = ori_backup[i].replace('-', 'b') # ^ means major 7th
+        if source == 'rule_MaxMel': # this version used a different chord encoding scheme
+            if (item[0].islower() and len(item) == 1) or (item[0].islower() and len(item) == 2 and (item[1] == '#' or item[1] == 'b')): # 'g' is a minor chord
+                ori_backup[i] = item + 'm'
+            if ori_backup[i].find('^') != -1:
+                ori_backup[i] = ori_backup[i].replace('^', 'M') # ^ means major 7th
+            if ori_backup[i].find('o') != -1 and ori_backup[i].find('oo') == -1 and ori_backup[i].find('7') != -1: # go7 means half diminished
+                ori_backup[i] = ori_backup[i].replace('o','/o')
+            if ori_backup[i].find('oo') != -1: # oo means fully diminished
+                ori_backup[i] = ori_backup[i].replace('oo', 'o')
+        else:  # this uses a new chord schema Nat specifies
+            if ori_backup[i].find('d') != -1 and len(ori_backup[i]) > 1 and ori_backup[i].find('dd') == -1 \
+                    and ori_backup[i].find('dm') == -1: # d means diminished
+                ori_backup[i] = ori_backup[i].replace('d', 'o')
+            if ori_backup[i].find('dd') != -1: # dd means fully-diminished
+                ori_backup[i] = ori_backup[i].replace('dd', 'o7')
+            if ori_backup[i].find('dm') != -1: # dm means half-diminished
+                ori_backup[i] = ori_backup[i].replace('dm', '/o7')
+            if ori_backup[i].find('MM') != -1: # MM means major seventh
+                ori_backup[i] = ori_backup[i].replace('MM', 'M7')
+            if ori_backup[i].find('mm') != -1: # mm means minor seventh
+                ori_backup[i] = ori_backup[i].replace('mm', 'm7')
+            if ori_backup[i].find('Mm') != -1: # Mm means dominant-seventh
+                ori_backup[i] = ori_backup[i].replace('Mm', '7')
+            if ori_backup[i].find('-') != -1: # Mm means flat
+                ori_backup[i] = ori_backup[i].replace('-', 'b') # ^ means major 7th
     return ori_backup
 if __name__ == "__main__":
     #multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))
