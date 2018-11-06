@@ -35,10 +35,10 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class')
+                        type=str, default='pitch_class_4_voices')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=2)
+                        type=int, default=1)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -61,7 +61,10 @@ def main():
                         type=int, default=0)
     parser.add_argument('-o', '--output',
                         help='specify whether you want output non-chord tone (NCT) or chord labels (CL) directly (default: %(default))',
-                        type=str, default='NCT')
+                        type=str, default='CL')
+    parser.add_argument('-i', '--input',
+                        help='specify what input features, besides pitch, you are using (default: %(default))',
+                        type=str, default='3meter')
 
     args = parser.parse_args()
 
@@ -96,12 +99,12 @@ def main():
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version, args.distributed, args.output)  # generate training and testing data, return the sequence of test id
+                                                                 args.cross_validation, args.version, args.distributed, args.output, args.input)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, 10, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output)
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

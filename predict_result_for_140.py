@@ -252,7 +252,7 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
     thisChord.addLyric(chord_label_list[j])
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype):
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype, inputtype):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
@@ -280,7 +280,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     patience = 50
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
-    extension = sign + outputtype+ pitch_class + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
+    extension = sign + outputtype+ pitch_class + inputtype + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
     timestep = ts
     #INPUT_DIM = train_xxx_ori.shape[1]
     #OUTPUT_DIM = train_yyy_ori.shape[1]
@@ -304,17 +304,17 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         valid_num = len(valid_id)
         test_num = len(test_id)
         valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         if not (os.path.isfile((os.path.join('.', 'ML_result',sign, MODEL_NAME) + ".hdf5"))):
             train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-                windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+                windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-                windowsize) + outputtype + pitch_class + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+                windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
@@ -397,13 +397,13 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                              validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
         # visualize the result and put into file
         test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
         test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + 'CL' + pitch_class + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            windowsize) + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + '.txt')
         model = load_model(os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5")
         if outputtype == 'CL':
@@ -463,19 +463,17 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         a_counter_correct = 0
         if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
             os.mkdir(os.path.join('.', 'predicted_result', sign))
-        if os.path.isfile(os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt'):
+        if os.path.isfile(os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
             f_all = open(
-            os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+            os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
             'a') # create this file to track every type of mistakes
         else:
             f_all = open(
-                os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + '.txt',
+                os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
                 'w')  # create this file to track every type of mistakes
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
             print(fileName[i][-7:-4])
-            if fileName[i][-7:-4] == '047':
-                print('debug')
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
             s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
@@ -484,9 +482,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             chord_tone_list = []  # store all the chord tones predicted by the model
             chord_label_list = [] # store all the chord labels predicted by the model
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                if(j == 65):
-                    print('debug')
-                print('slice', j)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
                 if outputtype == 'CL':
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])
@@ -516,19 +511,20 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                 a_counter += 1
             a_counter_correct += correct_num
-            for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
-                    # chord is un-determined because there are only two tones!
-                    infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list) # determine the final chord
-                else:
-                    thisChord.addLyric(chord_label_list[j])
+            if outputtype == 'NCT':
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
+                        # chord is un-determined because there are only two tones!
+                        infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list) # determine the final chord
+                    else:
+                        thisChord.addLyric(chord_label_list[j])
             print(end='\n', file=f_all)
             print('accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
             print('num of correct answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
                   file=f_all)
             print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
             s.write('musicxml',
-                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][:-4] + outputtype + sign + pitch_class + '.xml')
+                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][:-4] + outputtype + sign + pitch_class + inputtype + '.xml')
             # output result in musicXML
         frame_acc.append((a_counter_correct / a_counter) * 100)
     counts = Counter(error_list)

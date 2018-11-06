@@ -368,17 +368,32 @@ def add_beat_into_binary(pitchclass, beat):
     return pitchclass
 
 
-def add_beat_into(pitchclass, beat):
+def add_beat_into(pitchclass, beat, inputtype):
     """
     adding two dimension to the input vector, specifying whether the current slice is on/off beat.
     :return:
     """
-    if(len(beat) == 1):  # on beat
-        pitchclass.append(1)
-        pitchclass.append(0)
-    else:
-        pitchclass.append(0)
-        pitchclass.append(1)
+    if inputtype.find('2meter') != -1:
+        if(len(beat) == 1):  # on beat
+            pitchclass.append(1)
+            pitchclass.append(0)
+        else: # off beat
+            pitchclass.append(0)
+            pitchclass.append(1)
+    elif inputtype.find('3meter') != -1:
+        if (len(beat) == 1):  # on beat
+            if beat == '1': # on a strong beat
+                pitchclass.append(1)
+                pitchclass.append(0)
+                pitchclass.append(0)
+            else: # on a weak beat
+                pitchclass.append(0)
+                pitchclass.append(1)
+                pitchclass.append(0)
+        else: # off beat
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(1)
     return pitchclass
 
 
@@ -689,7 +704,7 @@ def find_id(input, version):
     return id_sum_strip
 
 
-def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output, f2, sign, predict, augmentation, pitch, data_id, times, portion, outputtype, data_id_total):
+def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output, f2, sign, predict, augmentation, pitch, data_id, times, portion, outputtype, data_id_total, inputtype):
     """
     Generate non-chord tone verserion of the annotations and put them into matrice for machine learning
     as long as the file ID is given
@@ -728,9 +743,9 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         label = 'Chorales_Bach_'
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
-    search_file_x = os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + '_New_annotation_' + keys +'_' +music21+'_' + portion + 'ing' + str(number) + '_cv_' + str(times) + '.txt'
+    search_file_x = os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(windowsize) + outputtype+ pitch + inputtype + '_New_annotation_' + keys +'_' +music21+'_' + portion + 'ing' + str(number) + '_cv_' + str(times) + '.txt'
     search_file_y = os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-        windowsize) + outputtype + pitch + '_New_annotation_' + keys + '_' + music21 + '_' + portion + 'ing' + str(
+        windowsize) + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + portion + 'ing' + str(
         number) + '_cv_' + str(times) + '.txt'
     if not (os.path.isfile(search_file_x)): # if there matrix file is already there, no need to generate again. Although each shuffle, the content will be different
         for id, fn in enumerate(os.listdir(input1)):
@@ -842,21 +857,22 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
                         #pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
                         #(thisChord.pitchClasses)
-                        pitchClass = add_beat_into(pitchClass, thisChord.beatStr)  # add on/off beat info
+                        pitchClass = add_beat_into(pitchClass, thisChord.beatStr, inputtype)  # add on/off beat info
                         if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # add beat info for 12 pitch class
                             # if generic pitch is used
-                            pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr)
+                            pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr, inputtype)
                     else:  # if binary encoding is used, each voice is specified with a pitch-class
-                        if inputdim > 8 and inputdim <= 16:
-                            pitchClass = [0] * 16
-                        else:
-                            input('input_dim is not within [8,16]!')
-
-                        pitchClass, bad_voice_finding_slice = fill_in_pitch_class_binary(pitchClass, thisChord.pitchClasses, thisChord, s, bad_voice_finding_slice)  # pitchClass is sorted in SATB, respectively
-                        counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
-                        # pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
-                        # (thisChord.pitchClasses)
-                        pitchClass = add_beat_into_binary(pitchClass, thisChord.beatStr)  # add on/off beat info
+                        input('binary encoding is depreciated!')
+                        # if inputdim > 8 and inputdim <= 16:
+                        #     pitchClass = [0] * 16
+                        # else:
+                        #     input('input_dim is not within [8,16]!')
+                        #
+                        # pitchClass, bad_voice_finding_slice = fill_in_pitch_class_binary(pitchClass, thisChord.pitchClasses, thisChord, s, bad_voice_finding_slice)  # pitchClass is sorted in SATB, respectively
+                        # counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
+                        # # pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
+                        # # (thisChord.pitchClasses)
+                        # pitchClass = add_beat_into_binary(pitchClass, thisChord.beatStr)  # add on/off beat info
                     if(i == 0):
                         if pitch.find('pitch') != -1 and pitch.find('7') != -1:
                             chorale_x_12 = np.concatenate((chorale_x_12, pitchClass_12))
@@ -948,7 +964,7 @@ def get_id(id_sum, num_of_chorale, times):
     return train_id, valid_id, test_id
 
 
-def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv, version, distributed, outputtype):
+def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1, output, f2, sign, augmentation, pitch, ratio, cv, version, distributed, outputtype, inputtype):
     """
     The only difference with "generate_data_windowing_non_chord_tone"
     :param counter1:
@@ -972,21 +988,21 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
         for times in range(cv):  # do cross validation to get file ID
             train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train', outputtype, id_sum)  # generate training + validating data
+                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train', outputtype, id_sum, inputtype)  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid', outputtype, id_sum)  # generate training + validating data
+                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid', outputtype, id_sum, inputtype)  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test', outputtype, id_sum)  # generating test data
+                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test', outputtype, id_sum, inputtype)  # generating test data
         #print('debug')
     else:
         for times in range(distributed-1, distributed):  # do cross validation to get file ID
             train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train', outputtype, id_sum)  # generate training + validating data
+                                    output, f2, sign, 'N', augmentation, pitch, train_id, times+1, 'train', outputtype, id_sum, inputtype)  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid', outputtype, id_sum)  # generate training + validating data
+                          output, f2, sign, 'N', augmentation, pitch, valid_id, times+1, 'valid', outputtype, id_sum, inputtype)  # generate training + validating data
             generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
-                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test', outputtype, id_sum)  # generating test data
+                                    output, f2, sign, 'Y', augmentation, pitch, test_id, times+1, 'test', outputtype, id_sum, inputtype)  # generating test data
 if __name__ == "__main__":
     counter = 0
     counterMin = 60
