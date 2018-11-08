@@ -4,6 +4,7 @@ import re
 import numpy as np
 dic = {}
 from counter_chord_frequency import *
+from music21 import *
 from adding_window_one_hot import adding_window_one_hot
 from test_musicxml_gt import get_chord_tone
 from random import shuffle
@@ -180,53 +181,140 @@ def fill_in_pitch_class_with_voice(pitchclass, list):
 
 
 def get_pitch_class_for_four_voice(thisChord, s):
-    pitch_class_four_voice = []
+    if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes
+        return thisChord.pitchClasses[::-1], thisChord.pitches[::-1]
+    else:
+        print('still less than 4 pitches in chordify???')
+        pitch_class_four_voice = []
+        pitch_four_voice = []
+        for j, part in enumerate(s.parts):  # all parts, starting with soprano
+            all_beatStr = []  # record all the beat position in this part
+            if len(part.measure(
+                    thisChord.measureNumber).notes) == 0: # No note at this measure, it must be a whole rest
+                pitch_class_four_voice.append(-1)  # -1 represents rest
+                pitch_four_voice.append(note.Rest())
+                continue
 
-    for j, part in enumerate(s.parts):
-        for i in range(len(part.measure(
-                thisChord.measureNumber).notes)):  # didn't work correctly if using enumerate, internal bug!!!!!
-            # print("voice:", j, "in measure", thisChord.measureNumber, ',', i, "note in this voice", "pitch is",
-            # part.measure(thisChord.measureNumber).notes[i].pitch,
-            # len(part.measure(thisChord.measureNumber).notes), "notes in total", "note.beatStr:", part.measure(thisChord.measureNumber).notes[i].beatStr,
-            # "thisChord.beatStr", thisChord.beatStr)
-            if part.measure(thisChord.measureNumber).notes[i].beatStr == thisChord.beatStr:
-
+            for i in range(len(part.measure(
+                    thisChord.measureNumber).notes)):  # didn't work correctly if using enumerate, internal bug!!!!!
+                # the current thisChord's measure's all the notes in this part
+                all_beatStr.append(part.measure(thisChord.measureNumber).notes[i].beatStr)
+                # record all the beat position in this part
+            if thisChord.beatStr in all_beatStr: # if the note of this slice is not artificially sliced, add this note
+                i = all_beatStr.index(thisChord.beatStr)
                 pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-            else:
-                if part.measure(thisChord.measureNumber).notes[i].beatStr < thisChord.beatStr:
-                    if len(part.measure(thisChord.measureNumber).notes) == i + 1:
-                        pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                    elif i + 1 < len(part.measure(thisChord.measureNumber).notes):
-                        if part.measure(thisChord.measureNumber).notes[i + 1].beatStr > thisChord.beatStr:
-                            pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-    return pitch_class_four_voice
+                pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+            else: # if artifically slices, add the notes closest to this slice before
+                for i, item in enumerate(all_beatStr):
+                    if item < thisChord.beatStr:
+                        continue
+                    # this slice is has bigger beat position than the salami slice, the one before this slice is used
+                    if part.measure(thisChord.measureNumber).notes[i - 1].beatStr < thisChord.beatStr:
+                        pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i - 1].pitch.pitchClass)
+                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i - 1].pitch)
+                    else: # if there are rests, do not add the note, instead, add rest
+                        pitch_class_four_voice.append(-1) # -1 represents rest
+                        pitch_four_voice.append(note.Rest())
+                    break # no need to look through
+                # print(i)
+                if i == len(all_beatStr) - 1 and all_beatStr[i] < thisChord.beatStr:
+                    pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
+                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
 
 
-def fill_in_pitch_class_4_voices(pitchclass, list, thisChord, s):
+                # if part.measure(thisChord.measureNumber).notes[i].beatStr == thisChord.beatStr:
+                #
+                #     pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
+                #     pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+                # else:
+                #     if part.measure(thisChord.measureNumber).notes[i].beatStr < thisChord.beatStr:
+                #         if len(part.measure(thisChord.measureNumber).notes) == i + 1:
+                #             pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
+                #             pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+                #         elif i + 1 < len(part.measure(thisChord.measureNumber).notes):
+                #             if part.measure(thisChord.measureNumber).notes[i + 1].beatStr > thisChord.beatStr:
+                #                 pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
+                #                 pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+        return pitch_class_four_voice, pitch_four_voice
+
+
+def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
     """
-    Generate one-hot encoding for 4 voices using pitch classes
+    Generate one-hot encoding for 4 voices using pitch classes, and possible one-hot encoding of the potential NCTs
     :param pitchclass:
-    :param list:
+    :param list: this is pitch class from this chord, and the sequence starts from bass
     :param thisChord:
     :param s:
     :return:
     """
-    pitchclass = [0] * 48
-    if len(list) <4:
-        list_ori = list
-        print('originally unique pitch is less than 4', list)
-        list = get_pitch_class_for_four_voice(thisChord, s) # in case there are only less then 4 voices
-        print('after processing', list)
-        for item in list: # TODO: solve this hacky fix later! you function above do not work perfectly!
-            if item not in list_ori:
-                list.remove(item)
-        if len(list) > 4:
-            list = list[:(4-len(list))]
-    for i, item in enumerate(list):
-        pitchclass[i*12 + item] = 1
+
+    # print('slice number:', ii)
+    # print('measure number:', thisChord.measureNumber)
+    # if ii == 8:
+    #     print('debug')
+    list_ori = list
+    #print('original pitch class', list)
+    list, this_pitch_list = get_pitch_class_for_four_voice(thisChord, s) # in case there are only less then 4 voices
+    #print('after processing', list)
+    # This function starts from soprano! which is the different sequence than thisChord.pitchClass!!!!!!!
+    # Hacky: I don't need to worry the functionality of this if there are 4 pitches
+    # if thisChord.measureNumber == 0:
+    #     input('this salami slice has the wrong measure number!')
+    if len(list) == 4 and len(list_ori) == 4:
+        if list[::-1] != list_ori:
+            print('Although you manage to find 4 voices, but the pitches are wrong. Your 4 voices finder algorithm must be wrong!')
+    for item in list: # TODO: solve this hacky fix later! you function above do not work perfectly!
+        if item not in list_ori:
+            print(
+                'You have a new pitch not found in the salami slice. Your 4 voices finder algorithm must be wrong!')
+            #list.remove(item)
+    if len(list) != 4:  # this shouldn't happen anymore!
+        #list = list[:(4-len(list))]
+        input('you have 5 pitches again. Your 4 voices finder algorithm must be wrong!')
+    if inputtype.find('NCT') == -1:  # We dont specify NCT signs for each voice
+        pitchclass = [0] * 48
+        for i, item in enumerate(list):
+            if item != -1:
+                pitchclass[i*12 + item] = 1
+    else:
+        if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1: # not the first slice nor the last
+            # so we can add NCT features for the current slice
+            lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
+            last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
+            nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
+            next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+            #print('debug')
+            pitchclass = []
+            for i, item in enumerate(list):
+                pitchclass_one_voice = [0] * 12
+                if item != -1:
+                    pitchclass_one_voice[item] = 1
+                pitchclass += pitchclass_one_voice
+                #print('current i:', i, 'last slice has:', len(last_pitch_list), 'current slice has:', len(this_pitch_list), 'next slice has:', len(next_pitch_list))
+                # print('three notes are', last_pitch_list[i], this_pitch_list[i], next_pitch_list[i], 'could be N',
+                #       voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBeNeighborTone(),
+                #       'could be P', voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBePassingTone())
+                if item != -1 and last_pitch_list[i].name != 'rest' and next_pitch_list[i].name != 'rest' : # need to judge NCT if there is a note in all 3 slices
+                    if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBeNeighborTone() \
+                        or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBePassingTone():
+                        pitchclass.append(0)
+                        pitchclass.append(1)
+                    else:
+                        pitchclass.append(1)
+                        pitchclass.append(0)
+                else: # if any of these 3 slices has a rest, it must not be a NCT
+                    pitchclass.append(1)
+                    pitchclass.append(0)
+        else: # we cannot add NCT for the current slice
+            pitchclass = []
+            for i, item in enumerate(list):
+                pitchclass_one_voice = [0] * 12
+                if item != -1:
+                    pitchclass_one_voice[item] = 1
+                pitchclass += pitchclass_one_voice
+                pitchclass.append(1)
+                pitchclass.append(0)
     return pitchclass
-
-
 def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     """
     Encode pitch-class information for each voice in a binary encoding
@@ -704,7 +792,7 @@ def find_id(input, version):
     return id_sum_strip
 
 
-def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output, f2, sign, predict, augmentation, pitch, data_id, times, portion, outputtype, data_id_total, inputtype):
+def  generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output, f2, sign, predict, augmentation, pitch, data_id, times, portion, outputtype, data_id_total, inputtype):
     """
     Generate non-chord tone verserion of the annotations and put them into matrice for machine learning
     as long as the file ID is given
@@ -809,6 +897,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         f_chord2.close()
         for id, fn in enumerate(fn_total):
                 print(fn)
+                # if fn != 'transposed_KBcKE358.xml':
+                #     continue
                 ptr = p.search(fn).span()[0]  # return the starting place of "001"
                 ptr2 = p.search(fn).span()[1]
                 chorale_x = []
@@ -825,7 +915,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     continue  # skip the file which does not have chord labels
                 file_counter += 1
                 s = converter.parse(os.path.join(input1, fn))
-                sChords = s.chordify()
+                sChords = s.chordify(removeRedundantPitches=False)
                 slice_input = 0
                 #print(slice_input)
                 #length = len(sChords)
@@ -843,7 +933,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
                             pitchClass= fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                         elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
-                            pitchClass = fill_in_pitch_class_4_voices(pitchClass, thisChord.pitchClasses, thisChord, s)
+                            pitchClass = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord, s,
+                                                                      inputtype, i, sChords)
                         if pitch.find('pitch') != -1 and pitch.find('7') != -1: # Use generic pitch, could be
                             # just pitch, pitch_class or pitch_class in 4 voices. Append 7 in the end
                             pitchClass_12 = pitchClass  # pitchClass saves the original
@@ -852,8 +943,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         for ii in pitchClass:
                             if ii == 1:
                                 pc_counter +=1
-                        if (pc_counter > 4):
-                            print("pc is greate than 4!~")
+                        # if (pc_counter > 4):
+                        #     print("pc is greate than 4!~")
                         counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
                         #pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
                         #(thisChord.pitchClasses)

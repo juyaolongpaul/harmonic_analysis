@@ -189,7 +189,7 @@ def provide_path_12keys(input, f1, output, f2, source):
     for file_name in os.listdir(output):
         if os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(os.path.join(output, 'transposed_') + 'KBc_oriKE' + file_name):
             continue
-        print(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) # print what's the current file you are transposing
+        # print(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) # print what's the current file you are transposing
         if file_name[-3:] == 'txt' and file_name.find('KB') == -1 and file_name.find('transposed') == -1 and file_name.find('translated') != -1:
                 #if(file_name[:3] != '369'):
                     #continue

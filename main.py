@@ -61,10 +61,10 @@ def main():
                         type=int, default=0)
     parser.add_argument('-o', '--output',
                         help='specify whether you want output non-chord tone (NCT) or chord labels (CL) directly (default: %(default))',
-                        type=str, default='CL')
+                        type=str, default='NCT')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter')
+                        type=str, default='2meterss_NCT')
 
     args = parser.parse_args()
 
