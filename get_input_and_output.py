@@ -182,7 +182,7 @@ def fill_in_pitch_class_with_voice(pitchclass, list):
 
 def get_pitch_class_for_four_voice(thisChord, s):
     if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes
-        return thisChord.pitchClasses[::-1], thisChord.pitches[::-1]
+        return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
     else:
         print('still less than 4 pitches in chordify???')
         pitch_class_four_voice = []
@@ -203,7 +203,7 @@ def get_pitch_class_for_four_voice(thisChord, s):
             if thisChord.beatStr in all_beatStr:  # if the note of this slice is not artificially sliced, add this note
                 i = all_beatStr.index(thisChord.beatStr)
                 pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+                pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i])
             else:  # if artifically slices, add the notes closest to this slice before
                 for i, item in enumerate(all_beatStr):
                     if item < thisChord.beatStr:
@@ -212,7 +212,7 @@ def get_pitch_class_for_four_voice(thisChord, s):
                     if part.measure(thisChord.measureNumber).notes[i - 1].beatStr < thisChord.beatStr:
                         pitch_class_four_voice.append(
                             part.measure(thisChord.measureNumber).notes[i - 1].pitch.pitchClass)
-                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i - 1].pitch)
+                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i - 1])
                     else:  # if there are rests, do not add the note, instead, add rest
                         pitch_class_four_voice.append(-1)  # -1 represents rest
                         pitch_four_voice.append(note.Rest())
@@ -220,7 +220,7 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 # print(i)
                 if i == len(all_beatStr) - 1 and all_beatStr[i] < thisChord.beatStr:
                     pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i])
 
                 # if part.measure(thisChord.measureNumber).notes[i].beatStr == thisChord.beatStr:
                 #
@@ -237,6 +237,19 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 #                 pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
         return pitch_class_four_voice, pitch_four_voice
 
+
+def fill_in_4_voices(pitchclass, item):
+    """
+    The modular function to fill in the pitch classes in 4 voices
+    :param pitchclass:
+    :param item:
+    :return:
+    """
+    pitchclass_one_voice = [0] * 12
+    if item != -1:
+        pitchclass_one_voice[item] = 1
+    pitchclass += pitchclass_one_voice
+    return pitchclass
 
 def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
     """
@@ -272,7 +285,7 @@ def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
     if len(list) != 4:  # this shouldn't happen anymore!
         # list = list[:(4-len(list))]
         input('you have 5 pitches again. Your 4 voices finder algorithm must be wrong!')
-    if inputtype.find('NCT') == -1:  # We dont specify NCT signs for each voice
+    if inputtype.find('NCT') == -1 and inputtype.find('NewOnset') == -1:  # We dont specify NCT signs for each voice
         pitchclass = [0] * 48
         for i, item in enumerate(list):
             if item != -1:
@@ -282,48 +295,66 @@ def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
         if item != -1:
             only_pitch_4_voices[i * 12 + item] = 1
     else:
-        if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
-            # so we can add NCT features for the current slice
-            lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
-            last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
-            nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
-            next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
-            # print('debug')
-            pitchclass = []
-            for i, item in enumerate(list):
-                pitchclass_one_voice = [0] * 12
-                if item != -1:
-                    pitchclass_one_voice[item] = 1
-                pitchclass += pitchclass_one_voice
-                # print('current i:', i, 'last slice has:', len(last_pitch_list), 'current slice has:', len(this_pitch_list), 'next slice has:', len(next_pitch_list))
-                # print('three notes are', last_pitch_list[i], this_pitch_list[i], next_pitch_list[i], 'could be N',
-                #       voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBeNeighborTone(),
-                #       'could be P', voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBePassingTone())
-                if item != -1 and last_pitch_list[i].name != 'rest' and next_pitch_list[
-                    i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
-                    if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave,
-                                                           this_pitch_list[i].nameWithOctave,
-                                                           next_pitch_list[i].nameWithOctave).couldBeNeighborTone() \
-                            or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave,
-                                                                   this_pitch_list[i].nameWithOctave, next_pitch_list[
-                                                                       i].nameWithOctave).couldBePassingTone():
-                        pitchclass.append(0)
+        if inputtype.find('NCT') != -1:
+            if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
+                # so we can add NCT features for the current slice
+                lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
+                last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
+                nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
+                next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+                # print('debug')
+                pitchclass = []
+                for i, item in enumerate(list):
+                    pitchclass = fill_in_4_voices(pitchclass, item)
+                    # print('current i:', i, 'last slice has:', len(last_pitch_list), 'current slice has:', len(this_pitch_list), 'next slice has:', len(next_pitch_list))
+                    # print('three notes are', last_pitch_list[i], this_pitch_list[i], next_pitch_list[i], 'could be N',
+                    #       voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBeNeighborTone(),
+                    #       'could be P', voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBePassingTone())
+                    if item != -1 and last_pitch_list[i].name != 'rest' and next_pitch_list[
+                        i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
+                        if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                               this_pitch_list[i].pitch.nameWithOctave,
+                                                               next_pitch_list[i].pitch.nameWithOctave).couldBeNeighborTone() \
+                                or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                       this_pitch_list[i].pitch.nameWithOctave, next_pitch_list[
+                                                                           i].pitch.nameWithOctave).couldBePassingTone():
+                            pitchclass.append(0)
+                            pitchclass.append(1)
+                        else:
+                            pitchclass.append(1)
+                            pitchclass.append(0)
+                    else:  # if any of these 3 slices has a rest, it must not be a NCT
                         pitchclass.append(1)
-                    else:
-                        pitchclass.append(1)
                         pitchclass.append(0)
-                else:  # if any of these 3 slices has a rest, it must not be a NCT
+            else:  # we cannot add NCT for the current slice
+                pitchclass = []
+                for i, item in enumerate(list):
+                    pitchclass = fill_in_4_voices(pitchclass, item)
                     pitchclass.append(1)
                     pitchclass.append(0)
-        else:  # we cannot add NCT for the current slice
+        elif inputtype.find('NewOnset') != -1:
             pitchclass = []
             for i, item in enumerate(list):
-                pitchclass_one_voice = [0] * 12
-                if item != -1:
-                    pitchclass_one_voice[item] = 1
-                pitchclass += pitchclass_one_voice
-                pitchclass.append(1)
-                pitchclass.append(0)
+                pitchclass = fill_in_4_voices(pitchclass, item)
+
+                if this_pitch_list[i].tie is not None:
+                    if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
+                        # fake attacks
+                        pitchclass.append(0)
+                        pitchclass.append(1)
+                    elif this_pitch_list[i].tie.type == 'let-ring' or this_pitch_list[i].tie.type == 'continue-let-ring':
+                        input('we do have let-ring and continue-let-ring')
+                        pitchclass.append(1)
+                        pitchclass.append(0)
+                    else: # the start of the attack is the real one
+                        pitchclass.append(1)
+                        pitchclass.append(0)
+                else: # no tie, so the attack is real
+                    pitchclass.append(1)
+                    pitchclass.append(0)
+
+
+
     return pitchclass, only_pitch_4_voices
 
 
