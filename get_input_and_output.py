@@ -188,53 +188,51 @@ def get_pitch_class_for_four_voice(thisChord, s):
         pitch_class_four_voice = []
         pitch_four_voice = []
         for j, part in enumerate(s.parts):  # all parts, starting with soprano
-            all_beatStr = []  # record all the beat position in this part
+            all_beat = []  # record all the beat position in this part
             if len(part.measure(
                     thisChord.measureNumber).notes) == 0:  # No note at this measure, it must be a whole rest
-                pitch_class_four_voice.append(-1)  # -1 represents rest
-                pitch_four_voice.append(note.Rest())
-                continue
-
+                # pitch_class_four_voice.append(-1)  # -1 represents rest
+                # pitch_four_voice.append(note.Rest())
+                # continue
+                input('the whole measure is the rest, see what happens')
             for i in range(len(part.measure(
-                    thisChord.measureNumber).notes)):  # didn't work correctly if using enumerate, internal bug!!!!!
+                    thisChord.measureNumber).notesAndRests)):  # didn't work correctly if using enumerate, internal bug!!!!!
                 # the current thisChord's measure's all the notes in this part
-                all_beatStr.append(part.measure(thisChord.measureNumber).notes[i].beatStr)
+                all_beat.append(part.measure(thisChord.measureNumber).notesAndRests[i].beat)
                 # record all the beat position in this part
-            if thisChord.beatStr in all_beatStr:  # if the note of this slice is not artificially sliced, add this note
-                i = all_beatStr.index(thisChord.beatStr)
-                pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i])
+            if thisChord.beat in all_beat:  # if the note of this slice is not artificially sliced, add this note
+                k = all_beat.index(thisChord.beat)
+                if part.measure(thisChord.measureNumber).notesAndRests[k].isNote:
+                    pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[k].pitch.pitchClass)
+                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[k])
+                else:
+                    pitch_class_four_voice.append(-1)  # -1 represents rest
+                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[k])
             else:  # if artifically slices, add the notes closest to this slice before
-                for i, item in enumerate(all_beatStr):
-                    if item < thisChord.beatStr:
+                for i, item in enumerate(all_beat):
+                    if item < thisChord.beat:
                         continue
                     # this slice is has bigger beat position than the salami slice, the one before this slice is used
-                    if part.measure(thisChord.measureNumber).notes[i - 1].beatStr < thisChord.beatStr:
-                        pitch_class_four_voice.append(
-                            part.measure(thisChord.measureNumber).notes[i - 1].pitch.pitchClass)
-                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i - 1])
+                    if part.measure(thisChord.measureNumber).notesAndRests[i - 1].beat < thisChord.beat:
+                        if part.measure(thisChord.measureNumber).notesAndRests[i - 1].isNote:
+                            pitch_class_four_voice.append(
+                                part.measure(thisChord.measureNumber).notesAndRests[i - 1].pitch.pitchClass)
+                            pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[i - 1])
+                        else:
+                            pitch_class_four_voice.append(-1)  # -1 represents rest
+                            pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[i - 1])
                     else:  # if there are rests, do not add the note, instead, add rest
                         pitch_class_four_voice.append(-1)  # -1 represents rest
                         pitch_four_voice.append(note.Rest())
                     break  # no need to look through
                 # print(i)
-                if i == len(all_beatStr) - 1 and all_beatStr[i] < thisChord.beatStr:
-                    pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                    pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i])
-
-                # if part.measure(thisChord.measureNumber).notes[i].beatStr == thisChord.beatStr:
-                #
-                #     pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                #     pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
-                # else:
-                #     if part.measure(thisChord.measureNumber).notes[i].beatStr < thisChord.beatStr:
-                #         if len(part.measure(thisChord.measureNumber).notes) == i + 1:
-                #             pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                #             pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
-                #         elif i + 1 < len(part.measure(thisChord.measureNumber).notes):
-                #             if part.measure(thisChord.measureNumber).notes[i + 1].beatStr > thisChord.beatStr:
-                #                 pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch.pitchClass)
-                #                 pitch_four_voice.append(part.measure(thisChord.measureNumber).notes[i].pitch)
+                if i == len(all_beat) - 1 and all_beat[i] < thisChord.beat:
+                    if part.measure(thisChord.measureNumber).notesAndRests[i].isNote:
+                        pitch_class_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[i].pitch.pitchClass)
+                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[i])
+                    else:
+                        pitch_class_four_voice.append(-1)
+                        pitch_four_voice.append(part.measure(thisChord.measureNumber).notesAndRests[i])
         return pitch_class_four_voice, pitch_four_voice
 
 
@@ -951,8 +949,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         f_chord2.close()
         for id, fn in enumerate(fn_total):
             print(fn)
-            # if fn != 'transposed_KBcKE358.xml':
-            #     continue
+            if fn != 'transposed_KBcKE283.xml':
+                continue
             ptr = p.search(fn).span()[0]  # return the starting place of "001"
             ptr2 = p.search(fn).span()[1]
             chorale_x = []
