@@ -166,11 +166,11 @@ def output_NCT_to_XML(x, y, thisChord):
     yyptr = -1
     nonchordpitchclassptr = [-1] * 4
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
-    chord_tone = list(x[:-2])
+    chord_tone = list(x)
     chord_tone = [round(x) for x in chord_tone]
     # https://stackoverflow.com/questions/35651470/rounding-a-list-of-floats-into-integers-in-python
     #
-    for i in range(len(x) - 2):
+    for i in range(len(x)):
         if (x[i] == 1):  # non-chord tone
             yyptr += 1
             if (y[yyptr] == 1):
@@ -399,6 +399,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
+        test_xx_only_pitch = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
+            test_num) + '_cv_' + str(times + 1) + 'only_pitch.txt')
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times  + 1) + '.txt')
@@ -503,9 +506,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                             correct_bit += 1
                     if (correct_bit == len(gt)):
                         correct_num += 1
-                    dimension = test_xx.shape[1]
+                    dimension = test_xx_only_pitch.shape[1]
                     realdimension = int(dimension / (2 * windowsize + 1))
-                    x = test_xx[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
+                    x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                     output_NCT_to_XML(x, gt, thisChord)
                     chord_tone = output_NCT_to_XML(x, prediction, thisChord)
                     chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
