@@ -180,7 +180,14 @@ def output_NCT_to_XML(x, y, thisChord):
         for item in nonchordpitchclassptr:
             if (item != -1):
                 nct.append(pitchclass[item])
-                chord_tone[item] = 0
+                if len(chord_tone) == 48:
+                    for i in range(4):  # Go through each voice and set this class all to 0 (NCT)
+                        if int(chord_tone[i*12 + item]) == 1:
+                            chord_tone[i*12 + item] = 0
+                elif len(chord_tone) == 12:
+                    chord_tone[item] = 0
+                else:
+                    input('I have a chord tone matrix that I do not know how to process')
         thisChord.addLyric(nct)
     else:
         thisChord.addLyric(' ')
@@ -485,7 +492,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             chord_tone_list = []  # store all the chord tones predicted by the model
             chord_label_list = [] # store all the chord labels predicted by the model
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                thisChord.closedPosition(forceOctave=4, inPlace=True)
+                #thisChord.closedPosition(forceOctave=4, inPlace=True)
                 if outputtype == 'CL':
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])
                     thisChord.addLyric(chord_name[predict_y[a_counter]])
