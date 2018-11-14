@@ -64,7 +64,7 @@ def main():
                         type=str, default='NCT')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='2meter')
+                        type=str, default='2meters_NewOnset')
 
     args = parser.parse_args()
 

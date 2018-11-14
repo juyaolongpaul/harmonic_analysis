@@ -194,7 +194,7 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 # pitch_class_four_voice.append(-1)  # -1 represents rest
                 # pitch_four_voice.append(note.Rest())
                 # continue
-                input('the whole measure is the rest, see what happens')
+                print('the whole measure is the rest, see what happens')
             for i in range(len(part.measure(
                     thisChord.measureNumber).notesAndRests)):  # didn't work correctly if using enumerate, internal bug!!!!!
                 # the current thisChord's measure's all the notes in this part
@@ -949,8 +949,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         f_chord2.close()
         for id, fn in enumerate(fn_total):
             print(fn)
-            if fn != 'transposed_KBcKE283.xml':
-                continue
+            # if fn != 'transposed_KBcKE358.xml':
+            #     continue
             ptr = p.search(fn).span()[0]  # return the starting place of "001"
             ptr2 = p.search(fn).span()[1]
             chorale_x = []
