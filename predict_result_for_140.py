@@ -12,11 +12,12 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
+
 np.random.seed(1337)  # for reproducibility
 
 from keras.preprocessing import sequence
 from keras.utils import np_utils
-#from keras.utils.visualize_util import plot # draw fig
+# from keras.utils.visualize_util import plot # draw fig
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
@@ -44,6 +45,9 @@ from imblearn.over_sampling import RandomOverSampler
 from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
+from sklearn.svm import SVC
+
+
 def get_predict_file_name(input, data_id, augmentation):
     filename = []
     num_salami_slices = []
@@ -59,14 +63,11 @@ def get_predict_file_name(input, data_id, augmentation):
                 else:
                     filename.append(fn)
 
-
-
     for id, fn in enumerate(filename):
         length = 0
         s = converter.parse(os.path.join(input, fn))
         sChords = s.chordify()
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-
             length += 1
         num_salami_slices.append(length)
     return filename, num_salami_slices
@@ -82,7 +83,7 @@ def binary_decode(arr):
     for i, item in enumerate(arr):
         total = 0
         for index, val in enumerate(reversed(item)):
-            total += (val * 2**index)
+            total += (val * 2 ** index)
         arr_decoded.append(int(total))
 
     return arr_decoded
@@ -128,13 +129,12 @@ def onehot_encode(arr, dim):
     """
     arr_encoded = []
     for i, item in enumerate(arr):
-        print('progress:',i,'/',arr.shape[0])
+        print('progress:', i, '/', arr.shape[0])
         row = [0] * dim
         # https://stackoverflow.com/questions/22227595/convert-integer-to-binary-array-with-suitable-padding
         row[item] = 1
         arr_encoded.append(row)
     return arr_encoded
-
 
 
 def bootstrap_data(x, y, times):
@@ -176,14 +176,14 @@ def output_NCT_to_XML(x, y, thisChord):
             if (y[yyptr] == 1):
                 nonchordpitchclassptr[yyptr] = i % 12
     if nonchordpitchclassptr != [-1] * 4:
-        nct = [] # there are NCTs
+        nct = []  # there are NCTs
         for item in nonchordpitchclassptr:
             if (item != -1):
                 nct.append(pitchclass[item])
                 if len(chord_tone) == 48:
                     for i in range(4):  # Go through each voice and set this class all to 0 (NCT)
-                        if int(chord_tone[i*12 + item]) == 1:
-                            chord_tone[i*12 + item] = 0
+                        if int(chord_tone[i * 12 + item]) == 1:
+                            chord_tone[i * 12 + item] = 0
                 elif len(chord_tone) == 12:
                     chord_tone[item] = 0
                 else:
@@ -205,11 +205,11 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
     :return:
     """
     chord_pitch_class_ID = []
-    if int(chord_tone[thisChord.bass().pitchClass]) == 1: # If bass is a chord tone
+    if int(chord_tone[thisChord.bass().pitchClass]) == 1:  # If bass is a chord tone
         chord_pitch_class_ID.append(thisChord.bass().pitchClass)  # add the bass note first
     for i, item in enumerate(chord_tone):
         if item == 1:
-            if i != thisChord.bass().pitchClass: # bass note has been added
+            if i != thisChord.bass().pitchClass:  # bass note has been added
                 chord_pitch_class_ID.append(i)
     chord_label = chord.Chord(chord_pitch_class_ID)
     chord_tone_list.append(chord_pitch_class_ID)
@@ -221,17 +221,17 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                              'major triad',
                              'minor triad',
                              'diminished triad']
-    if chord_tone != [0] * len(chord_tone): # there must be a slice having at least one chord tone
+    if chord_tone != [0] * len(chord_tone):  # there must be a slice having at least one chord tone
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
             # This is the chord we can output directly
             # https://python-forum.io/Thread-Ho-to-check-if-string-contains-substring-from-list
-            #thisChord.addLyric(chord_label.pitchedCommonName)
+            # thisChord.addLyric(chord_label.pitchedCommonName)
             chord_label_list.append(chord_label.pitchedCommonName)
-        else: # undetermined chord
-            #thisChord.addLyric('un-determined')
+        else:  # undetermined chord
+            # thisChord.addLyric('un-determined')
             chord_label_list.append('un-determined')
-    else: # no chord tone, this slice is undetermined as well
-        #thisChord.addLyric('un-determined')
+    else:  # no chord tone, this slice is undetermined as well
+        # thisChord.addLyric('un-determined')
         chord_label_list.append('un-determined')
     return chord_tone_list, chord_label_list
 
@@ -259,13 +259,15 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
     thisChord.addLyric(chord_label_list[j])
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation, cv, pitch_class, ratio, input, output, distributed, balanced, outputtype, inputtype):
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+                                     cv, pitch_class, ratio, input, output, distributed, balanced, outputtype,
+                                     inputtype):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
-    train_num = num_of_chorale - int((num_of_chorale * (1 - ratio)/2))*2
-    #train_num = int(num_of_chorale * ratio)
+    train_num = num_of_chorale - int((num_of_chorale * (1 - ratio) / 2)) * 2
+    # train_num = int(num_of_chorale * ratio)
     test_num = int((num_of_chorale - train_num) / 2)
-    #keys, music21 = determine_middle_name(augmentation, sign, portion)
+    # keys, music21 = determine_middle_name(augmentation, sign, portion)
     keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
     pre = []
     pre_test = []
@@ -285,12 +287,14 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     batch_size = 256
     epochs = 500
     patience = 50
-    extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
+    extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(
+        patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
-    extension = sign + outputtype+ pitch_class + inputtype + '_New_annotation_' + keys + '_' +music21+ '_' + 'training' + str(train_num)
+    extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+        train_num)
     timestep = ts
-    #INPUT_DIM = train_xxx_ori.shape[1]
-    #OUTPUT_DIM = train_yyy_ori.shape[1]
+    # INPUT_DIM = train_xxx_ori.shape[1]
+    # OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                  str(windowsize) + 'training_data' + str(portion) + 'timestep' \
@@ -300,8 +304,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
         os.mkdir(os.path.join('.', 'ML_result', sign))
     cv_log = open(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
-    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict_log.csv', append=True, separator=';')
-    error_list = [] # save all the errors to calculate frequencies
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
+                           append=True, separator=';')
+    error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
@@ -316,7 +321,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
-        if not (os.path.isfile((os.path.join('.', 'ML_result',sign, MODEL_NAME) + ".hdf5"))):
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
             train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
                 windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
                 train_num) + '_cv_' + str(times + 1) + '.txt')
@@ -328,9 +333,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
 
             train_xx, train_yy = bootstrap_data(train_xx, train_yy, bootstraptime)
             train_xx = train_xx[
-                      :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
             train_yy = train_yy[:int(portion * train_yy.shape[0])]
-            if balanced: # re-balance the data
+            if balanced:  # re-balance the data
                 if outputtype == "NCT":
                     # http://imbalanced-learn.org/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets
                     train_yy_encoded = binary_decode(train_yy)
@@ -340,7 +345,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     ros_statistics = ros.fit(train_xx, train_yy_encoded)
                     train_xx, train_yy_balanced = ros.fit_sample(train_xx, train_yy_encoded)
 
-                    train_xx = train_xx[:int(1.5*train_xx_imbalanced.shape[0])]
+                    train_xx = train_xx[:int(1.5 * train_xx_imbalanced.shape[0])]
                     train_yy_balanced = train_yy_balanced[:int(1.5 * train_yy_imbalanced.shape[0])]
                     train_yy = binary_encode(train_yy_balanced)
                 else:
@@ -356,68 +361,83 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             print('train_yy shape:', train_yy.shape)
             print('valid_xx shape:', valid_xx.shape)
             print('valid_yy shape:', valid_yy.shape)
-            model = Sequential()
-            # model.add(Embedding(36, 256, input_length=batch))
-            if modelID == 'DNN':
-                model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
-                model.add(Dropout(0.2))
-                for i in range(layer - 1):
-                    model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
+            if modelID != 'SVM':
+                model = Sequential()
+                # model.add(Embedding(36, 256, input_length=batch))
+                if modelID == 'DNN':
+                    model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
                     model.add(Dropout(0.2))
-            elif modelID == 'BLSTM':
-                print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                model.add(Bidirectional(
-                    LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
-                         kernel_initializer="glorot_uniform"), input_shape=train_xx.shape))
-                for i in range(layer - 1):
+                    for i in range(layer - 1):
+                        model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
+                        model.add(Dropout(0.2))
+                elif modelID == 'BLSTM':
+                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                    model.add(Bidirectional(
+                        LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM,
+                             units=HIDDEN_NODE,
+                             kernel_initializer="glorot_uniform"), input_shape=train_xx.shape))
+                    for i in range(layer - 1):
+                        model.add(
+                            Bidirectional(
+                                LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
+                elif modelID == 'RNN':
+                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                    model.add(SimpleRNN(input_dim=INPUT_DIM, units=HIDDEN_NODE, return_sequences=True, dropout=0.2,
+                                        recurrent_dropout=0.2))
+                    for i in range(layer - 1):
+                        model.add(
+                            SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+                elif modelID == 'LSTM':
+                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
                     model.add(
-                        Bidirectional(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
-            elif modelID == 'RNN':
-                print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                model.add(SimpleRNN(input_dim=INPUT_DIM, units=HIDDEN_NODE, return_sequences=True, dropout=0.2,
-                                    recurrent_dropout=0.2))
-                for i in range(layer - 1):
-                    model.add(
-                        SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
-            elif modelID == 'LSTM':
-                print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                model.add(
-                    LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM, units=HIDDEN_NODE,
-                         kernel_initializer="glorot_uniform"))  # , input_shape=train_xx.shape)
-                for i in range(layer - 1):
-                    model.add(
-                        LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
-            if modelID == 'DNN':
-                model.add(Dense(OUTPUT_DIM, init='uniform'))
-            else:
-                model.add(TimeDistributed(Dense(OUTPUT_DIM)))
-            if outputtype == "NCT":
-                model.add(Activation('sigmoid'))
-                model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
-            elif outputtype == "CL":
-                model.add(Activation('softmax'))
-                model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
-            early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
-            print("Train...")
-            checkpointer = ModelCheckpoint(filepath=os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5", verbose=1, save_best_only=True, monitor='val_loss')
-            hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
-                             validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
+                        LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM,
+                             units=HIDDEN_NODE,
+                             kernel_initializer="glorot_uniform"))  # , input_shape=train_xx.shape)
+                    for i in range(layer - 1):
+                        model.add(
+                            LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+                if modelID == 'DNN':
+                    model.add(Dense(OUTPUT_DIM, init='uniform'))
+                else:
+                    model.add(TimeDistributed(Dense(OUTPUT_DIM)))
+                if outputtype == "NCT":
+                    model.add(Activation('sigmoid'))
+                    model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+                elif outputtype == "CL":
+                    model.add(Activation('softmax'))
+                    model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+                early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
+                print("Train...")
+                checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5",
+                                               verbose=1, save_best_only=True, monitor='val_loss')
+                hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
+                                 validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
+                model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
+            elif modelID == "SVM":
+                model = SVC(verbose=True)
+                train_yy_int = np.asarray(onehot_decode(train_yy))
+                model.fit(train_xx, train_yy_int)
         # visualize the result and put into file
         test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times  + 1) + '.txt')
+            test_num) + '_cv_' + str(times + 1) + '.txt')
         test_xx_only_pitch = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + 'only_pitch.txt')
         test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times  + 1) + '.txt')
+            test_num) + '_cv_' + str(times + 1) + '.txt')
         test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + '.txt')
-        model = load_model(os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5")
         if outputtype == 'CL':
-            predict_y = model.predict_classes(test_xx, verbose=0)  # we can directly output the chord class ID
+            if modelID != "SVM":
+                predict_y = model.predict_classes(test_xx, verbose=0)  # we can directly output the chord class ID
+            elif modelID == "SVM":
+                predict_y = model.predict(test_xx)
+                from sklearn.metrics import accuracy_score
+                test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
+                test_acc = accuracy_score(test_yy_int, predict_y)
         elif outputtype == 'NCT':
             predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             for i in predict_y:  # regulate the prediction
@@ -426,18 +446,22 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         i[j] = 1
                     else:
                         i[j] = 0
-        test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
-        scores = model.evaluate(valid_xx, valid_yy, verbose=0)
-        scores_test = model.evaluate(test_xx, test_yy, verbose=0)
-        print(' valid_acc: ', scores[1])
-        cvscores.append(scores[1] * 100)
-        cvscores_test.append(scores_test[1] * 100)
+        if modelID != 'SVM':
+            test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
+            scores = model.evaluate(valid_xx, valid_yy, verbose=0)
+            scores_test = model.evaluate(test_xx, test_yy, verbose=0)
+            print(' valid_acc: ', scores[1])
+            cvscores.append(scores[1] * 100)
+            cvscores_test.append(scores_test[1] * 100)
+        elif modelID == "SVM":
+            cvscores.append(test_acc * 100)
+            cvscores_test.append(test_acc * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
         with open('chord_name.txt') as f:
             chord_name = f.read().splitlines()
         if outputtype == 'CL':  # NCT does not make a lot of sense to use classification report
             with open('chord_name.txt') as f:
-                chord_name2 = f.read().splitlines() # delete all the chords which do not appear in the test set
+                chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
             # print(matrix, file=cv_log)
             for i, item in enumerate(chord_name):
                 if i not in test_yy_int and i not in predict_y:
@@ -446,8 +470,10 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         if outputtype == "NCT":
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
                 model, valid_xx, valid_yy, modelID)
-            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model, test_xx,
-                                                                                                            test_yy, modelID)
+            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                            test_xx,
+                                                                                                            test_yy,
+                                                                                                            modelID)
             pre.append(precision * 100)
             pre_test.append(precision_test * 100)
             rec.append(recall * 100)
@@ -473,13 +499,16 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         a_counter_correct = 0
         if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
             os.mkdir(os.path.join('.', 'predicted_result', sign))
-        if os.path.isfile(os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
+        if os.path.isfile(os.path.join('.', 'predicted_result', sign,
+                                       'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
             f_all = open(
-            os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
-            'a') # create this file to track every type of mistakes
+                os.path.join('.', 'predicted_result', sign,
+                             'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
+                'a')  # create this file to track every type of mistakes
         else:
             f_all = open(
-                os.path.join('.', 'predicted_result', sign, 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
+                os.path.join('.', 'predicted_result', sign,
+                             'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
                 'w')  # create this file to track every type of mistakes
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
@@ -490,9 +519,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             sChords = s.chordify()
             s.insert(0, sChords)
             chord_tone_list = []  # store all the chord tones predicted by the model
-            chord_label_list = [] # store all the chord labels predicted by the model
+            chord_label_list = []  # store all the chord labels predicted by the model
             for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                #thisChord.closedPosition(forceOctave=4, inPlace=True)
+                # thisChord.closedPosition(forceOctave=4, inPlace=True)
                 if outputtype == 'CL':
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])
                     thisChord.addLyric(chord_name[predict_y[a_counter]])
@@ -500,7 +529,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         correct_num += 1
                         print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
                     else:
-                        print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                        print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ',
+                              file=f_all)
                         error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
                 elif outputtype == 'NCT':
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
@@ -518,14 +548,15 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                     output_NCT_to_XML(x, gt, thisChord)
                     chord_tone = output_NCT_to_XML(x, prediction, thisChord)
-                    chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
+                    chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
+                                                                           chord_label_list)
                 a_counter += 1
             a_counter_correct += correct_num
             if outputtype == 'NCT':
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
                         # chord is un-determined because there are only two tones!
-                        infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list) # determine the final chord
+                        infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
                     else:
                         thisChord.addLyric(chord_label_list[j])
             print(end='\n', file=f_all)
@@ -534,7 +565,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                   file=f_all)
             print('accumulative accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
             s.write('musicxml',
-                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][:-4] + outputtype + sign + pitch_class + inputtype + '.xml')
+                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][
+                                                                                          :-4] + outputtype + sign + pitch_class + inputtype + modelID + '.xml')
             # output result in musicXML
         frame_acc.append((a_counter_correct / a_counter) * 100)
     counts = Counter(error_list)
@@ -542,8 +574,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     f_all.close()
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
-    model = load_model(os.path.join('.','ML_result', sign, MODEL_NAME) + ".hdf5")
-    model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
+    if modelID != 'SVM':
+        model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
+        model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
     if outputtype == 'NCT':
         print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
