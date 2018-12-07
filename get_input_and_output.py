@@ -263,7 +263,7 @@ def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
     # print('measure number:', thisChord.measureNumber)
     # if ii == 8:
     #     print('debug')
-    list_ori = list
+    list_ori = list(list)
     # print('original pitch class', list)
     list, this_pitch_list = get_pitch_class_for_four_voice(thisChord, s)  # in case there are only less then 4 voices
     # print('after processing', list)
@@ -364,7 +364,7 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     :return:
     """
     if len(list) < 4:
-        list_ori = list
+        list_ori = list(list)
         print('originally unique pitch is less than 4', list)
         list = get_pitch_class_for_four_voice(thisChord, s)  # in case there are only less then 4 voices
         print('after processing', list)
@@ -562,7 +562,7 @@ def get_non_chord_tone_4_binary(x, y, outputdim, f):
     """
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     yy = [0] * 4  # SATB
-    yori = y
+    yori = list(y)
     y = y[:12]
     if yori[-1] == 1:  # broken chord, assume there is no non-chord tone
         print('n/a', end=' ', file=f)
@@ -608,7 +608,7 @@ def get_non_chord_tone_4(x, y, outputdim, f):
     """
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     nonchordpitchclassptr = [-1] * 4
-    yori = y
+    yori = list(y)
     y = y[:12]
     yy = [0] * 4
     yyptr = -1
@@ -667,7 +667,7 @@ def get_non_chord_tone_4_pitch_class_7(x, y, outputdim, f):
     """
     pitchclass = ['c', 'd', 'e', 'f', 'g', 'a', 'b']
     nonchordpitchclassptr = [-1] * 4
-    yori = y
+    yori = list(y)
     y = y[:12]
     yy = [0] * 4
     yyptr = -1
@@ -716,7 +716,7 @@ def get_non_chord_tone_4_music21(x, y, f, thisChord):
                          [0, 4, 7, 10], [0, 4, 7, 11]]
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     nonchordpitchclassptr = [-1] * 4
-    yori = y
+    yori = list(y)
     y = y[:12]
     yy = [0] * 4
     yyptr = -1
@@ -980,22 +980,23 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 slice_counter += 1
                 if pitch != 'pitch_class_binary':
                     pitchClass = [0] * inputdim
+                    only_pitch_class = [0] * inputdim
                     # pitchClass, counter = fill_in_pitch_class_with_bass(pitchClass, thisChord.pitchClasses, counter)
                     if (pitch == 'pitch' or pitch == 'pitch_7'):
 
                         pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
-                        only_pitch_class = pitchClass
+                        only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
                         pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
-                        only_pitch_class = pitchClass
+                        only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                         pitchClass, only_pitch_class = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                                                     s,
                                                                                     inputtype, i, sChords)
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # Use generic pitch, could be
                         # just pitch, pitch_class or pitch_class in 4 voices. Append 7 in the end
-                        pitchClass_12 = pitchClass  # pitchClass saves the original
-                        only_pitch_class = pitchClass
+                        pitchClass_12 = list(pitchClass)  # pitchClass saves the original
+                        only_pitch_class = list(pitchClass)
                         pitchClass = fill_in_pitch_class_7(pitchClass, thisChord.pitchNames)
                     pc_counter = 0
                     for ii in pitchClass:
@@ -1035,8 +1036,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             chorale_x_window = adding_window_one_hot(chorale_x, windowsize)
             chorale_xx_window = adding_window_one_hot(chorale_x_only_pitch_class, windowsize)
             if (file_counter == 1):
-                x = chorale_x_window
-                xx = chorale_xx_window
+                x = list(chorale_x_window)
+                xx = list(chorale_xx_window)
             else:
                 x = np.concatenate((x, chorale_x_window))
                 xx = np.concatenate((xx, chorale_xx_window))

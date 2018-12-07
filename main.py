@@ -30,12 +30,12 @@ def main():
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='SVM')
+                        type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_4_voices')
+                        type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -61,7 +61,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-o', '--output',
                         help='specify whether you want output non-chord tone (NCT) or chord labels (CL) directly (default: %(default))',
-                        type=str, default='CL')
+                        type=str, default='NCT')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
                         type=str, default='2meters')
