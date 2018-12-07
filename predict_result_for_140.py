@@ -46,7 +46,7 @@ from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 from sklearn.svm import SVC
-
+from test_musicxml_gt import translate_chord_name_into_music21
 
 def get_predict_file_name(input, data_id, augmentation):
     filename = []
@@ -525,6 +525,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
             print(fileName[i][-7:-4])
+            if fileName[i][-7:-4] == '058':
+                print('debug')
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
             correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
@@ -570,40 +572,38 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
 
             if outputtype == 'NCT':
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    if j == 9:
-                        print('debug')
                     if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
                         # chord is un-determined because there are only two tones!
                         infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
                         thisChord.addLyric(chord_label_list[j])
-                        print(chord_label_list[j])
+                        #print(chord_label_list[j])
                         if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1: # harmony chord symbol cannot handle incomplete chord!
                             if chord_label_list[j].find('incomplete') != -1:
-                                if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
                                     correct_num_chord += 1
                                     thisChord.addLyric('✓')
                             else:
-                                if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == chord_tone_list[j].sort():
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == chord_tone_list[j].sort():
                                     correct_num_chord += 1
                                     thisChord.addLyric('✓')
-                        else:
-                            if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                        else: 
+                            if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                                 correct_num_chord += 1
                                 thisChord.addLyric('✓')
                     else:
                         thisChord.addLyric(chord_label_list[j])
-                        print(chord_label_list[j])
+                        #print(chord_label_list[j])
                         if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1: # harmony chord symbol cannot handle incomplete chord!
                             if chord_label_list[j].find('incomplete') != -1:
-                                if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
                                     correct_num_chord += 1
                                     thisChord.addLyric('✓')
                             else:
-                                if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == chord_tone_list[j].sort():
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort():
                                     correct_num_chord += 1
                                     thisChord.addLyric('✓')
                         else:
-                            if harmony.ChordSymbol(chord_label_list_gt[j]).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                            if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                                 correct_num_chord += 1
                                 thisChord.addLyric('✓')
             a_counter_correct_chord += correct_num_chord
