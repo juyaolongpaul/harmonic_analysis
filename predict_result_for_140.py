@@ -12,7 +12,6 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
-
 np.random.seed(1337)  # for reproducibility
 
 from keras.preprocessing import sequence
@@ -47,6 +46,26 @@ from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 from sklearn.svm import SVC
 from test_musicxml_gt import translate_chord_name_into_music21
+
+
+def format_sequence_data(inputdim, outputdim, batchsize, x, y):
+    """
+    Fit the dataset with the size of the batch
+    :param inputdim:
+    :param outputdim:
+    :param batchsize:
+    :param x:
+    :param y:
+    :return:
+    """
+    yy = [0] * outputdim
+    yy[-1] = 1
+    while (x.shape[0] % batchsize != 0):
+        x = np.vstack((x, [0] * inputdim))
+        y = np.vstack((y, yy))
+    print("Now x, y: " + str(x.shape[0]) + str(y.shape[0]))
+    return x, y
+
 
 def get_predict_file_name(input, data_id, augmentation):
     filename = []
@@ -312,7 +331,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
                            append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
-    for times in range(1):
+    for times in range(cv):
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -577,7 +596,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
                         thisChord.addLyric(chord_label_list[j])
                         #print(chord_label_list[j])
-                        if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1: # harmony chord symbol cannot handle incomplete chord!
+                        if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
                             if chord_label_list[j].find('incomplete') != -1:
                                 if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
                                     correct_num_chord += 1
@@ -593,7 +612,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     else:
                         thisChord.addLyric(chord_label_list[j])
                         #print(chord_label_list[j])
-                        if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1: # harmony chord symbol cannot handle incomplete chord!
+                        if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
                             if chord_label_list[j].find('incomplete') != -1:
                                 if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
                                     correct_num_chord += 1

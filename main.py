@@ -30,7 +30,7 @@ def main():
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='DNN')
+                        type=str, default='LSTM')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
@@ -38,7 +38,7 @@ def main():
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=0)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',

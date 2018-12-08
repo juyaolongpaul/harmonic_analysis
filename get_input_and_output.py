@@ -304,10 +304,6 @@ def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
                 pitchclass = []
                 for i, item in enumerate(list):
                     pitchclass = fill_in_4_voices(pitchclass, item)
-                    # print('current i:', i, 'last slice has:', len(last_pitch_list), 'current slice has:', len(this_pitch_list), 'next slice has:', len(next_pitch_list))
-                    # print('three notes are', last_pitch_list[i], this_pitch_list[i], next_pitch_list[i], 'could be N',
-                    #       voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBeNeighborTone(),
-                    #       'could be P', voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].nameWithOctave, this_pitch_list[i].nameWithOctave, next_pitch_list[i].nameWithOctave).couldBePassingTone())
                     if item != -1 and last_pitch_list[i].name != 'rest' and next_pitch_list[
                         i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
                         if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
