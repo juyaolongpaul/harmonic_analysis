@@ -394,32 +394,36 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     for i in range(layer - 1):
                         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                         model.add(Dropout(0.2))
-                elif modelID == 'BLSTM':
-                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                    model.add(Bidirectional(
-                        LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM,
-                             units=HIDDEN_NODE,
-                             kernel_initializer="glorot_uniform"), input_shape=train_xx.shape))
-                    for i in range(layer - 1):
+                else:
+                    train_xx, train_yy = format_sequence_data(train_xx.shape[-1], train_yy.shape[-1], timestep, train_xx, train_yy)
+                    valid_xx, valid_yy = format_sequence_data(valid_xx.shape[-1], valid_yy.shape[-1], timestep, valid_xx, valid_yy)
+                    train_xx = train_xx.reshape((int(train_xx.shape[0]/timestep), timestep, train_xx.shape[-1]))
+                    train_yy = train_yy.reshape((int(train_yy.shape[0] / timestep), timestep, train_yy.shape[-1]))
+                    valid_xx = valid_xx.reshape((int(valid_xx.shape[0] / timestep), timestep, valid_xx.shape[-1]))
+                    valid_yy = valid_yy.reshape((int(valid_yy.shape[0] / timestep), timestep, valid_yy.shape[-1]))
+                    if modelID == 'BLSTM':
+                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                        model.add(Bidirectional(
+                            LSTM(return_sequences=True, dropout=0.2, input_shape=(train_xx.shape[1], INPUT_DIM),
+                                 units=HIDDEN_NODE,
+                                 )))
+                        for i in range(layer - 1):
+                            model.add(
+                                Bidirectional(
+                                    LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2)))
+                    elif modelID == 'RNN':
+                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                        model.add(SimpleRNN(input_shape=(train_xx.shape[1], INPUT_DIM), units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
+                        for i in range(layer - 1):
+                            model.add(
+                                SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
+                    elif modelID == 'LSTM':
+                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
                         model.add(
-                            Bidirectional(
-                                LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2)))
-                elif modelID == 'RNN':
-                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                    model.add(SimpleRNN(input_dim=INPUT_DIM, units=HIDDEN_NODE, return_sequences=True, dropout=0.2,
-                                        recurrent_dropout=0.2))
-                    for i in range(layer - 1):
-                        model.add(
-                            SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
-                elif modelID == 'LSTM':
-                    print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                    model.add(
-                        LSTM(return_sequences=True, dropout=0.2, recurrent_dropout=0.2, input_dim=INPUT_DIM,
-                             units=HIDDEN_NODE,
-                             kernel_initializer="glorot_uniform"))  # , input_shape=train_xx.shape)
-                    for i in range(layer - 1):
-                        model.add(
-                            LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+                            LSTM(return_sequences=True, dropout=0.2, input_shape=(train_xx.shape[1], INPUT_DIM),
+                                 units=HIDDEN_NODE))  # , input_shape=train_xx.shape)
+                        for i in range(layer - 1):
+                            model.add(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
                 if modelID == 'DNN':
                     model.add(Dense(OUTPUT_DIM, init='uniform'))
                 else:
@@ -458,6 +462,11 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + '.txt')
+        if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+            test_xx, test_yy = format_sequence_data(test_xx.shape[-1], test_yy.shape[-1], timestep, test_xx,
+                                                    test_yy)
+            test_xx = test_xx.reshape((int(test_xx.shape[0] / timestep), timestep, test_xx.shape[-1]))
+            test_yy = test_yy.reshape((int(test_yy.shape[0] / timestep), timestep, test_yy.shape[-1]))
         if outputtype == 'CL':
             if modelID != "SVM":
                 model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
@@ -470,6 +479,8 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         elif outputtype == 'NCT':
             model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
             predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
+            if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+                predict_y = predict_y.reshape((predict_y.shape[0] * predict_y.shape[1], predict_y.shape[2]))
             for i in predict_y:  # regulate the prediction
                 for j, item in enumerate(i):
                     if (item > 0.5):
@@ -519,6 +530,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         # prediction put into files
         fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
         sum = 0
+        if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+            test_xx = test_xx.reshape((test_xx.shape[0] * test_xx.shape[1], test_xx.shape[2]))
+            test_yy = test_yy.reshape((test_yy.shape[0] * test_yy.shape[1], test_yy.shape[2]))
         for i in range(len(numSalamiSlices)):
             sum += numSalamiSlices[i]
         # input(sum)

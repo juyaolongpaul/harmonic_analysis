@@ -24,13 +24,13 @@ def main():
                         type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (default: %(default)s)',
-                        type=int, default=3)
+                        type=int, default=2)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='LSTM')
+                        type=str, default='RNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
@@ -38,7 +38,7 @@ def main():
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=0)
+                        type=int, default=1)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -103,7 +103,7 @@ def main():
       # only execute this when the CV matrices are complete
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                     args.model, 10, args.bootstrap, args.source, args.augmentation,
+                                     args.model, 3, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
