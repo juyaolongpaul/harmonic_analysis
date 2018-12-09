@@ -28,6 +28,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
+from keras.preprocessing.sequence import TimeseriesGenerator
 import h5py
 import re
 import os
@@ -310,7 +311,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     chord_acc = []
     batch_size = 256
     epochs = 500
-    patience = 50
+    patience = 20
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(
         patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
@@ -395,16 +396,18 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                         model.add(Dropout(0.2))
                 else:
-                    train_xx, train_yy = format_sequence_data(train_xx.shape[-1], train_yy.shape[-1], timestep, train_xx, train_yy)
-                    valid_xx, valid_yy = format_sequence_data(valid_xx.shape[-1], valid_yy.shape[-1], timestep, valid_xx, valid_yy)
-                    train_xx = train_xx.reshape((int(train_xx.shape[0]/timestep), timestep, train_xx.shape[-1]))
-                    train_yy = train_yy.reshape((int(train_yy.shape[0] / timestep), timestep, train_yy.shape[-1]))
-                    valid_xx = valid_xx.reshape((int(valid_xx.shape[0] / timestep), timestep, valid_xx.shape[-1]))
-                    valid_yy = valid_yy.reshape((int(valid_yy.shape[0] / timestep), timestep, valid_yy.shape[-1]))
+                    train_gen_xxx = TimeseriesGenerator(train_xx, train_yy, length=timestep, batch_size=train_xx.shape[0])
+                    train_xxx =  train_gen_xxx[0][0]
+                    train_gen_yyy = TimeseriesGenerator(train_yy, train_xx, length=timestep, batch_size=train_yy.shape[0])
+                    train_yyy = train_gen_yyy[0][0]
+                    valid_gen_xxx = TimeseriesGenerator(valid_xx, valid_yy, length=timestep, batch_size=valid_xx.shape[0])
+                    valid_xxx = valid_gen_xxx[0][0]
+                    valid_gen_yyy = TimeseriesGenerator(valid_yy, valid_xx, length=timestep, batch_size=valid_yy.shape[0])
+                    valid_yyy = valid_gen_yyy[0][0]
                     if modelID == 'BLSTM':
-                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                        print("fuck you shape: ", train_xxx.shape, train_yyy.shape)
                         model.add(Bidirectional(
-                            LSTM(return_sequences=True, dropout=0.2, input_shape=(train_xx.shape[1], INPUT_DIM),
+                            LSTM(return_sequences=True, dropout=0.2, input_shape=(timestep, INPUT_DIM),
                                  units=HIDDEN_NODE,
                                  )))
                         for i in range(layer - 1):
@@ -412,15 +415,15 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                                 Bidirectional(
                                     LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2)))
                     elif modelID == 'RNN':
-                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
-                        model.add(SimpleRNN(input_shape=(train_xx.shape[1], INPUT_DIM), units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
+                        print("fuck you shape: ", train_xxx.shape, train_yyy.shape)
+                        model.add(SimpleRNN(input_shape=(timestep, INPUT_DIM), units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
                         for i in range(layer - 1):
                             model.add(
                                 SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
                     elif modelID == 'LSTM':
-                        print("fuck you shape: ", train_xx.shape, train_yy.shape)
+                        print("fuck you shape: ", train_xxx.shape, train_yyy.shape)
                         model.add(
-                            LSTM(return_sequences=True, dropout=0.2, input_shape=(train_xx.shape[1], INPUT_DIM),
+                            LSTM(return_sequences=True, dropout=0.2, input_shape=(timestep, INPUT_DIM),
                                  units=HIDDEN_NODE))  # , input_shape=train_xx.shape)
                         for i in range(layer - 1):
                             model.add(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
@@ -438,9 +441,14 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 print("Train...")
                 checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5",
                                                verbose=1, save_best_only=True, monitor='val_loss')
-                hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
-                                 validation_data=(valid_xx, valid_yy), callbacks=[early_stopping, checkpointer, csv_logger])
-
+                if modelID != 'SVM' or modelID != 'DNN':
+                    hist = model.fit(train_xxx, train_yyy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
+                                     validation_data=(valid_xxx, valid_yyy),
+                                     callbacks=[early_stopping, checkpointer, csv_logger])
+                else:
+                    hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
+                                     validation_data=(valid_xx, valid_yy),
+                                     callbacks=[early_stopping, checkpointer, csv_logger])
             elif modelID == "SVM":
                 model = SVC(verbose=True)
                 train_yy_int = np.asarray(onehot_decode(train_yy))
@@ -463,14 +471,18 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             windowsize) + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
             test_num) + '_cv_' + str(times + 1) + '.txt')
         if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-            test_xx, test_yy = format_sequence_data(test_xx.shape[-1], test_yy.shape[-1], timestep, test_xx,
-                                                    test_yy)
-            test_xx = test_xx.reshape((int(test_xx.shape[0] / timestep), timestep, test_xx.shape[-1]))
-            test_yy = test_yy.reshape((int(test_yy.shape[0] / timestep), timestep, test_yy.shape[-1]))
+            test_gen_xxx = TimeseriesGenerator(test_xx, test_yy, length=timestep, batch_size=test_xx.shape[0])
+            test_xxx = test_gen_xxx[0][0]
+            test_gen_yyy = TimeseriesGenerator(test_yy, test_xx, length=timestep, batch_size=test_yy.shape[0])
+            test_yyy = test_gen_yyy[0][0]
         if outputtype == 'CL':
             if modelID != "SVM":
                 model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
-                predict_y = model.predict_classes(test_xx, verbose=0)  # we can directly output the chord class ID
+                if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+                    predict_y = model.predict_classes(test_xxx, verbose=0)  # Predict the probability for each bit of NCT
+                    predict_y = predict_y.reshape((predict_y.shape[0] * predict_y.shape[1], predict_y.shape[2]))
+                else:
+                    predict_y = model.predict_classes(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             elif modelID == "SVM":
                 predict_y = model.predict(test_xx)
                 from sklearn.metrics import accuracy_score
@@ -478,9 +490,11 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 test_acc = accuracy_score(test_yy_int, predict_y)
         elif outputtype == 'NCT':
             model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
-            predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+                predict_y = model.predict(test_xxx, verbose=0)  # Predict the probability for each bit of NCT
                 predict_y = predict_y.reshape((predict_y.shape[0] * predict_y.shape[1], predict_y.shape[2]))
+            else:
+                predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             for i in predict_y:  # regulate the prediction
                 for j, item in enumerate(i):
                     if (item > 0.5):
@@ -489,8 +503,12 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         i[j] = 0
         if modelID != 'SVM':
             test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
-            scores = model.evaluate(valid_xx, valid_yy, verbose=0)
-            scores_test = model.evaluate(test_xx, test_yy, verbose=0)
+            if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
+                scores = model.evaluate(valid_xxx, valid_yyy, verbose=0)
+                scores_test = model.evaluate(test_xxx, test_yyy, verbose=0)
+            else:
+                scores = model.evaluate(valid_xx, valid_yy, verbose=0)
+                scores_test = model.evaluate(test_xx, test_yy, verbose=0)
             print(' valid_acc: ', scores[1])
             cvscores.append(scores[1] * 100)
             cvscores_test.append(scores_test[1] * 100)
@@ -509,12 +527,20 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                     chord_name2.remove(item)
             print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
         if outputtype == "NCT":
-            precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
-                model, valid_xx, valid_yy, modelID)
-            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
-                                                                                                            test_xx,
-                                                                                                            test_yy,
-                                                                                                            modelID)
+            if modelID != 'SVM' or modelID != 'DNN':
+                precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+                    model, valid_xxx, valid_yyy, modelID)
+                precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                                test_xxx,
+                                                                                                                test_yyy,
+                                                                                                                modelID)
+            else:
+                precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+                    model, valid_xx, valid_yy, modelID)
+                precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                                test_xx,
+                                                                                                                test_yy,
+                                                                                                                modelID)
             pre.append(precision * 100)
             pre_test.append(precision_test * 100)
             rec.append(recall * 100)
@@ -530,9 +556,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         # prediction put into files
         fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
         sum = 0
-        if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-            test_xx = test_xx.reshape((test_xx.shape[0] * test_xx.shape[1], test_xx.shape[2]))
-            test_yy = test_yy.reshape((test_yy.shape[0] * test_yy.shape[1], test_yy.shape[2]))
         for i in range(len(numSalamiSlices)):
             sum += numSalamiSlices[i]
         # input(sum)
@@ -558,8 +581,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         for i in range(length):
             print(fileName[i][:-4], file=f_all)
             print(fileName[i][-7:-4])
-            if fileName[i][-7:-4] == '058':
-                print('debug')
             num_salami_slice = numSalamiSlices[i]
             correct_num = 0
             correct_num_chord = 0 # record the correct predicted chord labels from NCT approach

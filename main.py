@@ -30,7 +30,7 @@ def main():
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='RNN')
+                        type=str, default='LSTM')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
@@ -65,6 +65,9 @@ def main():
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
                         type=str, default='2meters')
+    parser.add_argument('-time', '--timestep',
+                        help='specify how many time steps (default: %(default))',
+                        type=int, default=1)
 
     args = parser.parse_args()
 
@@ -103,7 +106,7 @@ def main():
       # only execute this when the CV matrices are complete
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                     args.model, 3, args.bootstrap, args.source, args.augmentation,
+                                     args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
