@@ -285,7 +285,7 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
 
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, distributed, balanced, outputtype,
-                                     inputtype):
+                                     inputtype, predict):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio) / 2)) * 2
@@ -340,22 +340,29 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
+        train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+            train_num) + '_cv_' + str(times + 1) + '.txt')
+        train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
+            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+            train_num) + '_cv_' + str(times + 1) + '.txt')
         valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
         valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
             windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
             valid_num) + '_cv_' + str(times + 1) + '.txt')
+        train_gen_xxx = TimeseriesGenerator(train_xx, train_yy, length=timestep, batch_size=train_xx.shape[0])
+        train_xxx = train_gen_xxx[0][0]
+        train_gen_yyy = TimeseriesGenerator(train_yy, train_xx, length=timestep, batch_size=train_yy.shape[0])
+        train_yyy = train_gen_yyy[0][0]
+        valid_gen_xxx = TimeseriesGenerator(valid_xx, valid_yy, length=timestep, batch_size=valid_xx.shape[0])
+        valid_xxx = valid_gen_xxx[0][0]
+        valid_gen_yyy = TimeseriesGenerator(valid_yy, valid_xx, length=timestep, batch_size=valid_yy.shape[0])
+        valid_yyy = valid_gen_yyy[0][0]
         if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
-            train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-                windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-                train_num) + '_cv_' + str(times + 1) + '.txt')
-            train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-                windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-                train_num) + '_cv_' + str(times + 1) + '.txt')
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
-
             train_xx, train_yy = bootstrap_data(train_xx, train_yy, bootstraptime)
             train_xx = train_xx[
                        :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
@@ -396,14 +403,6 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                         model.add(Dropout(0.2))
                 else:
-                    train_gen_xxx = TimeseriesGenerator(train_xx, train_yy, length=timestep, batch_size=train_xx.shape[0])
-                    train_xxx =  train_gen_xxx[0][0]
-                    train_gen_yyy = TimeseriesGenerator(train_yy, train_xx, length=timestep, batch_size=train_yy.shape[0])
-                    train_yyy = train_gen_yyy[0][0]
-                    valid_gen_xxx = TimeseriesGenerator(valid_xx, valid_yy, length=timestep, batch_size=valid_xx.shape[0])
-                    valid_xxx = valid_gen_xxx[0][0]
-                    valid_gen_yyy = TimeseriesGenerator(valid_yy, valid_xx, length=timestep, batch_size=valid_yy.shape[0])
-                    valid_yyy = valid_gen_yyy[0][0]
                     if modelID == 'BLSTM':
                         print("fuck you shape: ", train_xxx.shape, train_yyy.shape)
                         model.add(Bidirectional(
@@ -553,132 +552,134 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             fp.append(false_positive)
             fn.append(false_negative)
             tn.append(true_negative)
-        # prediction put into files
-        fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
-        sum = 0
-        for i in range(len(numSalamiSlices)):
-            sum += numSalamiSlices[i]
-        # input(sum)
-        # input(predict_y.shape[0])
+        if predict == 'Y':
+            # prediction put into files
+            fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
+            sum = 0
+            for i in range(len(numSalamiSlices)):
+                sum += numSalamiSlices[i]
+            # input(sum)
+            # input(predict_y.shape[0])
 
-        length = len(fileName)
-        a_counter = 0
-        a_counter_correct = 0
-        a_counter_correct_chord = 0 # correct chord labels predicted by NCT approach
-        if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
-            os.mkdir(os.path.join('.', 'predicted_result', sign))
-        if os.path.isfile(os.path.join('.', 'predicted_result', sign,
-                                       'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
-            f_all = open(
-                os.path.join('.', 'predicted_result', sign,
-                             'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
-                'a')  # create this file to track every type of mistakes
-        else:
-            f_all = open(
-                os.path.join('.', 'predicted_result', sign,
-                             'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
-                'w')  # create this file to track every type of mistakes
-        for i in range(length):
-            print(fileName[i][:-4], file=f_all)
-            print(fileName[i][-7:-4])
-            num_salami_slice = numSalamiSlices[i]
-            correct_num = 0
-            correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
-            s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
-            sChords = s.chordify()
-            s.insert(0, sChords)
-            chord_tone_list = []  # store all the chord tones predicted by the model
-            chord_label_list = []  # store all the chord labels predicted by the model
-            chord_label_list_gt = []
-            for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                # thisChord.closedPosition(forceOctave=4, inPlace=True)
-                if outputtype == 'CL':
-                    thisChord.addLyric(chord_name[test_yy_int[a_counter]])
-                    thisChord.addLyric(chord_name[predict_y[a_counter]])
-                    if test_yy_int[a_counter] == predict_y[a_counter]:
-                        correct_num += 1
-                        print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
-                    else:
-                        print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ',
-                              file=f_all)
-                        error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
-                elif outputtype == 'NCT':
-                    thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
-                    chord_label_list_gt.append(chord_name[test_yy_int[a_counter]])
-                    # pitch spelling does not affect the final results
-                    gt = test_yy[a_counter]
-                    prediction = predict_y[a_counter]
-                    correct_bit = 0
-                    for ii in range(len(gt)):
-                        if (gt[ii] == prediction[ii]):  # the label is correct
-                            correct_bit += 1
-                    if (correct_bit == len(gt)):
-                        correct_num += 1
-                    dimension = test_xx_only_pitch.shape[1]
-                    realdimension = int(dimension / (2 * windowsize + 1))
-                    x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
-                    output_NCT_to_XML(x, gt, thisChord)
-                    chord_tone = output_NCT_to_XML(x, prediction, thisChord)
-                    chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
-                                                                           chord_label_list)
-                a_counter += 1
-            a_counter_correct += correct_num
-
-            if outputtype == 'NCT':
+            length = len(fileName)
+            a_counter = 0
+            a_counter_correct = 0
+            a_counter_correct_chord = 0 # correct chord labels predicted by NCT approach
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign))
+            if os.path.isfile(os.path.join('.', 'predicted_result', sign,
+                                           'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
+                f_all = open(
+                    os.path.join('.', 'predicted_result', sign,
+                                 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
+                    'a')  # create this file to track every type of mistakes
+            else:
+                f_all = open(
+                    os.path.join('.', 'predicted_result', sign,
+                                 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
+                    'w')  # create this file to track every type of mistakes
+            for i in range(length):
+                print(fileName[i][:-4], file=f_all)
+                print(fileName[i][-7:-4])
+                num_salami_slice = numSalamiSlices[i]
+                correct_num = 0
+                correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
+                s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                sChords = s.chordify()
+                s.insert(0, sChords)
+                chord_tone_list = []  # store all the chord tones predicted by the model
+                chord_label_list = []  # store all the chord labels predicted by the model
+                chord_label_list_gt = []
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
-                        # chord is un-determined because there are only two tones!
-                        infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
-                        thisChord.addLyric(chord_label_list[j])
-                        #print(chord_label_list[j])
-                        if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                            if chord_label_list[j].find('incomplete') != -1:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                                    correct_num_chord += 1
-                                    thisChord.addLyric('✓')
+                    # thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    if outputtype == 'CL':
+                        thisChord.addLyric(chord_name[test_yy_int[a_counter]])
+                        thisChord.addLyric(chord_name[predict_y[a_counter]])
+                        if test_yy_int[a_counter] == predict_y[a_counter]:
+                            correct_num += 1
+                            print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                        else:
+                            print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ',
+                                  file=f_all)
+                            error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
+                    elif outputtype == 'NCT':
+                        thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
+                        chord_label_list_gt.append(chord_name[test_yy_int[a_counter]])
+                        # pitch spelling does not affect the final results
+                        gt = test_yy[a_counter]
+                        prediction = predict_y[a_counter]
+                        correct_bit = 0
+                        for ii in range(len(gt)):
+                            if (gt[ii] == prediction[ii]):  # the label is correct
+                                correct_bit += 1
+                        if (correct_bit == len(gt)):
+                            correct_num += 1
+                        dimension = test_xx_only_pitch.shape[1]
+                        realdimension = int(dimension / (2 * windowsize + 1))
+                        x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
+                        output_NCT_to_XML(x, gt, thisChord)
+                        chord_tone = output_NCT_to_XML(x, prediction, thisChord)
+                        chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
+                                                                               chord_label_list)
+                    a_counter += 1
+                a_counter_correct += correct_num
+
+                if outputtype == 'NCT':
+                    for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
+                            # chord is un-determined because there are only two tones!
+                            infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
+                            thisChord.addLyric(chord_label_list[j])
+                            #print(chord_label_list[j])
+                            if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
+                                if chord_label_list[j].find('incomplete') != -1:
+                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                                        correct_num_chord += 1
+                                        thisChord.addLyric('✓')
+                                else:
+                                    if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == chord_tone_list[j].sort():
+                                        correct_num_chord += 1
+                                        thisChord.addLyric('✓')
                             else:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == chord_tone_list[j].sort():
-                                    correct_num_chord += 1
-                                    thisChord.addLyric('✓')
-                        else: 
-                            if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                                correct_num_chord += 1
-                                thisChord.addLyric('✓')
-                    else:
-                        thisChord.addLyric(chord_label_list[j])
-                        #print(chord_label_list[j])
-                        if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                            if chord_label_list[j].find('incomplete') != -1:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                                    correct_num_chord += 1
-                                    thisChord.addLyric('✓')
-                            else:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort():
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                                     correct_num_chord += 1
                                     thisChord.addLyric('✓')
                         else:
-                            if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                                correct_num_chord += 1
-                                thisChord.addLyric('✓')
-            a_counter_correct_chord += correct_num_chord
-            print(end='\n', file=f_all)
-            print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
-            print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
-                  file=f_all)
-            print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
-            print('chord accucary: ' + str(correct_num_chord / num_salami_slice), end='\n', file=f_all)
-            print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
-                  file=f_all)
-            print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
-            s.write('musicxml',
-                    fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][
-                                                                                          :-4] + outputtype + sign + pitch_class + inputtype + modelID + '.xml')
-            # output result in musicXML
-        frame_acc.append((a_counter_correct / a_counter) * 100)
-        chord_acc.append((a_counter_correct_chord / a_counter) * 100)
-    counts = Counter(error_list)
-    print(counts, file=f_all)
-    f_all.close()
+                            thisChord.addLyric(chord_label_list[j])
+                            #print(chord_label_list[j])
+                            if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
+                                if chord_label_list[j].find('incomplete') != -1:
+                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                                        correct_num_chord += 1
+                                        thisChord.addLyric('✓')
+                                else:
+                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort():
+                                        correct_num_chord += 1
+                                        thisChord.addLyric('✓')
+                            else:
+                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                                    correct_num_chord += 1
+                                    thisChord.addLyric('✓')
+                a_counter_correct_chord += correct_num_chord
+                print(end='\n', file=f_all)
+                print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
+                print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
+                      file=f_all)
+                print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
+                print('chord accucary: ' + str(correct_num_chord / num_salami_slice), end='\n', file=f_all)
+                print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
+                      file=f_all)
+                print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
+                s.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][
+                                                                                              :-4] + outputtype + sign + pitch_class + inputtype + modelID + '.xml')
+                # output result in musicXML
+            frame_acc.append((a_counter_correct / a_counter) * 100)
+            chord_acc.append((a_counter_correct_chord / a_counter) * 100)
+    if predict == 'Y':
+        counts = Counter(error_list)
+        print(counts, file=f_all)
+        f_all.close()
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     if modelID != 'SVM':
@@ -694,8 +695,12 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
         print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
-        for i in range(len(cvscores_test)):
-            print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Chord acc:', chord_acc[i], file=cv_log)
+        if predict == 'Y':
+            for i in range(len(cvscores_test)):
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Chord acc:', chord_acc[i], file=cv_log)
+        else:
+            for i in range(len(cvscores_test)):
+                print('Test f1:', i, f1_test[i], '%', file=cv_log)
     elif outputtype == "CL":
         for i in range(len(cvscores_test)):
             print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
@@ -705,8 +710,9 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
         print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-        print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
-        print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
+        if predict == 'Y':
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
 
 
 if __name__ == "__main__":

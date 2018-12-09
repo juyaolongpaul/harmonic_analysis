@@ -38,7 +38,7 @@ def main():
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=2)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -68,7 +68,9 @@ def main():
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=1)
-
+    parser.add_argument('-pre', '--predict',
+                        help='specify whether you want to predict and output the result in XML (default: %(default))',
+                        type=str, default='N')
     args = parser.parse_args()
 
     if args.source == 'Rameau':
@@ -107,7 +109,7 @@ def main():
     if args.distributed == 0:
         train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input)
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input, args.predict)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
