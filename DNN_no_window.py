@@ -239,11 +239,9 @@ def evaluate_multi_label(model, x,y):
 
 def evaluate_f1score(model, x,y, modelname):
     mini = 0.000000001
+
     yyy = model.predict(x, verbose=0)
     yy = model.predict(x, verbose=0)
-    if modelname != 'DNN' or modelname != 'SVM':  # need to reshape the output
-       yy = yyy.reshape(yyy.shape[0]*yyy.shape[1], yyy.shape[2])
-       y = y.reshape(y.shape[0]*y.shape[1], y.shape[2])
     for i in yy:
         #print(i)
         for j, item in enumerate(i):

@@ -23,11 +23,11 @@ def main():
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
                         type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
-                        help='number of units (default: %(default)s)',
-                        type=int, default=1)
+                        help='number of units (at least two layers) (default: %(default)s)',
+                        type=int, default=2)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=200)
+                        type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='BLSTM')
@@ -67,7 +67,7 @@ def main():
                         type=str, default='2meters')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
-                        type=int, default=3)
+                        type=int, default=2)
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
                         type=str, default='N')
