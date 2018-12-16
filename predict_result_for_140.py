@@ -47,7 +47,7 @@ from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 from sklearn.svm import SVC
 from test_musicxml_gt import translate_chord_name_into_music21
-
+from keras_self_attention import SeqSelfAttention
 
 def format_sequence_data(inputdim, outputdim, batchsize, x, y):
     """
@@ -307,7 +307,7 @@ def create_3D_data(x, timestep):
 
 
 
-def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, distributed, balanced, outputtype,
                                      inputtype, predict):
     id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
@@ -411,43 +411,59 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             print('train_yy shape:', train_yy.shape)
             print('valid_xx shape:', valid_xx.shape)
             print('valid_yy shape:', valid_yy.shape)
-            if modelID != 'SVM':
+            if modelID.find('SVM') == -1 :
                 model = Sequential()
                 # model.add(Embedding(36, 256, input_length=batch))
-                if modelID == 'DNN':
+                if modelID.find('DNN') != -1:
                     model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh', input_dim=INPUT_DIM))
                     model.add(Dropout(0.2))
                     for i in range(layer - 1):
                         model.add(Dense(HIDDEN_NODE, init='uniform', activation='tanh'))
                         model.add(Dropout(0.2))
                 else:
-                    if modelID == 'BLSTM':
+                    if modelID.find('BLSTM') != -1:
                         model.add(Bidirectional(
                             LSTM(return_sequences=True, dropout=0.2, input_shape=(timestep, INPUT_DIM),
                                  units=HIDDEN_NODE,
                                  )))
-                        for i in range(layer - 2):
+                        for i in range(layer - 1):
                             model.add(
                                 Bidirectional(
                                     LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2)))
-                        model.add(
+                        if modelID.find('attention') != -1:
+                            model.add(
+                                Bidirectional(
+                                    LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2)))
+                            model.add(SeqSelfAttention(attention_activation='sigmoid'))
+                        else:
+                            model.add(
                             Bidirectional(
                                 LSTM(units=HIDDEN_NODE, dropout=0.2)))
-                    elif modelID == 'RNN':
+                    elif modelID.find('RNN') != -1:
                         model.add(SimpleRNN(input_shape=(timestep, INPUT_DIM), units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
                         for i in range(layer - 2):
                             model.add(
                                 SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
-                        model.add(
-                            SimpleRNN(units=HIDDEN_NODE, dropout=0.2))
-                    elif modelID == 'LSTM':
+                        if modelID.find('attention') != -1:
+                            model.add(
+                                SimpleRNN(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
+                            model.add(SeqSelfAttention(attention_activation='sigmoid'))
+                        else:
+                            model.add(
+                                SimpleRNN(units=HIDDEN_NODE, dropout=0.2))
+                    elif modelID.find('LSTM') != -1:
                         model.add(
                             LSTM(return_sequences=True, dropout=0.2, input_shape=(timestep, INPUT_DIM),
                                  units=HIDDEN_NODE))  # , input_shape=train_xx.shape)
                         for i in range(layer - 2):
                             model.add(LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
-                        model.add(LSTM(units=HIDDEN_NODE, dropout=0.2))
-
+                        if modelID.find('attention') != -1:
+                            model.add(
+                                LSTM(units=HIDDEN_NODE, return_sequences=True, dropout=0.2))
+                            model.add(SeqSelfAttention(attention_activation='sigmoid'))
+                        else:
+                            model.add(
+                                LSTM(units=HIDDEN_NODE, dropout=0.2))
                 model.add(Dense(OUTPUT_DIM))
 
                 if outputtype == "NCT":

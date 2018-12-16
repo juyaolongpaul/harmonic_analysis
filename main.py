@@ -27,7 +27,7 @@ def main():
                         type=int, default=2)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=300)
+                        type=int, default=500)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='BLSTM')
