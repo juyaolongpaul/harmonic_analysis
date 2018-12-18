@@ -27,7 +27,7 @@ def main():
                         type=int, default=2)
     parser.add_argument('-n', '--num_of_hidden_node',
                         help='number of units (default: %(default)s)',
-                        type=int, default=500)
+                        type=int, default=200)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='BLSTM')
@@ -35,10 +35,10 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class')
+                        type=str, default='pitch_class_4_voices')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=0)
+                        type=int, default=1)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -53,9 +53,6 @@ def main():
     parser.add_argument('-v', '--version',
                         help='whether to use 153 chorales (same with Rameau) or 367 chorales (rule-based) (default: %(default))',
                         type=int, default=367)
-    parser.add_argument('-d', '--distributed',
-                        help='specify which cv set you want to generate (default: %(default))',
-                        type=int, default=0)
     parser.add_argument('-bal', '--balanced',
                         help='specify whether you want to make the dataset balanced (default: %(default))',
                         type=int, default=0)
@@ -67,7 +64,7 @@ def main():
                         type=str, default='2meters')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
-                        type=int, default=2)
+                        type=int, default=3)
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
                         type=str, default='N')
@@ -104,12 +101,12 @@ def main():
                                                                  counter, counterMin, input, f1, output, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version, args.distributed, args.output, args.input)  # generate training and testing data, return the sequence of test id
+                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
-    if args.distributed == 0:
-        train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+
+    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.distributed, args.balanced, args.output, args.input, args.predict)
+                                     args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
 
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

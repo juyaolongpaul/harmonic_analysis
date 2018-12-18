@@ -305,12 +305,59 @@ def create_3D_data(x, timestep):
     return xx
 
 
+def generate_ML_matrix(id, model, windowsize, ts, path, sign='N'):
+    """
+
+    :param id: Id for training, validating and testing files
+    :param model: Model ID. If RNN variant used a different windowing schema
+    :param windowsize: For non-RNN variant
+    :param ts: For RNN variant
+    :param path: The folder for the encoding files
+    :param sign: A sign indicating whether the pitch_class_only encoding is needed
+    :return:
+    """
+    from get_input_and_output import adding_window_one_hot
+    counter = 0
+    #encoding_all = []
+    for fn in os.listdir(path):
+        if sign == 'N': # eliminate pitch class only encoding
+            if fn.find('_pitch_class') != -1:
+                continue
+        else: # only want pitch class only encoding
+            if fn.find('_pitch_class') == -1:
+                continue
+        p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        id_id = p.findall(fn)
+        if id_id[0] in id:
+            #print('fount:', fn)
+            encoding = np.loadtxt(os.path.join(path, fn))
+            if path.find('_x_') != -1:  # we need to add windows
+                if model.find('SVM') != -1 or model.find('DNN') != -1:
+                    encoding_window = adding_window_one_hot(encoding, windowsize)
+
+                else:
+                    encoding_window = create_3D_data(encoding, ts)
+                if counter == 0:
+                    encoding_all = list(encoding_window)
+                    encoding_all = np.array(encoding_all)
+                else:
+                    encoding_all = np.concatenate((encoding_all, encoding_window))
+            else:
+                if counter == 0:
+                    encoding_all = list(encoding)
+                    encoding_all = np.array(encoding_all)
+                else:
+                    encoding_all = np.concatenate((encoding_all, encoding))
+            counter += 1
+    return encoding_all
+
+
 
 
 def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
-                                     cv, pitch_class, ratio, input, output, distributed, balanced, outputtype,
+                                     cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict):
-    id_sum = find_id(output, distributed)  # get 3 digit id of the chorale
+    id_sum = find_id(output, '')  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio) / 2)) * 2
     # train_num = int(num_of_chorale * ratio)
@@ -342,8 +389,6 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
         train_num)
     timestep = ts
-    # INPUT_DIM = train_xxx_ori.shape[1]
-    # OUTPUT_DIM = train_yyy_ori.shape[1]
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                  str(windowsize) + 'training_data' + str(portion) + 'timestep' \
@@ -364,20 +409,13 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
-        train_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-            train_num) + '_cv_' + str(times + 1) + '.txt')
-        train_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
-            train_num) + '_cv_' + str(times + 1) + '.txt')
-        valid_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
-            valid_num) + '_cv_' + str(times + 1) + '.txt')
-        valid_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'validing' + str(
-            valid_num) + '_cv_' + str(times + 1) + '.txt')
-        train_xxx = create_3D_data(train_xx, timestep)
-        valid_xxx = create_3D_data(valid_xx, timestep)
+        train_xx = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign, sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        valid_xx = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                      sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
@@ -476,12 +514,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print("Train...")
                 checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5",
                                                verbose=1, save_best_only=True, monitor='val_loss')
-                if modelID != 'SVM' or modelID != 'DNN':
-                    hist = model.fit(train_xxx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
-                                     validation_data=(valid_xxx, valid_yy),
-                                     callbacks=[early_stopping, checkpointer, csv_logger])
-                else:
-                    hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
+                hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                                      validation_data=(valid_xx, valid_yy),
                                      callbacks=[early_stopping, checkpointer, csv_logger])
             elif modelID == "SVM":
@@ -493,27 +526,18 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('new training set', train_xx_SVM.shape, train_yy_int_SVM.shape)
                 model.fit(train_xx_SVM, train_yy_int_SVM)
         # visualize the result and put into file
-        test_xx = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times + 1) + '.txt')
-        test_xx_only_pitch = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_x_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times + 1) + 'only_pitch.txt')
-        test_yy = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + outputtype + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times + 1) + '.txt')
-        test_yy_chord_label = np.loadtxt(os.path.join('.', 'data_for_ML', sign, sign) + '_y_windowing_' + str(
-            windowsize) + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys1 + '_' + music21 + '_' + 'testing' + str(
-            test_num) + '_cv_' + str(times + 1) + '.txt')
-        if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-            test_xxx = create_3D_data(test_xx, timestep)
+        test_xx = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                      sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        test_xx_only_pitch = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                    sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
+        test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                    sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        test_yy_chord_label = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                    sign) + '_y_' + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if outputtype == 'CL':
             if modelID != "SVM":
                 model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
-                if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-                    predict_y = model.predict(test_xxx, verbose=0)  # Predict the probability for each bit of NCT
-                else:
-                    predict_y = model.predict_classes(test_xx, verbose=0)  # Predict the probability for each bit of NCT
+                predict_y = model.predict_classes(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             elif modelID == "SVM":
                 predict_y = model.predict(test_xx)
                 from sklearn.metrics import accuracy_score
@@ -521,10 +545,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 test_acc = accuracy_score(test_yy_int, predict_y)
         elif outputtype == 'NCT':
             model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
-            if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-                predict_y = model.predict(test_xxx, verbose=0)  # Predict the probability for each bit of NCT
-            else:
-                predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
+            predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             for i in predict_y:  # regulate the prediction
                 for j, item in enumerate(i):
                     if (item > 0.5):
@@ -533,12 +554,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         i[j] = 0
         if modelID != 'SVM':
             test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
-            if modelID != 'SVM' or modelID != 'DNN':  # must be a RNN based model
-                scores = model.evaluate(valid_xxx, valid_yy, verbose=0)
-                scores_test = model.evaluate(test_xxx, test_yy, verbose=0)
-            else:
-                scores = model.evaluate(valid_xx, valid_yy, verbose=0)
-                scores_test = model.evaluate(test_xx, test_yy, verbose=0)
+            scores = model.evaluate(valid_xx, valid_yy, verbose=0)
+            scores_test = model.evaluate(test_xx, test_yy, verbose=0)
             print(' valid_acc: ', scores[1])
             cvscores.append(scores[1] * 100)
             cvscores_test.append(scores_test[1] * 100)
@@ -557,20 +574,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     chord_name2.remove(item)
             print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
         if outputtype == "NCT":
-            if modelID != 'SVM' or modelID != 'DNN':
-                precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
-                    model, valid_xxx, valid_yy, modelID)
-                precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
-                                                                                                                test_xxx,
-                                                                                                                test_yy,
-                                                                                                                modelID)
-            else:
-                precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
-                    model, valid_xx, valid_yy, modelID)
-                precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
-                                                                                                                test_xx,
-                                                                                                                test_yy,
-                                                                                                                modelID)
+            precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+                model, valid_xx, valid_yy, modelID)
+            precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                            test_xx,
+                                                                                                            test_yy,
+                                                                                                            modelID)
             pre.append(precision * 100)
             pre_test.append(precision_test * 100)
             rec.append(recall * 100)
