@@ -1037,6 +1037,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 xx = np.concatenate((xx, chorale_xx_window))
             slice_counter = 0  # remember what slice in order to get the pitch class info
             yy = []  # save output by each chorale
+            yy_pitch_class = []
             for line in f.readlines():
                 line = get_chord_line(line, sign)
                 for chord in line.split():
@@ -1047,8 +1048,14 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     # chord_class = [0] * outputdim
                     # chord_class = y_non_chord_tone(chord, chord_class, list_of_chords)
                     # chord_class = get_non_chord_tone(chorale_x[slice_counter],)
-                    if outputtype == "NCT":
+                    if outputtype.find('NCT') != -1:
                         chord_class = get_chord_tone(chord, outputdim)
+                        chord_class_pitch_class = chord_class[:-1]
+                        NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter]) # we want NCT pitch class
+                        for iii, itemm in enumerate(NCT_pitch_class):
+                            if itemm == 1:
+                                if int(chord_class_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
+                                    NCT_pitch_class[iii] = 0
                         # chord_class = get_non_chord_tone(chorale_x[slice_counter], chord_class, output_dim)
                         if pitch != 'pitch_class_binary':
                             chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
@@ -1064,12 +1071,21 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     slice_counter += 1
                     if (slice_counter == 1):
                         yy = np.concatenate((yy, chord_class))
+                        if outputtype.find("NCT") != -1:
+                            yy_pitch_class = np.concatenate((yy_pitch_class, NCT_pitch_class))
                     else:
                         yy = np.vstack((yy, chord_class))
+                        if outputtype.find("NCT") != -1:
+                            yy_pitch_class = np.vstack((yy_pitch_class, NCT_pitch_class))
             print('slices of output: ', slice_counter, "slices of input", slice_input)
             file_name_y = os.path.join('.', 'data_for_ML', sign, sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                        fn[:-4] + '.txt')
             np.savetxt(file_name_y, yy, fmt='%.1e')
+            if outputtype.find("NCT") != -1:
+                file_name_y_pitch_class = os.path.join('.', 'data_for_ML', sign,
+                                           sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                           fn[:-4] + '_pitch_class.txt')
+                np.savetxt(file_name_y_pitch_class, yy_pitch_class, fmt='%.1e')
             if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
                 input('fix this or delete this')
 
@@ -1122,7 +1138,7 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
     id_sum = find_id(output, version)
     num_of_chorale = len(id_sum)
     # train_num = int(num_of_chorale * ratio)
-    if outputtype == 'NCT':
+    if outputtype.find("NCT") != -1:
         generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                   output, f2, sign, augmentation, pitch, id_sum, 'train', outputtype, id_sum,
                   inputtype)  # generate training + validating data

@@ -382,7 +382,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     chord_acc = []
     batch_size = 256
     epochs = 500
-    patience = 20
+    if modelID == 'DNN':
+        patience = 50
+    else:
+        patience = 20
     extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(
         patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
@@ -410,12 +413,19 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         valid_num = len(valid_id)
         test_num = len(test_id)
         train_xx = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign, sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
-                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        if outputtype.find('_pitch_class') == -1:
+            train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                          sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+            valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                          sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        else:
+            train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
+            valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                          sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                          'Y')
         valid_xx = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
-                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
@@ -424,7 +434,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                        :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
             train_yy = train_yy[:int(portion * train_yy.shape[0])]
             if balanced:  # re-balance the data
-                if outputtype == "NCT":
+                if outputtype.find("NCT") != -1:
                     # http://imbalanced-learn.org/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets
                     train_yy_encoded = binary_decode(train_yy)
                     ros = RandomOverSampler(ratio='minority')
@@ -504,7 +514,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 LSTM(units=HIDDEN_NODE, dropout=0.2))
                 model.add(Dense(OUTPUT_DIM))
 
-                if outputtype == "NCT":
+                if outputtype.find("NCT") != -1:
                     model.add(Activation('sigmoid'))
                     model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
                 elif outputtype == "CL":
@@ -530,11 +540,15 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         test_xx_only_pitch = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
-        test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
-                                                                                    sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        if outputtype.find('_pitch_class') == -1:
+            test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                        sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        else:
+            test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+                                                                                    sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
         test_yy_chord_label = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_y_' + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        if outputtype == 'CL':
+        if outputtype.find("CL") != -1:
             if modelID != "SVM":
                 model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
                 predict_y = model.predict_classes(test_xx, verbose=0)  # Predict the probability for each bit of NCT
@@ -543,7 +557,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 from sklearn.metrics import accuracy_score
                 test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
                 test_acc = accuracy_score(test_yy_int, predict_y)
-        elif outputtype == 'NCT':
+        elif outputtype.find("NCT") != -1:
             model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
             predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             for i in predict_y:  # regulate the prediction
@@ -573,7 +587,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 if i not in test_yy_int and i not in predict_y:
                     chord_name2.remove(item)
             print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
-        if outputtype == "NCT":
+        if outputtype.find("NCT") != -1:
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
                 model, valid_xx, valid_yy, modelID)
             precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
@@ -642,7 +656,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ',
                                   file=f_all)
                             error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
-                    elif outputtype == 'NCT':
+                    elif outputtype.find("NCT") != -1:
                         thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
                         chord_label_list_gt.append(chord_name[test_yy_int[a_counter]])
                         # pitch spelling does not affect the final results
@@ -664,7 +678,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     a_counter += 1
                 a_counter_correct += correct_num
 
-                if outputtype == 'NCT':
+                if outputtype.find("NCT") != -1:
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                         if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
                             # chord is un-determined because there are only two tones!
@@ -726,7 +740,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
-    if outputtype == 'NCT':
+    if outputtype.find("NCT") != -1:
         print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
         print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
         print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
@@ -745,7 +759,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         for i in range(len(cvscores_test)):
             print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
     print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
-    if outputtype == 'NCT':
+    if outputtype.find("NCT") != -1:
         print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
