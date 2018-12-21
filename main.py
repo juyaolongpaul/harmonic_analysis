@@ -15,7 +15,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='rule_MaxMel')
+                        type=str, default='rule_MaxMel_NoSeventh')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -67,7 +67,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
-                        type=str, default='N')
+                        type=str, default='Y')
     args = parser.parse_args()
 
     if args.source == 'Rameau':
@@ -78,7 +78,7 @@ def main():
         f1 = '.krn'  # the version of chorales used
     output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
     f2 = '.txt'
-    if args.source != 'rule_MaxMel':
+    if args.source.find('rule_MaxMel') == -1:
         extract_chord_labels(output, f1)
     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys

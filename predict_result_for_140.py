@@ -173,7 +173,7 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def output_NCT_to_XML(x, y, thisChord):
+def output_NCT_to_XML(x, y, thisChord, outputtype):
     """
     Translate 4-bit nct encoding and map the pitch classes and output the result into XML
     If you want to predict_chord, set this parameter to 'Y'
@@ -187,32 +187,44 @@ def output_NCT_to_XML(x, y, thisChord):
     nonchordpitchclassptr = [-1] * 4
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
-    chord_tone = [round(x) for x in chord_tone]
+    chord_tone = [int(round(x)) for x in chord_tone]
     # https://stackoverflow.com/questions/35651470/rounding-a-list-of-floats-into-integers-in-python
     #
-    for i in range(len(x)):
-        if (x[i] == 1):  # non-chord tone
-            yyptr += 1
-            if (y[yyptr] == 1):
-                nonchordpitchclassptr[yyptr] = i % 12
-    if nonchordpitchclassptr != [-1] * 4:
-        nct = []  # there are NCTs
-        for item in nonchordpitchclassptr:
-            if (item != -1):
-                nct.append(pitchclass[item])
-                if len(chord_tone) == 48:
-                    for i in range(4):  # Go through each voice and set this class all to 0 (NCT)
-                        if int(chord_tone[i * 12 + item]) == 1:
-                            chord_tone[i * 12 + item] = 0
-                elif len(chord_tone) == 12:
-                    chord_tone[item] = 0
-                else:
-                    input('I have a chord tone matrix that I do not know how to process')
-        thisChord.addLyric(nct)
+    if outputtype.find('_pitch_class') == -1:
+        for i in range(len(x)):
+            if (x[i] == 1):  # non-chord tone
+                yyptr += 1
+                if (y[yyptr] == 1):
+                    nonchordpitchclassptr[yyptr] = i % 12
+        if nonchordpitchclassptr != [-1] * 4:
+            nct = []  # there are NCTs
+            for item in nonchordpitchclassptr:
+                if (item != -1):
+                    nct.append(pitchclass[item])
+                    if len(chord_tone) == 48:
+                        for i in range(4):  # Go through each voice and set this class all to 0 (NCT)
+                            if int(chord_tone[i * 12 + item]) == 1:
+                                chord_tone[i * 12 + item] = 0
+                    elif len(chord_tone) == 12:
+                        chord_tone[item] = 0
+                    else:
+                        input('I have a chord tone matrix that I do not know how to process')
+            thisChord.addLyric(nct)
+        else:
+            thisChord.addLyric(' ')
+        return chord_tone
     else:
-        thisChord.addLyric(' ')
-    return chord_tone
-
+        # in 12-d pitch class, y is already the chord_tone
+        nct = []
+        for i, item in enumerate(y):
+            if int(item) == 1:
+                nct.append(pitchclass[i])
+                chord_tone[i] = 0
+        if nct != []:
+            thisChord.addLyric(nct)
+        else:
+            thisChord.addLyric(' ')
+        return chord_tone
 
 def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list):
     """
@@ -379,6 +391,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     fp = []
     fn = []
     frame_acc = []
+    frame_acc_2 = [] # Use it without generating XML, and also use it to cross validate the one above
     chord_acc = []
     batch_size = 256
     epochs = 500
@@ -566,6 +579,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         i[j] = 1
                     else:
                         i[j] = 0
+            correct_num2 = 0
+            for i, item in enumerate(predict_y):
+                if np.array_equal(item,test_yy[i]): # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
+                    correct_num2 += 1
+            frame_acc_2.append(((correct_num2 / predict_y.shape[0]) * 100))
+
         if modelID != 'SVM':
             test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
             scores = model.evaluate(valid_xx, valid_yy, verbose=0)
@@ -671,8 +690,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         dimension = test_xx_only_pitch.shape[1]
                         realdimension = int(dimension / (2 * windowsize + 1))
                         x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
-                        output_NCT_to_XML(x, gt, thisChord)
-                        chord_tone = output_NCT_to_XML(x, prediction, thisChord)
+                        output_NCT_to_XML(x, gt, thisChord, outputtype)
+                        chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
                         chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
                                                                                chord_label_list)
                     a_counter += 1
@@ -751,10 +770,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Chord acc:', chord_acc[i], file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], file=cv_log)
         else:
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%', file=cv_log)
+                print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
     elif outputtype == "CL":
         for i in range(len(cvscores_test)):
             print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
@@ -763,11 +782,14 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%',)
         print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
         if predict == 'Y':
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
-
+    cv_log.close()
 
 if __name__ == "__main__":
     train_and_predict_non_chord_tone(2, 200, 2, 1, 'DNN', 10)

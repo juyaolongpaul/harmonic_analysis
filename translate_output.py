@@ -555,7 +555,7 @@ def translate_rule_based_annotation(ori, source):
                 ori_backup[i] = 'C' # assume it is a C chord
         if ori_backup[i] != '??' and ori_backup[i].find('??') != -1:  # D?? is D
             ori_backup[i] = ori_backup[i].replace('??', '')
-        if source == 'rule_MaxMel': # this version used a different chord encoding scheme
+        if source.find('rule_MaxMel') != -1: # this version used a different chord encoding scheme
             if (item[0].islower() and len(item) == 1) or (item[0].islower() and len(item) == 2 and (item[1] == '#' or item[1] == 'b')): # 'g' is a minor chord
                 ori_backup[i] = item + 'm'
             if ori_backup[i].find('^') != -1:
@@ -564,6 +564,13 @@ def translate_rule_based_annotation(ori, source):
                 ori_backup[i] = ori_backup[i].replace('o','/o')
             if ori_backup[i].find('oo') != -1: # oo means fully diminished
                 ori_backup[i] = ori_backup[i].replace('oo', 'o')
+            if source.find('NoSeventh') != -1: # This could be used for all versions
+                if ori_backup[i].find('/o7') != -1: # half diminised 7th chord becomes diminished triad
+                    ori_backup[i] = ori_backup[i].replace('/o7', 'o')
+                if ori_backup[i].find('7') != -1:
+                    ori_backup[i] = ori_backup[i].replace('7', '')
+                if ori_backup[i].find('M') != -1: # M is the leftover from M7, and we need to unify fM and f as the same thing
+                    ori_backup[i] = ori_backup[i].replace('M', '')
         else:  # this uses a new chord schema Nat specifies
             if ori_backup[i].find('d') != -1 and len(ori_backup[i]) > 1 and ori_backup[i].find('dd') == -1 \
                     and ori_backup[i].find('dm') == -1: # d means diminished

@@ -866,7 +866,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
     if sign == 'Rameau':
         input1 = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
-    if sign == 'rule_MaxMel':
+    if sign.find('rule_MaxMel') != -1:
         label = 'chor'
     else:
         label = 'Chorales_Bach_'
@@ -946,8 +946,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
             # pitch class is used. This one is used to indicate which one is NCT.
             chorale_x_only_pitch_class = []
-            if (os.path.isfile(
-                    os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
+            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
                 f = open(
                     os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
                     'r')
@@ -1050,13 +1049,15 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     # chord_class = get_non_chord_tone(chorale_x[slice_counter],)
                     if outputtype.find('NCT') != -1:
                         chord_class = get_chord_tone(chord, outputdim)
-                        chord_class_pitch_class = chord_class[:-1]
-                        NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter]) # we want NCT pitch class
-                        for iii, itemm in enumerate(NCT_pitch_class):
-                            if itemm == 1:
-                                if int(chord_class_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
-                                    NCT_pitch_class[iii] = 0
-                        # chord_class = get_non_chord_tone(chorale_x[slice_counter], chord_class, output_dim)
+                        if outputtype.find("_pitch_class") != -1:
+                            if pitch.find('_4_voices') != -1:
+                                input('Do not use 12-d output when the pitch class is used for each of 4 voices!')
+                            chord_class_pitch_class = chord_class[:-1]
+                            NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter]) # we want NCT pitch class
+                            for iii, itemm in enumerate(NCT_pitch_class):
+                                if itemm == 1:
+                                    if int(chord_class_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
+                                        NCT_pitch_class[iii] = 0
                         if pitch != 'pitch_class_binary':
                             chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
                                                                outputdim,
@@ -1071,17 +1072,17 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     slice_counter += 1
                     if (slice_counter == 1):
                         yy = np.concatenate((yy, chord_class))
-                        if outputtype.find("NCT") != -1:
+                        if outputtype.find("_pitch_class") != -1:
                             yy_pitch_class = np.concatenate((yy_pitch_class, NCT_pitch_class))
                     else:
                         yy = np.vstack((yy, chord_class))
-                        if outputtype.find("NCT") != -1:
+                        if outputtype.find("_pitch_class") != -1:
                             yy_pitch_class = np.vstack((yy_pitch_class, NCT_pitch_class))
             print('slices of output: ', slice_counter, "slices of input", slice_input)
             file_name_y = os.path.join('.', 'data_for_ML', sign, sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                        fn[:-4] + '.txt')
             np.savetxt(file_name_y, yy, fmt='%.1e')
-            if outputtype.find("NCT") != -1:
+            if outputtype.find("_pitch_class") != -1:
                 file_name_y_pitch_class = os.path.join('.', 'data_for_ML', sign,
                                            sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                            fn[:-4] + '_pitch_class.txt')
