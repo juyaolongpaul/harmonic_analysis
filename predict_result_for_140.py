@@ -664,17 +664,19 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 chord_label_list = []  # store all the chord labels predicted by the model
                 chord_label_list_gt = []
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    # thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    thisChord.closedPosition(forceOctave=4, inPlace=True)
                     if outputtype == 'CL':
                         thisChord.addLyric(chord_name[test_yy_int[a_counter]])
                         thisChord.addLyric(chord_name[predict_y[a_counter]])
                         if test_yy_int[a_counter] == predict_y[a_counter]:
                             correct_num += 1
                             print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
+                            thisChord.addLyric('✓')
                         else:
                             print(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]], end=' ',
                                   file=f_all)
                             error_list.append(chord_name[test_yy_int[a_counter]] + '->' + chord_name[predict_y[a_counter]])
+                            thisChord.addLyric(' ')
                     elif outputtype.find("NCT") != -1:
                         thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
                         chord_label_list_gt.append(chord_name[test_yy_int[a_counter]])
@@ -685,13 +687,16 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         for ii in range(len(gt)):
                             if (gt[ii] == prediction[ii]):  # the label is correct
                                 correct_bit += 1
-                        if (correct_bit == len(gt)):
-                            correct_num += 1
                         dimension = test_xx_only_pitch.shape[1]
                         realdimension = int(dimension / (2 * windowsize + 1))
                         x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                         output_NCT_to_XML(x, gt, thisChord, outputtype)
                         chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
+                        if (correct_bit == len(gt)):
+                            correct_num += 1
+                            thisChord.addLyric('✓')
+                        else:
+                            thisChord.addLyric(' ')
                         chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
                                                                                chord_label_list)
                     a_counter += 1
