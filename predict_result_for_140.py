@@ -230,20 +230,26 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
     """
     Record all the chord tones and chord labels predicted by the model, which are used to finalize the un-determined
     chord
+    harmony.chordSymbolFigureFromChord is used to convert pitch classes into chord names
     :param thisChord:
     :param chord_tone:
     :param chord_tone_list:
     :param chord_label_list:
     :return:
     """
+    chord_pitch = []
     chord_pitch_class_ID = []
     if int(chord_tone[thisChord.bass().pitchClass]) == 1:  # If bass is a chord tone
-        chord_pitch_class_ID.append(thisChord.bass().pitchClass)  # add the bass note first
+        chord_pitch.append(thisChord.pitchNames[thisChord.pitchClasses.index(thisChord.bass().pitchClass)])
+        chord_pitch_class_ID.append(thisChord.bass().pitchClass)
+        # add the bass note first
     for i, item in enumerate(chord_tone):
         if item == 1:
             if i != thisChord.bass().pitchClass:  # bass note has been added
-                chord_pitch_class_ID.append(i)
-    chord_label = chord.Chord(chord_pitch_class_ID)
+                if i in thisChord.pitchClasses:
+                    chord_pitch.append(thisChord.pitchNames[thisChord.pitchClasses.index(i)])
+                    chord_pitch_class_ID.append(i)
+    chord_label = chord.Chord(chord_pitch)  # what's wrong with this damn function??? Why I am giving 369 and then give me a f#o????. Must give actual pitch name
     chord_tone_list.append(chord_pitch_class_ID)
     allowed_chord_quality = ['incomplete major-seventh chord', 'major seventh chord',
                              'incomplete minor-seventh chord', 'minor seventh chord',
@@ -258,14 +264,42 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
             # This is the chord we can output directly
             # https://python-forum.io/Thread-Ho-to-check-if-string-contains-substring-from-list
             # thisChord.addLyric(chord_label.pitchedCommonName)
-            if harmony.chordSymbolFigureFromChord(chord_label).find('Identified') != -1:
+            if harmony.chordSymbolFigureFromChord(chord_label).find('Identified') != -1:  # harmony.chordSymbolFigureFromChord cannot convert pitch classes into chord name sometimes, and the examples are below
                 #print('debug')
-                chord_label_list.append(chord_label.pitchedCommonName)
+                if chord_label.pitchedCommonName.find('-diminished triad') != -1: # chord_label.pitchedCommonName is another version of the chord name, but usually I cannot use it to get harmony.ChordSymbol to get pitch classes, so I translate these cases which could be processed by harmony.ChordSymbol later on
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-diminished triad', 'o')) # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete half-diminished seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete half-diminished seventh chord', '/o7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete minor-seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete minor-seventh chord', 'm7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete major-seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete major-seventh chord', 'M7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete dominant-seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7')) # translate to support
+                else:
+                    chord_label_list.append(chord_label.pitchedCommonName)  # What does this do?
             else:
-                chord_label_list.append(re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label))) # remove inversions, notice that half diminished also has /!
-        else:  # undetermined chord
+                if harmony.chordSymbolFigureFromChord(chord_label).find('add') != -1: # contains "add" which does not work for harmony.ChordSymbol, at 095
+                    chord_label_list.append(
+                        re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[:harmony.chordSymbolFigureFromChord(chord_label).find('add')]))  # remove 'add' part
+                elif harmony.chordSymbolFigureFromChord(chord_label).find('dim') != -1:
+                    chord_label_list.append(
+                        re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label).replace('dim','o')))
+                else:
+                    chord_label_list.append(re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label))) # remove inversions, notice that half diminished also has /!
+                # the line above is the most cases, where harmony.chordSymbolFigureFromChord can give a chord name for the pitch classes, and Bdim is generated by this!
+        else:  # undetermined chord, but we want to keep a few cases of 2 note pitch classes
             # thisChord.addLyric('un-determined')
-            chord_label_list.append('un-determined')
+            if chord_label.pitchedCommonName.find('-interval class 5') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                chord_label_list.append(chord_label.pitchedCommonName)
+            elif chord_label.pitchedCommonName.find('-interval class 4') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                chord_label_list.append(chord_label.pitchedCommonName)
+            elif chord_label.pitchedCommonName.find('-interval class 3') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                chord_label_list.append(chord_label.pitchedCommonName) # minor third missing 5th will be considered as minor triads
+            elif chord_label.pitchedCommonName.find('-tritone') != -1: # tritone is converted into diminished chord
+                chord_label_list.append(chord_label.pitchedCommonName[:chord_label.pitchedCommonName.find('-tritone')] + 'o')
+            else:
+                chord_label_list.append('un-determined')
     else:  # no chord tone, this slice is undetermined as well
         # thisChord.addLyric('un-determined')
         chord_label_list.append('un-determined')
@@ -282,18 +316,58 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
     :param chord_tone_list:
     :return:
     """
-    for jj, itemitem in enumerate(chord_label_list[j + 1:]):
-        if itemitem != 'un-determined':  # Find the next real chord
-            break
-    jj += j + 1
-    common_tone1 = list(set(chord_tone_list[j]).intersection(chord_tone_list[j - 1]))
-    common_tone2 = list(set(chord_tone_list[j]).intersection(chord_tone_list[jj]))
-    if len(common_tone1) >= len(common_tone2):
-        chord_label_list[j] = chord_label_list[j - 1]
-    else:
-        chord_label_list[j] = chord_label_list[jj]
+    if chord_tone_list[-1].find('interval') != -1:  # change the last element first
+        if chord_label_list[-1].find(
+                '-interval class 5') != -1:  # p5 and missing 5th (major third will be considered as major triads)
+            chord_label_list[-1] = chord_label_list[-1].replace('-interval class 5', '')
+        elif chord_label_list[-1].find(
+                '-interval class 4') != -1:  # p5 and missing 5th (major third will be considered as major triads)
+            chord_label_list[-1] = chord_label_list[-1].replace('-interval class 4', '')
+        elif chord_label_list[-1].find(
+                '-interval class 3') != -1:  # m3 and missing 5th (minor third will be considered as minor triads)
+            chord_label_list[-1] = chord_label_list[-1].replace('-interval class 3', '') + 'm'
+    if j < len(chord_tone_list) - 1:
+        for jj, itemitem in enumerate(chord_label_list[j + 1:]):
+            if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
+                break
+        jj = jj + j + 1
+        #print('chord_label_list[j - 1]', chord_label_list[j - 1])
 
-
+        common_tone1 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses)) # compare the current chord tone with the ones from adjacent chord labels (not the identified tones)
+        #print('chord_label_list[jj]', chord_label_list[jj])
+        common_tone2 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+        if chord_label_list[j] == 'un-determined':
+            if len(common_tone1) >= len(common_tone2):
+                chord_label_list[j] = chord_label_list[j - 1]
+            else:
+                chord_label_list[j] = chord_label_list[jj]
+        elif chord_label_list[j].find('interval') != -1:
+            if len(common_tone1) == len(chord_tone_list[j]): # if the previous slice contains the current slice, use the previous chord
+                chord_label_list[j] = chord_label_list[j - 1]
+            elif len(common_tone2) == len(chord_tone_list[j]): # if the following slice contains the current slice, use the following chord
+                chord_label_list[j] = chord_label_list[jj]
+            else:
+                if chord_label_list[j].find('-interval class 5') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 5', '')
+                elif chord_label_list[j].find('-interval class 4') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 4', '')
+                elif chord_label_list[j].find('-interval class 3') != -1: # m3 and missing 5th (minor third will be considered as minor triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 3', '') + 'm'
+    else: # this is the last slice of the song
+        if chord_label_list[j] == 'un-determined':
+            chord_label_list[j] = chord_label_list[j - 1] # only can be changed as the last label
+        elif chord_label_list[j].find('interval') != -1:
+            common_tone1 = list(
+                set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+            if len(common_tone1) == len(chord_tone_list[j]): # if the previous slice contains the current slice, use the previous chord
+                chord_label_list[j] = chord_label_list[j - 1]
+            else:
+                if chord_label_list[j].find('-interval class 5') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 5', '')
+                elif chord_label_list[j].find('-interval class 4') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 4', '')
+                elif chord_label_list[j].find('-interval class 3') != -1: # m3 and missing 5th (minor third will be considered as minor triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 3', '') + 'm'
 def create_3D_data(x, timestep):
     """
     generate 3D data for RNN like network to train based on 2D data.
@@ -418,6 +492,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                            append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
+        if times != 3:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -654,6 +730,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i][-7:-4])
+                # if fileName[i][-7:-4] == '043':
+                #     print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
@@ -702,42 +780,56 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     a_counter += 1
                 a_counter_correct += correct_num
 
-                if outputtype.find("NCT") != -1:
+                if outputtype.find("NCT") != -1: # always compare the pitch class from the lowest ones to the highest ones, so dimished chord with different inversions should always be right answers
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                        if chord_label_list[j] == 'un-determined' and j < len(chord_tone_list) - 1:  # sometimes the last
+                        if j == 67 and fileName[i][-7:-4] == '153':
+                            print('debug')
+                        if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
-                            thisChord.addLyric(chord_label_list[j])
+                        thisChord.addLyric(chord_label_list[j])
+                        print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
+                        if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                            correct_num_chord += 1
+                            thisChord.addLyric('✓')
                             #print(chord_label_list[j])
-                            if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                                if chord_label_list[j].find('incomplete') != -1:
-                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                                        correct_num_chord += 1
-                                        thisChord.addLyric('✓')
-                                else:
-                                    if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == chord_tone_list[j].sort():
-                                        correct_num_chord += 1
-                                        thisChord.addLyric('✓')
-                            else:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                                    correct_num_chord += 1
-                                    thisChord.addLyric('✓')
-                        else:
-                            thisChord.addLyric(chord_label_list[j])
+                            # if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
+                            #     # Currently, this function is rarely used since most of the chords are renamed by infer_chord_label1 so it can be processed by harmony.ChordSymbol
+                            #     if chord_label_list[j].find('incomplete') != -1:
+                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]) or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                            #             correct_num_chord += 1
+                            #             thisChord.addLyric('✓')
+                            #     else:
+                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == sorted(chord_tone_list[j]):
+                            #             correct_num_chord += 1
+                            #             thisChord.addLyric('✓')
+                            # else: # the other cases, which are most the cases, can be processed by harmony.ChordSymbolic to have the pitch class
+                            #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                            #         correct_num_chord += 1
+                            #         thisChord.addLyric('✓')
+                        # else:
+                        #     thisChord.addLyric(chord_label_list[j])
+                        #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(
+                        #             chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(
+                        #             chord_label_list[j]).orderedPitchClasses:
+                        #         correct_num_chord += 1
+                        #         thisChord.addLyric('✓')
                             #print(chord_label_list[j])
-                            if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                                if chord_label_list[j].find('incomplete') != -1:
-                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort() or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                                        correct_num_chord += 1
-                                        thisChord.addLyric('✓')
-                                else:
-                                    if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == chord_tone_list[j].sort():
-                                        correct_num_chord += 1
-                                        thisChord.addLyric('✓')
-                            else:
-                                if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                                    correct_num_chord += 1
-                                    thisChord.addLyric('✓')
+                            # if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
+                            #     if chord_label_list[j].find('incomplete') != -1:
+                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]) or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
+                            #             correct_num_chord += 1
+                            #             thisChord.addLyric('✓')
+                            #     else:
+                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]):
+                            #             correct_num_chord += 1
+                            #             thisChord.addLyric('✓')
+                            #         else:
+                            #             print(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses, sorted(chord_tone_list[j]))
+                            # else:
+                            #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
+                            #         correct_num_chord += 1
+                            #         thisChord.addLyric('✓')
                 a_counter_correct_chord += correct_num_chord
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
