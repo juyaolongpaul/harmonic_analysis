@@ -872,70 +872,70 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         label = 'Chorales_Bach_'
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
+    for id, fn in enumerate(os.listdir(input1)):  # this part should be executed no matter what since we want a updated version of chord list
+        if fn.find('KB') != -1 and fn[-4:] == f1:
+            p = re.compile(r'\d{3}')  # find 3 digit in the file name
+            id_id = p.findall(fn)
+            if id_id[0] in data_id:  # if the digit found in the list, add this file
+                if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                    if pitch.find('oriKey') == -1:  # we want transposed key
+                        if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                            fn_total.append(fn)
+                    else:
+                        if fn.find('_ori') != -1:  # no transposition
+                            fn_total.append(fn)
+                elif augmentation == 'Y' and portion == 'train':
+                    fn_total.append(fn)  # we want 12 keys on training set
+                elif augmentation == 'Y' and (
+                        portion == 'valid' or portion == 'test'):  # original keys on the valid and test set:
+                    if (fn.find('_ori') != -1):  # only add original key
+                        fn_total.append(fn)
+            if id_id[0] in data_id_total:
+                # This section of code aims to add all the file IDs across training validation and test set
+                if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                    if pitch.find('oriKey') == -1:  # we want transposed key
+                        if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                            fn_total_all.append(fn)
+                    else:
+                        if fn.find('_ori') != -1:  # no transposition
+                            fn_total_all.append(fn)
+                elif augmentation == 'Y':
+                    fn_total_all.append(fn)  # we want 12 keys on all sets
+
+    # if (predict == 'N'):
+    #     shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
+    # This is not needed anymore, since we will shuffle the dataset when training
+    print(fn_total)
+    # input('?')
+    bad_voice_finding_slice = 0
+    # The following part calculates chord frequency distribution
+    dic = {}  # Save chord name + frequencies
+    for id, fn in enumerate(fn_total_all):
+        ptr = p.search(fn).span()[0]  # return the starting place of "001"
+        ptr2 = p.search(fn).span()[1]
+        if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
+            f = open(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2, 'r')
+        else:
+            continue  # skip the file which does not have chord labels
+        for line in f.readlines():
+            line = get_chord_line(line, sign)
+            dic = calculate_freq(dic, line)
+    li = sorted(dic.items(), key=lambda d: d[1], reverse=True)
+    list_of_chords = []
+    for i, word in enumerate(li):
+        list_of_chords.append(word[0])  # Get all the chords
+    f_chord = open('chord_freq.txt', 'w')
+    for item in li:
+        print(item, file=f_chord)
+    f_chord.close()
+    f_chord2 = open('chord_name.txt', 'w')
+    for item in list_of_chords:
+        print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
+        # confusion matrix
+    f_chord2.close()
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign, sign) + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21):
         os.mkdir(os.path.join('.', 'data_for_ML', sign, sign) + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21)
         os.mkdir(os.path.join('.', 'data_for_ML', sign, sign) + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21)
-        for id, fn in enumerate(os.listdir(input1)):
-            if fn.find('KB') != -1 and fn[-4:] == f1:
-                p = re.compile(r'\d{3}')  # find 3 digit in the file name
-                id_id = p.findall(fn)
-                if id_id[0] in data_id:  # if the digit found in the list, add this file
-                    if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                        if pitch.find('oriKey') == -1:  # we want transposed key
-                            if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
-                                fn_total.append(fn)
-                        else:
-                            if fn.find('_ori') != -1:  # no transposition
-                                fn_total.append(fn)
-                    elif augmentation == 'Y' and portion == 'train':
-                        fn_total.append(fn)  # we want 12 keys on training set
-                    elif augmentation == 'Y' and (
-                            portion == 'valid' or portion == 'test'):  # original keys on the valid and test set:
-                        if (fn.find('_ori') != -1):  # only add original key
-                            fn_total.append(fn)
-                if id_id[0] in data_id_total:
-                    # This section of code aims to add all the file IDs across training validation and test set
-                    if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                        if pitch.find('oriKey') == -1:  # we want transposed key
-                            if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
-                                fn_total_all.append(fn)
-                        else:
-                            if fn.find('_ori') != -1:  # no transposition
-                                fn_total_all.append(fn)
-                    elif augmentation == 'Y':
-                        fn_total_all.append(fn)  # we want 12 keys on all sets
-
-        # if (predict == 'N'):
-        #     shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
-        # This is not needed anymore, since we will shuffle the dataset when training
-        print(fn_total)
-        # input('?')
-        bad_voice_finding_slice = 0
-        # The following part calculates chord frequency distribution
-        dic = {}  # Save chord name + frequencies
-        for id, fn in enumerate(fn_total_all):
-            ptr = p.search(fn).span()[0]  # return the starting place of "001"
-            ptr2 = p.search(fn).span()[1]
-            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
-                f = open(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2, 'r')
-            else:
-                continue  # skip the file which does not have chord labels
-            for line in f.readlines():
-                line = get_chord_line(line, sign)
-                dic = calculate_freq(dic, line)
-        li = sorted(dic.items(), key=lambda d: d[1], reverse=True)
-        list_of_chords = []
-        for i, word in enumerate(li):
-            list_of_chords.append(word[0])  # Get all the chords
-        f_chord = open('chord_freq.txt', 'w')
-        for item in li:
-            print(item, file=f_chord)
-        f_chord.close()
-        f_chord2 = open('chord_name.txt', 'w')
-        for item in list_of_chords:
-            print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
-            # confusion matrix
-        f_chord2.close()
         for id, fn in enumerate(fn_total):
             print(fn)
             # if fn != 'transposed_KBcKE358.xml':

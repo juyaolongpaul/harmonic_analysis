@@ -276,8 +276,18 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete major-seventh chord', 'M7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-incomplete dominant-seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-major triad') != -1: #(e.g., E--major triad) in  279 slice 33
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-major triad', '')) # translate to support
+                elif chord_label.pitchedCommonName.find('-dominant seventh chord') != -1: #(e.g., E--major triad) in  279 slice 33
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-dominant seventh chord', '7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-half-diminished seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-half-diminished seventh chord', '/o7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minor-seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-minor-seventh chord', 'm7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-major-seventh chord') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-major-seventh chord', 'M7')) # translate to support
                 else:
-                    chord_label_list.append(chord_label.pitchedCommonName)  # What does this do?
+                    chord_label_list.append(chord_label.pitchedCommonName)  # Just in case the function cannot accept any names (e.g., E--major triad)
             else:
                 if harmony.chordSymbolFigureFromChord(chord_label).find('add') != -1: # contains "add" which does not work for harmony.ChordSymbol, at 095
                     chord_label_list.append(
@@ -316,7 +326,8 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
     :param chord_tone_list:
     :return:
     """
-    if chord_tone_list[-1].find('interval') != -1:  # change the last element first
+    # TODO: this part of code can be further factorized
+    if chord_label_list[-1].find('interval') != -1:  # change the last element first
         if chord_label_list[-1].find(
                 '-interval class 5') != -1:  # p5 and missing 5th (major third will be considered as major triads)
             chord_label_list[-1] = chord_label_list[-1].replace('-interval class 5', '')
@@ -326,16 +337,40 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
         elif chord_label_list[-1].find(
                 '-interval class 3') != -1:  # m3 and missing 5th (minor third will be considered as minor triads)
             chord_label_list[-1] = chord_label_list[-1].replace('-interval class 3', '') + 'm'
-    if j < len(chord_tone_list) - 1:
+    if j == 0: # this is the first slice of the song, only look after
+        # TODO: always be careful about the first and last slice. Use -1 carefully!
         for jj, itemitem in enumerate(chord_label_list[j + 1:]):
             if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
                 break
         jj = jj + j + 1
-        #print('chord_label_list[j - 1]', chord_label_list[j - 1])
-
+        if chord_label_list[j] == 'un-determined':
+            chord_label_list[j] = chord_label_list[jj] # You dont have a choice
+            # TODO: this part can get tricky if there are many undetermined slices in the beginning, and we have to look after where slices are not fully processed
+        elif chord_label_list[j].find('interval') != -1:
+            common_tone2 = list(
+                set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+            if len(common_tone2) == len(chord_tone_list[j]): # if the previous slice contains the current slice, use the previous chord
+                chord_label_list[j] = chord_label_list[jj]
+            else:
+                if chord_label_list[j].find('-interval class 5') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 5', '')
+                elif chord_label_list[j].find('-interval class 4') != -1: # p5 and missing 5th (major third will be considered as major triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 4', '')
+                elif chord_label_list[j].find('-interval class 3') != -1: # m3 and missing 5th (minor third will be considered as minor triads)
+                    chord_label_list[j] = chord_label_list[j].replace('-interval class 3', '') + 'm'
+    elif j < len(chord_tone_list) - 1:
+        for jj, itemitem in enumerate(chord_label_list[j + 1:]):
+            if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
+                break
+        jj = jj + j + 1
+        print('j-1', j-1, 'chord_label_list[j - 1]', chord_label_list[j - 1])
         common_tone1 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses)) # compare the current chord tone with the ones from adjacent chord labels (not the identified tones)
-        #print('chord_label_list[jj]', chord_label_list[jj])
-        common_tone2 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+        print('jj', jj, 'chord_label_list[jj]', chord_label_list[jj])
+        print('j', j, 'chord_label_list[j]', chord_label_list[j])
+        if chord_label_list[jj] != 'un-determined':  # it is possible that the last slice of the chorale is undetermined, see 187
+            common_tone2 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+        else:
+            common_tone2 = [] # we don't want any chance of the current slice to be 'un-determined'
         if chord_label_list[j] == 'un-determined':
             if len(common_tone1) >= len(common_tone2):
                 chord_label_list[j] = chord_label_list[j - 1]
@@ -353,7 +388,7 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
                     chord_label_list[j] = chord_label_list[j].replace('-interval class 4', '')
                 elif chord_label_list[j].find('-interval class 3') != -1: # m3 and missing 5th (minor third will be considered as minor triads)
                     chord_label_list[j] = chord_label_list[j].replace('-interval class 3', '') + 'm'
-    else: # this is the last slice of the song
+    else: # this is the last slice of the song, only look back
         if chord_label_list[j] == 'un-determined':
             chord_label_list[j] = chord_label_list[j - 1] # only can be changed as the last label
         elif chord_label_list[j].find('interval') != -1:
@@ -492,8 +527,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                            append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        if times != 3:
-            continue
+        # if times != 9:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -730,8 +765,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i][-7:-4])
-                # if fileName[i][-7:-4] == '043':
-                #     print('debug')
+                if fileName[i][-7:-4] == '043':
+                    print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
@@ -782,7 +817,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
                 if outputtype.find("NCT") != -1: # always compare the pitch class from the lowest ones to the highest ones, so dimished chord with different inversions should always be right answers
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                        if j == 67 and fileName[i][-7:-4] == '153':
+                        if j == 18 and fileName[i][-7:-4] == '043':
                             print('debug')
                         if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
