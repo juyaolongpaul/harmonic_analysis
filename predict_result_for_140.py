@@ -817,7 +817,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
                 if outputtype.find("NCT") != -1: # always compare the pitch class from the lowest ones to the highest ones, so dimished chord with different inversions should always be right answers
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                        if j == 18 and fileName[i][-7:-4] == '043':
+                        if j == 77 and fileName[i][-7:-4] == '002':
                             print('debug')
                         if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
