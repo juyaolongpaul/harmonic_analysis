@@ -80,7 +80,7 @@ def get_predict_file_name(input, data_id, augmentation):
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                     if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
                         filename.append(fn)
-                else:
+                elif fn.find('_ori') != -1:
                     filename.append(fn)
 
     for id, fn in enumerate(filename):
@@ -212,7 +212,14 @@ def output_NCT_to_XML(x, y, thisChord, outputtype):
             thisChord.addLyric(nct)
         else:
             thisChord.addLyric(' ')
-        return chord_tone
+        if len(chord_tone) == 48:
+            chord_tone_12 = [0] * 12
+            for i, item in enumerate(chord_tone):
+                if int(item) == 1:
+                    chord_tone_12[i % 12] = 1
+            return chord_tone_12
+        else:
+            return chord_tone
     else:
         # in 12-d pitch class, y is already the chord_tone
         nct = []
@@ -363,18 +370,28 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
             if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
                 break
         jj = jj + j + 1
-        print('j-1', j-1, 'chord_label_list[j - 1]', chord_label_list[j - 1])
+        #print('j-1', j-1, 'chord_label_list[j - 1]', chord_label_list[j - 1])
         common_tone1 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses)) # compare the current chord tone with the ones from adjacent chord labels (not the identified tones)
-        print('jj', jj, 'chord_label_list[jj]', chord_label_list[jj])
-        print('j', j, 'chord_label_list[j]', chord_label_list[j])
+        #print('jj', jj, 'chord_label_list[jj]', chord_label_list[jj])
+        #print('j', j, 'chord_label_list[j]', chord_label_list[j])
         if chord_label_list[jj] != 'un-determined':  # it is possible that the last slice of the chorale is undetermined, see 187
             common_tone2 = list(set(chord_tone_list[j]).intersection(harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
         else:
             common_tone2 = [] # we don't want any chance of the current slice to be 'un-determined'
         if chord_label_list[j] == 'un-determined':
-            if len(common_tone1) >= len(common_tone2):
+            if len(common_tone1) == len(common_tone2): # if sharing the same number of pcs, choose the chord label whose root is the bass of the slice
+                slice_bass = thisChord.bass().pitchClass
+                chord_root_1 = harmony.ChordSymbol(chord_label_list[j - 1])._cache['root'].pitchClass
+                chord_root_2 = harmony.ChordSymbol(chord_label_list[jj])._cache['root'].pitchClass
+                if chord_root_1 == slice_bass:
+                    chord_label_list[j] = chord_label_list[j - 1]
+                elif chord_root_2 == slice_bass:
+                    chord_label_list[j] = chord_label_list[jj]
+                else:
+                    chord_label_list[j] = chord_label_list[j - 1]
+            elif len(common_tone1) > len(common_tone2):
                 chord_label_list[j] = chord_label_list[j - 1]
-            else:
+            elif len(common_tone1) < len(common_tone2):
                 chord_label_list[j] = chord_label_list[jj]
         elif chord_label_list[j].find('interval') != -1:
             if len(common_tone1) == len(chord_tone_list[j]): # if the previous slice contains the current slice, use the previous chord
@@ -426,7 +443,7 @@ def create_3D_data(x, timestep):
     return xx
 
 
-def generate_ML_matrix(id, model, windowsize, ts, path, sign='N'):
+def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, sign='N'):
     """
 
     :param id: Id for training, validating and testing files
@@ -446,6 +463,12 @@ def generate_ML_matrix(id, model, windowsize, ts, path, sign='N'):
                 continue
         else: # only want pitch class only encoding
             if fn.find('_pitch_class') == -1:
+                continue
+        if augmentation == 'N':
+            if fn.find('cKE') == -1 and fn.find('c_oriKE') == -1: # we cannot find key of c, skip
+                continue
+        elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
+            if fn.find('_ori') == -1:
                 continue
         p = re.compile(r'\d{3}')  # find 3 digit in the file name
         id_id = p.findall(fn)
@@ -470,6 +493,7 @@ def generate_ML_matrix(id, model, windowsize, ts, path, sign='N'):
                 else:
                     encoding_all = np.concatenate((encoding_all, encoding))
             counter += 1
+    print(portion, 'finished')
     return encoding_all
 
 
@@ -536,21 +560,28 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         train_num = len(train_id)
         valid_num = len(valid_id)
         test_num = len(test_id)
-        train_xx = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign, sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if outputtype.find('_pitch_class') == -1:
-            train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
-                                                                                          sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-            valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+            valid_yy = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                           sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         else:
-            train_yy = generate_ML_matrix(train_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
-                                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
-            valid_yy = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+            valid_yy = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                           sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                           'Y')
-        valid_xx = generate_ML_matrix(valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+        valid_xx = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
+            train_xx = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+            if outputtype.find('_pitch_class') == -1:
+                train_yy = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                              os.path.join('.', 'data_for_ML', sign,
+                                                           sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+            else:
+                train_yy = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                              os.path.join('.', 'data_for_ML', sign,
+                                                           sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                              'Y')
             INPUT_DIM = train_xx.shape[1]
             OUTPUT_DIM = train_yy.shape[1]
             train_xx, train_yy = bootstrap_data(train_xx, train_yy, bootstraptime)
@@ -660,17 +691,17 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('new training set', train_xx_SVM.shape, train_yy_int_SVM.shape)
                 model.fit(train_xx_SVM, train_yy_int_SVM)
         # visualize the result and put into file
-        test_xx = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+        test_xx = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        test_xx_only_pitch = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+        test_xx_only_pitch = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
         if outputtype.find('_pitch_class') == -1:
-            test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+            test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                         sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         else:
-            test_yy = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+            test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
-        test_yy_chord_label = generate_ML_matrix(test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
+        test_yy_chord_label = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_y_' + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if outputtype.find("CL") != -1:
             if modelID != "SVM":
@@ -738,7 +769,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             tn.append(true_negative)
         if predict == 'Y':
             # prediction put into files
-            fileName, numSalamiSlices = get_predict_file_name(input, test_id, 'N')
+            fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation)
             sum = 0
             for i in range(len(numSalamiSlices)):
                 sum += numSalamiSlices[i]
@@ -823,7 +854,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
                         thisChord.addLyric(chord_label_list[j])
-                        print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
+                        #print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                             correct_num_chord += 1
                             thisChord.addLyric('✓')
