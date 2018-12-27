@@ -493,7 +493,7 @@ def add_beat_into_binary(pitchclass, beat):
     return pitchclass
 
 
-def add_beat_into(pitchclass, beat, inputtype):
+def add_beat_into(pitchclass, beat, inputtype, beatstrength):
     """
     adding two dimension to the input vector, specifying whether the current slice is on/off beat.
     :return:
@@ -519,6 +519,39 @@ def add_beat_into(pitchclass, beat, inputtype):
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(1)
+    elif inputtype.find('5meter') != -1: # we use beat strength of 1, 0.5, 0.25, 0.125, 0.0625
+        if beatstrength == 1.0:
+            pitchclass.append(1)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+        elif beatstrength == 0.5:
+            pitchclass.append(0)
+            pitchclass.append(1)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+        elif beatstrength == 0.25:
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(1)
+            pitchclass.append(0)
+            pitchclass.append(0)
+        elif beatstrength == 0.125:
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(1)
+            pitchclass.append(0)
+        elif beatstrength <= 0.0625:
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(1)
+        else:
+            input('debug')
     return pitchclass
 
 
@@ -995,10 +1028,11 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     counter, countermin = pitch_distribution(thisChord.pitches, counter, countermin)
                     # pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
                     # (thisChord.pitchClasses)
-                    pitchClass = add_beat_into(pitchClass, thisChord.beatStr, inputtype)  # add on/off beat info
+                    #print('beat strength is:', thisChord.beatStrength)
+                    pitchClass = add_beat_into(pitchClass, thisChord.beatStr, inputtype, thisChord.beatStrength)  # add on/off beat info
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # add beat info for 12 pitch class
                         # if generic pitch is used
-                        pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr, inputtype)
+                        pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr, inputtype, thisChord.beatStrength)
                 else:  # if binary encoding is used, each voice is specified with a pitch-class
                     input('binary encoding is depreciated!')
                     # if inputdim > 8 and inputdim <= 16:
