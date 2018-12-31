@@ -558,8 +558,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     print('Build model...')
     if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
         os.mkdir(os.path.join('.', 'ML_result', sign))
-    cv_log = open(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
-    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
+        os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
                            append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
@@ -568,6 +570,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
+        FOLDER_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                     str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                     + str(timestep) + extension + extension2
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
         train_num = len(train_id)
         valid_num = len(valid_id)
@@ -581,7 +586,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                           'Y')
         valid_xx = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5"))):
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
             train_xx = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
                                           os.path.join('.', 'data_for_ML', sign,
                                                        sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
@@ -689,9 +694,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
                 early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
                 print("Train...")
-                checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5",
+                checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5",
                                                verbose=1, save_best_only=True, monitor='val_loss')
-                tbCallBack = TensorBoard(log_dir=os.path.join('.', 'ML_result', sign), histogram_freq=0, write_graph=True,
+                tbCallBack = TensorBoard(log_dir=os.path.join('.', 'ML_result', sign, FOLDER_NAME), histogram_freq=0, write_graph=True,
                                                          write_images=True)
                 hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                                      validation_data=(valid_xx, valid_yy),
@@ -719,7 +724,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                                                                     sign) + '_y_' + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         if outputtype.find("CL") != -1:
             if modelID != "SVM":
-                model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
+                model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
                 predict_y = model.predict_classes(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             elif modelID == "SVM":
                 predict_y = model.predict(test_xx)
@@ -727,7 +732,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
                 test_acc = accuracy_score(test_yy_int, predict_y)
         elif outputtype.find("NCT") != -1:
-            model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
+            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
             predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
             for i in predict_y:  # regulate the prediction
                 for j, item in enumerate(i):
@@ -927,7 +932,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     if modelID != 'SVM':
-        model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5")
+        model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
