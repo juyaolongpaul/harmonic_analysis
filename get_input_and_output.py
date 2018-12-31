@@ -328,27 +328,31 @@ def fill_in_pitch_class_4_voices(list, thisChord, s, inputtype, ii, sChords):
                     pitchclass.append(0)
         elif inputtype.find('NewOnset') != -1:
             pitchclass = []
+            Onset = [0] * 4
             for i, item in enumerate(list):
                 pitchclass = fill_in_4_voices(pitchclass, item)
-
                 if this_pitch_list[i].tie is not None:
                     if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
                         # fake attacks
-                        pitchclass.append(0)
-                        pitchclass.append(1)
+                        print('fake attacks')
+                        # pitchclass.append(0)
+                        # pitchclass.append(1)
                     elif this_pitch_list[i].tie.type == 'let-ring' or this_pitch_list[i].tie.type == 'continue-let-ring':
                         input('we do have let-ring and continue-let-ring')
-                        pitchclass.append(1)
-                        pitchclass.append(0)
+                        # pitchclass.append(1)
+                        # pitchclass.append(0)
+                        Onset[i] = 1
                     else: # the start of the attack is the real one
-                        pitchclass.append(1)
-                        pitchclass.append(0)
+                        Onset[i] = 1
+                        # pitchclass.append(1)
+                        # pitchclass.append(0)
                 else: # no tie, so the attack is real
-                    pitchclass.append(1)
-                    pitchclass.append(0)
+                    Onset[i] = 1
+                    # pitchclass.append(1)
+                    # pitchclass.append(0)
 
-
-
+    if inputtype.find('NewOnset') != -1: # add onset signs
+        pitchclass.extend(Onset)
     return pitchclass, only_pitch_4_voices
 
 
@@ -1011,7 +1015,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
                         only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
-                        pitchClass, only_pitch_class = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
+                        pitchClass,                              = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                                                     s,
                                                                                     inputtype, i, sChords)
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # Use generic pitch, could be

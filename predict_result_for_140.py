@@ -28,6 +28,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
+from keras.callbacks import TensorBoard
 from keras.preprocessing.sequence import TimeseriesGenerator
 import h5py
 import re
@@ -690,9 +691,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print("Train...")
                 checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, MODEL_NAME) + ".hdf5",
                                                verbose=1, save_best_only=True, monitor='val_loss')
+                tbCallBack = TensorBoard(log_dir=os.path.join('.', 'ML_result', sign), histogram_freq=0, write_graph=True,
+                                                         write_images=True)
                 hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                                      validation_data=(valid_xx, valid_yy),
-                                     callbacks=[early_stopping, checkpointer, csv_logger])
+                                     callbacks=[early_stopping, checkpointer, csv_logger, tbCallBack])
             elif modelID == "SVM":
                 model = SVC(verbose=True)
                 train_yy_int = np.asarray(onehot_decode(train_yy))
@@ -793,17 +796,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             a_counter_correct_chord = 0 # correct chord labels predicted by NCT approach
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
-            if os.path.isfile(os.path.join('.', 'predicted_result', sign,
-                                           'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt'):
-                f_all = open(
-                    os.path.join('.', 'predicted_result', sign,
-                                 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
-                    'a')  # create this file to track every type of mistakes
-            else:
-                f_all = open(
-                    os.path.join('.', 'predicted_result', sign,
-                                 'predicted_result_') + 'ALTOGETHER' + outputtype + sign + pitch_class + inputtype + '.txt',
-                    'w')  # create this file to track every type of mistakes
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID))
+
+            f_all = open(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, 'ALTOGETHER') + '.txt', 'w')  # create this file to track every type of mistakes
+
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i][-7:-4])
@@ -918,8 +915,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                       file=f_all)
                 print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
                 s.write('musicxml',
-                        fp=os.path.join('.', 'predicted_result', sign, 'predicted_result_') + fileName[i][
-                                                                                              :-4] + outputtype + sign + pitch_class + inputtype + modelID + '.xml')
+                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, fileName[i][
+                                                                                              :-4]) + '.xml')
                 # output result in musicXML
             frame_acc.append((a_counter_correct / a_counter) * 100)
             chord_acc.append((a_counter_correct_chord / a_counter) * 100)
