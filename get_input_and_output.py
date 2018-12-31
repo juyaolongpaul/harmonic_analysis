@@ -385,15 +385,44 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     return pitchclass, bad
 
 
-def fill_in_pitch_class(pitchclass, list):
+def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s):
     """
     :param pitchclass: The pitch class vector that needs to label
     :param list: The pitch class encoded in number, [0,3,6,9]
     :return: the modified pitch class that need to store
     """
+
     for i in list:
         pitchclass[i] = 1
-    return pitchclass
+    ori_pitchclass = pitchclass[:]
+
+    if inputtype.find('NewOnset') != -1:
+        list, this_pitch_list = get_pitch_class_for_four_voice(thisChord, s)
+        # pitchclass = []
+        # Onset = [0] * 4
+        for i, item in enumerate(this_pitch_list):
+            #pitchclass = fill_in_4_voices(pitchclass, item)
+            if this_pitch_list[i].tie is not None:
+                if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
+                    # fake attacks
+                    #print('fake attacks')
+                    pitchclass[this_pitch_list[i].pitch.pitchClass] = 0 # set the pitch class of the fake attack as 0
+                    # pitchclass.append(0)
+                    # pitchclass.append(1)
+            #     elif this_pitch_list[i].tie.type == 'let-ring' or this_pitch_list[i].tie.type == 'continue-let-ring':
+            #         input('we do have let-ring and continue-let-ring')
+            #         # pitchclass.append(1)
+            #         # pitchclass.append(0)
+            #     else:  # the start of the attack is the real one
+            #         print('real attacks')
+            #         # pitchclass.append(1)
+            #         # pitchclass.append(0)
+            # else:  # no tie, so the attack is real
+            #     print('real attacks')
+            #     # pitchclass.append(1)
+            #     # pitchclass.append(0)
+        pitchclass.extend(ori_pitchclass)
+    return ori_pitchclass, pitchclass
 
 
 def fill_in_pitch_class_7(list, name):
@@ -1012,8 +1041,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                         only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
-                        pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses)
-                        only_pitch_class = list(pitchClass)
+                        only_pitch_class, pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord, inputtype, s)
+                        #only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                         pitchClass,                              = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                                                     s,
