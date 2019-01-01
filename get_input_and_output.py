@@ -4,7 +4,7 @@ import re
 import numpy as np
 
 dic = {}
-from counter_chord_frequency import *
+#from counter_chord_frequency import *
 from music21 import *
 from adding_window_one_hot import adding_window_one_hot
 from test_musicxml_gt import get_chord_tone
