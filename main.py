@@ -1,14 +1,15 @@
 # This is the script to lead the user to train a neural network from scratch
 
+import argparse
+import os
+
+from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
+from kernscore import extract_chord_labels
+from predict_result_for_140 import train_and_predict_non_chord_tone
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony
-from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
-from predict_result_for_140 import train_and_predict_non_chord_tone
-from chord_visualization import put_music21chord_into_musicXML, put_non_chord_tone_into_musicXML
-from kernscore import extract_chord_labels
-import argparse
-import os
+
 
 def main():
     parser = argparse.ArgumentParser()
