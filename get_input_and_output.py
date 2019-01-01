@@ -880,6 +880,7 @@ def find_id(input, version):
         if (id != []):
             id_sum.append(id[0])
             # print(id[0])
+
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
     id_sum_strip.remove('316')  # this file does not align
@@ -894,6 +895,7 @@ def find_id(input, version):
         for i in rameau_crap:
             if i in id_sum_strip:
                 id_sum_strip.remove(i)
+    id_sum_strip.sort() # different file systems have different orderings. Need this line of code to unify them
     return id_sum_strip
 
 

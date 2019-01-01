@@ -469,6 +469,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     from get_input_and_output import adding_window_one_hot
     counter = 0
     #encoding_all = []
+    fn_all = [] # Unify the order
     for fn in os.listdir(path):
         if sign == 'N': # eliminate pitch class only encoding
             if fn.find('_pitch_class') != -1:
@@ -485,26 +486,30 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         p = re.compile(r'\d{3}')  # find 3 digit in the file name
         id_id = p.findall(fn)
         if id_id[0] in id:
-            #print('fount:', fn)
-            encoding = np.loadtxt(os.path.join(path, fn))
-            if path.find('_x_') != -1:  # we need to add windows
-                if model.find('SVM') != -1 or model.find('DNN') != -1:
-                    encoding_window = adding_window_one_hot(encoding, windowsize)
+            fn_all.append(fn)
+    print(fn_all)
+    fn_all.sort()
+    print(fn_all)
+    for fn in fn_all:
+        encoding = np.loadtxt(os.path.join(path, fn))
+        if path.find('_x_') != -1:  # we need to add windows
+            if model.find('SVM') != -1 or model.find('DNN') != -1:
+                encoding_window = adding_window_one_hot(encoding, windowsize)
 
-                else:
-                    encoding_window = create_3D_data(encoding, ts)
-                if counter == 0:
-                    encoding_all = list(encoding_window)
-                    encoding_all = np.array(encoding_all)
-                else:
-                    encoding_all = np.concatenate((encoding_all, encoding_window))
             else:
-                if counter == 0:
-                    encoding_all = list(encoding)
-                    encoding_all = np.array(encoding_all)
-                else:
-                    encoding_all = np.concatenate((encoding_all, encoding))
-            counter += 1
+                encoding_window = create_3D_data(encoding, ts)
+            if counter == 0:
+                encoding_all = list(encoding_window)
+                encoding_all = np.array(encoding_all)
+            else:
+                encoding_all = np.concatenate((encoding_all, encoding_window))
+        else:
+            if counter == 0:
+                encoding_all = list(encoding)
+                encoding_all = np.array(encoding_all)
+            else:
+                encoding_all = np.concatenate((encoding_all, encoding))
+        counter += 1
     print(portion, 'finished')
     return encoding_all
 
