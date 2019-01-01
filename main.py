@@ -38,7 +38,7 @@ def main():
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=0)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -61,13 +61,13 @@ def main():
                         type=str, default='NCT_pitch_class')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter_NewOnset')
+                        type=str, default='3meter')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=0)
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
-                        type=str, default='Y')
+                        type=str, default='N')
     args = parser.parse_args()
 
     if args.source == 'Rameau':

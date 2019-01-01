@@ -932,7 +932,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
     if modelID != 'SVM':
-        model = load_model(os.path.join('.', 'ML_result', sign, MODEL_NAME, MODEL_NAME) + ".hdf5")
+        model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
