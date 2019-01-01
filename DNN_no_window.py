@@ -36,7 +36,7 @@ import keras.callbacks as CB
 import sys
 import string
 import time
-import SaveModelLog
+#import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
 from DNN_no_window_cross_validation import divide_training_data

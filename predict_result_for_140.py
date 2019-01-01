@@ -38,12 +38,12 @@ import keras.callbacks as CB
 import sys
 import string
 import time
-import SaveModelLog
+#import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
 from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
-from DNN_no_window_cross_validation import divide_training_data
+#from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 from sklearn.svm import SVC
