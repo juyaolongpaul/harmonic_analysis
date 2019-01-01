@@ -32,7 +32,7 @@ import numpy as np
 import keras.callbacks as CB
 import sys
 import string
-import SaveModelLog
+#import SaveModelLog
 def divide_training_data(k, portion, times, trainxo, trainyo, testset = 'Y'):
     placement = int(trainxo.shape[0] / k)
     placement2 = int(trainxo.shape[0] / k)
