@@ -72,7 +72,7 @@ Currently, all the experiments are conducted on the maximally melodic annotation
 * For (B)LSTM models, the timestep is 2 (for best performances).
 * I also ignored the number of hidden layers and hidden nodes across different models since they have little effect on the performances.
 Here are the results:
-
+### Results
 Parameters   |PC12   | PC12+M|PC12+W|PC12+M+W|PC7+M+W|PC48+M+W|PC12+M+W+O12
 ---|---|---|---|---|---|---|---
 DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020|f1:0.815±0.025<br/>FA:0.867±0.020<br/>CA:0.852±0.021|||**f1:0.820±0.026<br/>FA:0.867±0.021<br/>CA:0.853±0.021**
@@ -86,7 +86,12 @@ SVM+CL||||CA:0.838±0.019
 LSTM+4||||f1:0.795±0.025<br/>FA:0.856±0.019
 BLSTM+4||||f1:0.797±0.025<br/>||f1:0.781±0.020<br/>
 BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
-
+### Useful Findings
+* Overall using the same input features and output, DNN achieves the best performance, BLSTM is 0.001 consistantly lower than DNN appraoch in f1-measure; SVM has about 1.5-2% consistant lower chord accuracy compared to DNN.
+* The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.820
+* Results show that if only PC12 is used as input feature, on DNN+12, f1-measure is only 0.617, but with a small window as context, the performance boosts significantly to 0.782, and with the meter features, it further improves to 0.815. By specifying the sign of real/fake attack on 12 pitch class, the performance further improves to 0.820.
+* Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually drags down the performance of about 0.002 in f1-measure, since it causes a problme of overfitting. Therefore, we need more training data in order to use this feature. 
+* By collapsing 7th chord into triads, the performance further improves into 0.836 of f1-measure, and frame accuracy and chord accuracy is above 88%.
 ## Examples of the Result
 ## Current Problem to Solve
 ## Future Work
