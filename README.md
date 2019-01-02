@@ -24,21 +24,20 @@ Parameters   |Values   | Explanation
 --source (-s)   |'rule_Maxmel' and many other analytical styles you can specify!   |The kind of data you want to use
 --num_of_hidden_layer (-l)   |3, usually ranging from 2-5   |The number of hiddel layers (not effective in 'SVM')
 --num_of_hidden_node (-n)   |300, usually ranging from 100-500  |The number of hidden nodes (not effective in 'SVM')
---model (-m)   |'DNN', 'SVM', 'LSTM', 'BLSTM' also available  |The types of models you can use
+--model (-m)   |'DNN', 'SVM', 'LSTM' and 'BLSTM' also available  |The types of models you can use
 --pitch (-p)   |'pitch_class', 'pitch_class_4_voices' also available   |The kind of pitch you want to use as features. `pitch_class` means using 12-d pitch class for each sonority; 'pitch_class_4_voices' means using 12-d pitch class for each of the 4 voices
 --window (-w)  |1, usually ranging from 0-5|The static window you can add as context for `DNN` or `SVM` model (not effective in 'LSTM' and 'BLSTM' since they can get the contextual information by specifying the `timestep`)   
---output (-o)   |'NCT', 'NCT_pitch_class', 'CL'|'NCT' means using 4-d output vector specifying which voice contains Non-chord-tones (NCTs), used with 'pitch_class_4_voices'; 'NCT_pitch_class' means using 12-d output vector specifying which pitch classes contain NCTs, used with 'pitch_class';  'CL' means training the model to predict chord directly, skipping NCT identification step. 
---input (-i)   |'3meter', 'barebone', '2meter', 'NewOnset' available   | Specify what input features, besides pitch, you are using. You can use meter features: '2meter' means you are using on/off beat feature; '3meter' means you are using 'strong beat, on/off beat' feature; 'NewOnset' means whether the current slice has a real attack or not across all the pitch classes/voices. If used with 'pitch_class', it will add another 12-d vector in the input specifying which pitch classes are the real attacks; if used with 'pitch_class_4_voices', it will add another 4-d vector in the input specifying which voices have the real attacks
+--output (-o)   |'NCT', 'NCT_pitch_class' and 'CL' also available|'NCT' means using 4-d output vector specifying which voice contains Non-chord-tones (NCTs), used with 'pitch_class_4_voices'; 'NCT_pitch_class' means using 12-d output vector specifying which pitch classes contain NCTs, used with 'pitch_class';  'CL' means training the model to predict chord directly, skipping NCT identification step. 
+--input (-i)   |'3meter', 'barebone', '2meter' and 'NewOnset' also available   | Specify what input features, besides pitch, you are using. You can use meter features: '2meter' means you are using on/off beat feature; '3meter' means you are using 'strong beat, on/off beat' feature; 'NewOnset' means whether the current slice has a real attack or not across all the pitch classes/voices. If used with 'pitch_class', it will add another 12-d vector in the input specifying which pitch classes are the real attacks; if used with 'pitch_class_4_voices', it will add another 4-d vector in the input specifying which voices have the real attacks
 --timestep (-time)   |2, usually ranging from 2-5|`timestep` is the parameter used in `LSTM` and `BLSTM` to provide contextual information. 2 means LSTM will look at a slice before the current one as context; for BLSTM, it means the model will look a slice before and after the current one as context    
---predict (-pre)   |'Y', 'N' available|Specify whether you want to predict and output the resultd in musicXML
+--predict (-pre)   |'Y', 'N' also available|Specify whether you want to predict and output the resultd in musicXML
 ### Usage example
 * Use DNN with 3 layers and 300 nodes each layer; 12-d pitch class, 3-d meter and the sign of real/fake attacks as input feature, output as 12-d pitch class vector indicating which pitch class is NCT, using a contextual window size of 1; use the annotation of maximally melodic and predict the results and output into musicXML file: `python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0`. 
 * Use BLSTM with the same configuration above. Only one thing to notice is that the window size needs to set as 0 and specify timestep instead: `python main.py -l 3 -n 300 -m 'BLSTM' -w 0 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 2`
 * Use DNN with the same configuration, but conduct harmonic analysis directly by skipping the identification of NCTs: 'python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'CL' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0'
-### Example of the Model's Architecture
-For input and output encoding, I use the one-hot encoding method. Using 12-d pitch class, 2 meter features to indicate the current slice being on/off beat and the window size 1 to add the previous slice and the following slice as input features as well as 12-d pitch class for output indicating which pitch classes are NCTs, the resulting of the model's architecture looks like this:
+## Example of the Model's Architecture
+For input and output encoding, I use the one-hot encoding method. Using 12-d pitch class, 2 meter features to indicate the current slice (highlighted in the solid line) being on/off beat and the window size 1 to add the previous slice and the following slice (highlighted in the dashed line) as input features as well as 12-d pitch class for output indicating which pitch classes are NCTs, the resulting of the model's architecture looks like this:
 ![image](https://user-images.githubusercontent.com/9313094/50612164-081daa80-0ea7-11e9-85d1-b46246f7ae5f.png)
-
 Other experimental settings are shown here:
 ![image](https://user-images.githubusercontent.com/9313094/50612318-91cd7800-0ea7-11e9-84ba-f1dc5fd6bb9b.png)
 
@@ -59,7 +58,25 @@ Specifically, I proposed a NCT identification [model](https://dl.acm.org/citatio
 ![image](https://user-images.githubusercontent.com/9313094/50607126-262edf00-0e96-11e9-8f64-d0b9945a58f8.png)
 
 ## Current Progress and Result
-Currently, the best 
+Currently, all the experiments are conducted on the maximally melodic annotations for 366 Bach chorales. All the experiments are using 10-fold cross validation. For evaluation metrics, I use f1-measure (abbreviated as F1) for NCT identification accuracy; frame accuracy (abbreviated as FA) to indicate the accuracy for each slice; chord accuracy (abbreviated as CA) to indicate the predicted chord accuracy compared to the ground truth annotations. The chart below specifies all the result I have got so far: The row header indicates all the experimented input feature, the column header indicates all combination the output as well as different models. To save space, I use a series of acronyms for the choice of input and output architectures. Specifically:
+### Acronyms for the Row Header
+* I use 'PC' for pitch class. 'PC12' means 12-d pitch class category as "C, C#/Db, D, D#/Eb, E, F, F#/Gb, G, G#/Ab, A, A#/Bb, B". 'PC48' means 12-d pitch class is specified for each voice (among 4). 
+* I use 'M' to represent the use of 2 or 3 meter features (I did not differenciate M2 or M3 since they achieve almost the same performance). 
+* I use "WS" to indicate the use of windows as context. 
+* I also experiment generic pitch class as "C, D, E, F, G, A, B" and use "PC7" to represent it. "PC28" represents the generic pitch class for each voice. 
+* To specify whether the current slice contains a real/fake attack (onset) for a certain pitch, I use "O12" to indicate a 12-d vector specifying which pitch class contains real/fake attack by setting the value to 1 and 0, respectively; I use "O4" to incidate a 4-d vector specifying which voices contain real/fake attack. "O12" is used with "PC12/PC7" and "O4" is used with "PC48/PC28" for now. 
+* I also use data augmentation in some cases. For non-augmented approach, I tranpose all the chorales in the key of C; for augmented appraoch, I transpose the data to 12 possible keys to increase the size of the training data, and use the data in the original key for validation and test data. I use "A" to indicate the use of data augmentation.
+### Acronyms for the Column Header
+* Currently, the legal chord quality is major, minor, diminished for triads; dominant seventh, minor seventh, major seventh, half diminised seventh and fully diminished seventh for seventh chords. I also try to collapse all the seventh chord into triads in some experiments, indicated as "NO7th".
+* I use "4" to indicate which voices contains NCTs, "12" to indicate which pitch class contains NCTs, "CL" (chord label) to indicate the appraoch of direct chord prediction skipping non-chord-tone-first approach.
+* For (B)LSTM models, the timestep is 2 (for best performances).
+Here are the results:
+
+Parameters   |PC12   | PC12+M|PC12+WS1|PC
+---|---|---|---|---
+DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020
+
+
 ## Examples of the Result
 ## Current Problem to Solve
 ## Future Work
