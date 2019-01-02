@@ -62,7 +62,7 @@ Currently, all the experiments are conducted on the maximally melodic annotation
 ### Acronyms for the Row Header
 * I use 'PC' for pitch class. 'PC12' means 12-d pitch class category as "C, C#/Db, D, D#/Eb, E, F, F#/Gb, G, G#/Ab, A, A#/Bb, B". 'PC48' means 12-d pitch class is specified for each voice (among 4). 
 * I use 'M' to represent the use of 2 or 3 meter features (I did not differenciate M2 or M3 since they achieve almost the same performance). 
-* I use "WS" to indicate the use of windows as context. 
+* I use "W" to indicate the use of windows as context. The window size of 1 or 2 usually has the similar performances, so they are not differentiated here.
 * I also experiment generic pitch class as "C, D, E, F, G, A, B" and use "PC7" to represent it. "PC28" represents the generic pitch class for each voice. 
 * To specify whether the current slice contains a real/fake attack (onset) for a certain pitch, I use "O12" to indicate a 12-d vector specifying which pitch class contains real/fake attack by setting the value to 1 and 0, respectively; I use "O4" to incidate a 4-d vector specifying which voices contain real/fake attack. "O12" is used with "PC12/PC7" and "O4" is used with "PC48/PC28" for now. 
 * I also use data augmentation in some cases. For non-augmented approach, I tranpose all the chorales in the key of C; for augmented appraoch, I transpose the data to 12 possible keys to increase the size of the training data, and use the data in the original key for validation and test data. I use "A" to indicate the use of data augmentation.
@@ -70,12 +70,22 @@ Currently, all the experiments are conducted on the maximally melodic annotation
 * Currently, the legal chord quality is major, minor, diminished for triads; dominant seventh, minor seventh, major seventh, half diminised seventh and fully diminished seventh for seventh chords. I also try to collapse all the seventh chord into triads in some experiments, indicated as "NO7th".
 * I use "4" to indicate which voices contains NCTs, "12" to indicate which pitch class contains NCTs, "CL" (chord label) to indicate the appraoch of direct chord prediction skipping non-chord-tone-first approach.
 * For (B)LSTM models, the timestep is 2 (for best performances).
+* I also ignored the number of hidden layers and hidden nodes across different models since they have little effect on the performances.
 Here are the results:
 
-Parameters   |PC12   | PC12+M|PC12+WS1|PC
----|---|---|---|---
-DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020
-
+Parameters   |PC12   | PC12+M|PC12+W|PC12+M+W|PC7+M+W|PC48+M+W|PC12+M+W+O12
+---|---|---|---|---|---|---|---
+DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020|f1:0.815±0.025<br/>FA:0.867±0.020<br/>CA:0.852±0.021|||**f1:0.820±0.026<br/>FA:0.867±0.021<br/>CA:0.853±0.021**
+DNN+12+NO7th||||**f1:0.836±0.024<br/>FA:0.882±0.018<br/>CA:0.883±0.018**
+DNN+CL+NO7th||||**CA:0.883±0.018**
+DNN+4||||f1:0.810±0.025<br/>FA:0.863±0.021|f1:0.799±0.020|f1:0.789±0.028<br/>FA:0.842±0.022
+DNN+4<br/>Original key||||f1:0.780±0.025|
+DNN+4+A||||||f1:0.794±0.024<br/>FA:0.846±0.018
+DNN+CL||||CA:0.851±0.019||CA:0.850±0.021
+SVM+CL||||CA:0.838±0.019
+LSTM+4||||f1:0.795±0.025<br/>FA:0.856±0.019
+BLSTM+4||||f1:0.797±0.025<br/>||f1:0.781±0.020<br/>
+BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
 
 ## Examples of the Result
 ## Current Problem to Solve
