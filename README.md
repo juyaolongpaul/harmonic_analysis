@@ -35,6 +35,14 @@ Parameters   |Values   | Explanation
 * Use DNN with 3 layers and 300 nodes each layer; 12-d pitch class, 3-d meter and the sign of real/fake attacks as input feature, output as 12-d pitch class vector indicating which pitch class is NCT, using a contextual window size of 1; use the annotation of maximally melodic and predict the results and output into musicXML file: `python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0`. 
 * Use BLSTM with the same configuration above. Only one thing to notice is that the window size needs to set as 0 and specify timestep instead: `python main.py -l 3 -n 300 -m 'BLSTM' -w 0 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 2`
 * Use DNN with the same configuration, but conduct harmonic analysis directly by skipping the identification of NCTs: 'python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'CL' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0'
+### Example of the Model's Architecture
+For input and output encoding, I use the one-hot encoding method. Using 12-d pitch class, 2 meter features to indicate the current slice being on/off beat and the window size 1 to add the previous slice and the following slice as input features as well as 12-d pitch class for output indicating which pitch classes are NCTs, the resulting of the model's architecture looks like this:
+![image](https://user-images.githubusercontent.com/9313094/50612164-081daa80-0ea7-11e9-85d1-b46246f7ae5f.png)
+
+Other experimental settings are shown here:
+![image](https://user-images.githubusercontent.com/9313094/50612318-91cd7800-0ea7-11e9-84ba-f1dc5fd6bb9b.png)
+
+
 ## The Aim of This Project
 ### Introduction
 Despite being a core component of Western music theory, Harmonic analysis is difficult because: (1) It is a time-consuming process requiring years of training. (2) Even expert analysts will often disagree in their interpretations of certain passages, and are often inconsistent in their interpretive styles. Due to these difficulties, harmonic analysis remains a subjective endeavor, resistant to automation. As a result, few large datasets of high-quality harmonic analysis data exist, a situation that has significantly retarded the systematic study ofWestern harmony.
@@ -51,6 +59,7 @@ Specifically, I proposed a NCT identification [model](https://dl.acm.org/citatio
 ![image](https://user-images.githubusercontent.com/9313094/50607126-262edf00-0e96-11e9-8f64-d0b9945a58f8.png)
 
 ## Current Progress and Result
+Currently, the best 
 ## Examples of the Result
 ## Current Problem to Solve
 ## Future Work
