@@ -83,7 +83,7 @@ def get_predict_file_name(input, data_id, augmentation):
                         filename.append(fn)
                 elif fn.find('_ori') != -1:
                     filename.append(fn)
-
+    filename.sort()
     for id, fn in enumerate(filename):
         length = 0
         s = converter.parse(os.path.join(input, fn))
