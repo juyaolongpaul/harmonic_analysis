@@ -519,6 +519,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
 def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict):
+    print('Step 6: Training and testing the machine learning models')
     id_sum = find_id(output, '')  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int((num_of_chorale * (1 - ratio) / 2)) * 2

@@ -232,6 +232,7 @@ def extract_chord_labels(file_path, filetype):
     :param source:
     :return:
     """
+    print('Step 1: Extract chord labels from the Kern files')
     x = KernScore()
     for file_name in os.listdir(file_path):
         if file_name[-4:] == filetype:
