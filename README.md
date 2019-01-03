@@ -34,7 +34,7 @@ Parameters   |Values   | Explanation
 ### Usage Example
 * Use DNN with 3 layers and 300 nodes each layer; 12-d pitch class, 3-d meter and the sign of real/fake attacks as input features, output as 12-d pitch class vector indicating which pitch class is NCT. Use a contextual window size of 1 and the annotation of maximally melodic and predict the results and output into musicXML file: `python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0`. 
 * Use BLSTM with the same configuration above. Only one thing to change is that the window size needs to be set as 0, and the timestep needs to be specified: `python main.py -l 3 -n 300 -m 'BLSTM' -w 0 -o 'NCT_pitch_class' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 2`
-* Use DNN with the same configuration, but conduct harmonic analysis directly by skipping the identification of NCTs: 'python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'CL' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0'
+* Use DNN with the same configuration, but conduct harmonic analysis directly by skipping the identification of NCTs: `python main.py -l 3 -n 300 -m 'DNN' -w 1 -o 'CL' -p 'pitch_class' -i '3meter_NewOnset -pre 'Y' -time 0`
 ## Example of the Model's Architecture
 For input and output encoding, I use the one-hot encoding method. The example uses 12-d pitch class, 2 meter features to indicate the current slice (highlighted in the solid line) being on/off beat and the window size 1 to add the previous slice and the following slice (highlighted in the dashed line) as context, along with 12-d pitch class for output indicating which pitch classes are NCTs, the resulting model's architecture looks like this:
 ![image](https://user-images.githubusercontent.com/9313094/50612164-081daa80-0ea7-11e9-85d1-b46246f7ae5f.png)
@@ -87,27 +87,27 @@ LSTM+4||||f1:0.795±0.025<br/>FA:0.856±0.019
 BLSTM+4||||f1:0.797±0.025<br/>||f1:0.781±0.020<br/>
 BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
 ### Useful Findings
-* Overall using the same input features and output, DNN achieves the best performance, BLSTM is 0.001 consistantly lower than DNN appraoch in f1-measure; SVM has about 1.5-2% consistant lower chord accuracy compared to DNN.
+* Overall, using the same input and output structures, DNN achieves the best performance, BLSTM is 0.001 consistantly lower than DNN appraoch in f1-measure; SVM has about 1.5-2% consistant lower chord accuracy compared to DNN.
 * The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.820
-* Results show that if only PC12 is used as input feature, on DNN+12, f1-measure is only 0.617, but with a small window as context, the performance boosts significantly to 0.782, and with the meter features, it further improves to 0.815. By specifying the sign of real/fake attack on 12 pitch class, the performance further improves to 0.820.
-* Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually drags down the performance of about 0.002 in f1-measure, since it causes a problme of overfitting. Therefore, we need more training data in order to use this feature. 
-* By collapsing 7th chord into triads, the performance further improves into 0.836 of f1-measure, and frame accuracy and chord accuracy is above 88%.
+* Results show that if only PC12 is used as input feature on DNN+12, f1-measure is only 0.617, but with a small window as context, the performance boosts significantly to 0.782, and with the meter features, it further improves to 0.815. By specifying the sign of real/fake attack on 12 pitch class, the performance further improves to 0.820.
+* Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually undermines the performance by about 0.002 in f1-measure, since it causes the problem of overfitting. Therefore, we need more training data in order to use these features. 
+* By collapsing 7th chord into triads, the performance further improves into 0.836 in f1-measure, and frame accuracy and chord accuracy is above 88%.
 ## Examples of the Result
-The program can output the predicted results, along with the ground truth annotation, into a musicXML file. The figure below is an example:
+The program can output the predicted results, along with the ground truth annotations, into musicXML files. The figure below is an example:
 
 ![image](https://user-images.githubusercontent.com/9313094/50618085-98b3b500-0ebe-11e9-8d8e-10ce73ea3531.png)
 
-There are 6 rows underneath the score now. The first one is the ground truth chord labels, the second one is the corresponding ground truth non-chord tones, the third one is the model’s predicted NCTs, the fourth one entails whether the prediction is correct. The fifth one is the inferred chord label (based on a heuristic algorithm I wrote), and the last one entails whether the predicted chord label is correct.
+There are 6 rows underneath the score. The first one is the ground truth chord labels, the second one is the corresponding ground truth non-chord tones, the third one is the model’s predicted NCTs, the fourth one entails whether the predicted NCTs are correct. The fifth one is the inferred chord label (based on a heuristic algorithm I wrote), and the last one entails whether the predicted chord label is correct.
 ## Current Problem to Solve
-* Not enough data to learn: There are many other features to experiment, but once the scale of the input vector increases, even only adding voice leading information by introducing 12-d pitch class for each voice will lead to the problem of over-fitting. Although the model achieves an f1-measure of 0.820 using only 12-d pitch class, the information of voice leading is very limited in this case, and the performance should improve once we have enough data to add voice leading infomation by introducing 12-d pitch class for each voice (12*4=48 in total).
-* Bad performance on the 7th chords: The machine learning model has a poor performance distinguishing 7th chords and their corresponding triads (the majority of errors are 7th chords mis-classified as triads, and the accuracy of all 7th chords are below 50% in average), which comprises more than 10% of the total errors, which is proved by collapsing 7th into traids, the f1-measure improves from 0.815 to 0.836, where the error rate decreases by more than 10%. 
-* Some of the ground truth annotations are confusing: There are some annotations where my model constantly makes mistakes, but when I examine these slices, those annotations do not make a lot of sense to me, especially the ones around cadences. Overall, the annotations often choose V64-I around cadence, but there are inconsistencies. For example, in chorale 233, the annotations choose I64-V-I(m), coloured in blue, where you can see my model adopts V64-I, and compared to the annotations, they are considered as "mistakes":
+* Not enough data to train: There are many other features to experiment, but once the scale of the input vector increases, even only adding voice leading information by introducing 12-d pitch class for each voice will lead to the problem of over-fitting. Although the model achieves an f1-measure of 0.820 using only 12-d pitch class, the information of voice leading is very limited in this case, and some voice leading errors can be observed in the generated musicXML files.  Therefore, by introducing 12-d pitch class for each voice (12*4=48 in total), the performance should improve once we have enough data.
+* Bad performances on the 7th chords: The machine learning model has a poor performance distinguishing 7th chords and their corresponding triads (the majority of the errors are 7th chords mis-classified as triads, and the accuracy of all 7th chords are below 50% in average), comprising more than 10% of the total errors. Once the 7th chords are collapsed into traids, the f1-measure improves from 0.815 to 0.836, where the error rate decreases by more than 10%. 
+* Some of the ground truth annotations are contradictory: There are some annotations where my model constantly makes mistakes, but when I examine these slices, those annotations do not make a lot of sense to me, especially the ones around cadences. Overall, the annotations often choose V64-I around cadences, but there are inconsistencies. For example, in chorale 233, the annotations choose I64-V-I(m), coloured in blue, where you can see my model adopts V64-I, and compared to the annotations, they are considered as "mistakes":
 ![image](https://user-images.githubusercontent.com/9313094/50620390-fbac4880-0ecc-11e9-8297-dae321e1adf7.png)
 
 However, in later section (two measures later) of chorale 233, the annotations adopt V64-I again: 
 ![image](https://user-images.githubusercontent.com/9313094/50620405-05ce4700-0ecd-11e9-8a4a-2018c441c349.png)
 
-Furthermore, there are other confusing annotations around cadences. For example, chorale 061 measure 16, the annotations are four F major, which should really be g major instead:
+Furthermore, there are other contradictory annotations around cadences. For example, chorale 061 measure 16, the annotations are four F major, which should really be g major instead:
 ![image](https://user-images.githubusercontent.com/9313094/50620411-0d8deb80-0ecd-11e9-9db3-de576f42e4ea.png)
 
 In chorale 012 M13, the annotations are four E minor, which should really be G major:
@@ -119,5 +119,9 @@ Sometimes, the annotations do not really match the sonorities. In chorale 064 me
 In chorale 352 measure 17, the annotations are three E minor in a row where there is no natural G (but G# found in the adjacent slices):
 ![image](https://user-images.githubusercontent.com/9313094/50620446-3ada9980-0ecd-11e9-980f-0cb0ce9f1e61.png)
 
+As a part of the training data, I am afraid that these problematic annotations will be detrimental to my training process, and they also will create an artificial ceiling for the evaluation as well.
 
 ## Future Work
+* Gather more data
+* Hire analysts to improve the quality of the annotations generated by the rule-based model.
+* Train the machine learning models to conduct harmonic analysis automatically 
