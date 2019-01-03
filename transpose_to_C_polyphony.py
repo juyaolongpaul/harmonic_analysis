@@ -3,7 +3,7 @@ import os
 import re
 from transpose_to_C_chords import get_displacement
 def transpose_polyphony(source, input):
-    print('Step 4: Translate the music into 12 keys')
+    print('Step 3: Translate the music into 12 keys')
     c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
     #for fn in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'):
     if source != 'Rameau':

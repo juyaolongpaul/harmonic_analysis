@@ -1205,7 +1205,7 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, count
     :param countermin:
     :return:
     """
-    print('Step 5: Translate all the data into machine-learning-friendly encodings')
+    print('Step 4: Translate all the data into machine-learning-friendly encodings')
     id_sum = find_id(output, version)
     num_of_chorale = len(id_sum)
     # train_num = int(num_of_chorale * ratio)

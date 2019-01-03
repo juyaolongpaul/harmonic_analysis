@@ -354,7 +354,7 @@ def annotation_translation(input, output, version, source):
     :return:
 
     """
-    print('Step 2: Translate the chord syntax of the annotations')
+    print('Step 1: Translate the chord syntax of the annotations')
     cwd_score = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')  # for new annotations, we have to use krn version,
     # since it does not equal to the original midi version completely and mid cannot be visualized.
     cwd_annotation = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation')

@@ -185,7 +185,7 @@ def provide_path_12keys(input, f1, output, f2, source):
     #f1 = '.krn'
     #output = '.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\Melodic\\'
     #f2 = '.txt'
-    print('Step 3: Transpose the chord annotations into 12 possible keys')
+    print('Step 2: Transpose the chord annotations into 12 possible keys')
     import  re
     for file_name in os.listdir(output):
         if os.path.isfile(os.path.join(output, 'transposed_') + 'KBcKE' + file_name) or os.path.isfile(os.path.join(output, 'transposed_') + 'KBc_oriKE' + file_name):
