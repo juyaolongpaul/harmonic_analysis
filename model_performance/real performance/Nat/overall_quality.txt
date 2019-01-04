@@ -1,0 +1,11 @@
+overall slice 1443
+difference 202
+gt r 150
+pre r 96
+both w 11
+
+(this is based on the assumption that the rest of gt where it is the same with are all correct, which is not the case)
+overall gt acc = (1443-52/1443) = 96.40%
+overall pre acc = 1337/1443 = 92.65% (96% of quality of the original gt quality)(need to reduct both wrong case, this is when c c, but both wrong! it should be very very very small! neglectable!)
+both wrong rate = 11 (this is when both are different and all wrong)
+ 

@@ -1,0 +1,33 @@
+c c f f b° c c f#° f#° g
+dm am g g c c (dm7 -> b°)b° c c
+g g g7 c c g g c c c
+g7 am (am7 -> am)dm e am am em em c
+am g g g (-> c)c g d d7 g
+g g7 c c c g g7 c c a
+a7 dm dm a a (-> g)g c c (-> b°)
+b° (-> c)c (f -> dm)dm (-> c)c (g -> g7)g7 c
+c g g c c c g7 c c dm7
+g c c c c (-> c)(-> g)g am (-> am)
+f dm (-> c)c (g -> g7)g7 c 
+accucary: 0.8691588785046729
+num of correct answers: 98 number of salami slices: 107
+accumulative accucary: 0.86001386001386
+0.9158
+
+
+diff 14
+gt 14
+pre 5
+both c 5
+
+overall slice 1443
+difference 202
+gt r 150
+pre r 96
+both w 11
+
+(this is based on the assumption that the rest of gt where it is the same with are all correct, which is not the case)
+overall gt acc = (1443-52/1443) = 96.40%
+overall pre acc = 1337/1443 = 92.65% (96% of quality of the original gt quality)(need to reduct both wrong case, this is when c c, but both wrong! it should be very very very small! neglectable!)
+both wrong rate = 11 (this is when both are different and all wrong)
+ 
