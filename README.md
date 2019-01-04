@@ -90,7 +90,7 @@ BLSTM+4||||f1:0.797±0.025<br/>||f1:0.781±0.020<br/>
 BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
 ### Useful Findings
 * Overall, using the same input and output structures, DNN achieves the best performance, BLSTM is 0.001 consistantly lower than DNN appraoch in f1-measure; SVM has about 1.5-2% consistant lower chord accuracy compared to DNN.
-* The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.822
+* The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.822.
 * Results show that if only PC12 is used as input feature on DNN+12, f1-measure is only 0.617, but with a small window as context, the performance boosts significantly to 0.782, and with the meter features, it further improves to 0.815. By specifying the sign of real/fake attack on 12 pitch class, the performance further improves to 0.822.
 * Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually undermines the performance by about 0.002 in f1-measure, since it causes the problem of overfitting. Therefore, we need more training data in order to use these features. 
 * By collapsing 7th chord into triads, the performance further improves into 0.836 in f1-measure, and frame accuracy and chord accuracy is above 88%.
@@ -121,7 +121,7 @@ Sometimes, the annotations do not really match the sonorities. In chorale 064 me
 In chorale 352 measure 17, the annotations are three E minor in a row where there is no natural G (but G# found in the adjacent slices):
 ![image](https://user-images.githubusercontent.com/9313094/50620446-3ada9980-0ecd-11e9-980f-0cb0ce9f1e61.png)
 
-As a part of the training data, I am afraid that these problematic annotations will be detrimental to my training process, and they also will create an artificial ceiling for the evaluation as well.
+As a part of the training data, I am afraid that these problematic annotations will be detrimental to my training process, and they will create an artificial ceiling for the evaluation as well.
 
 ## Future Work
 * Gather more data
