@@ -80,6 +80,7 @@ Currently, all the experiments are conducted on the maximally melodic annotation
 Here are the results:
 
 ### Results
+
 Parameters   |PC12   | PC12+M|PC12+W|PC12+M+W|PC7+M+W|PC48+M+W|PC12+M+W+O12
 ---|---|---|---|---|---|---|---
 DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020|f1:0.815±0.025<br/>FA:0.867±0.020<br/>CA:0.852±0.021|||**f1:0.822±0.024<br/>FA:0.869±0.021<br/>CA:0.855±0.021**
