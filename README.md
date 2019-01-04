@@ -72,7 +72,7 @@ This repository specifically deals with the last step of the proposal. The first
 Specifically, I proposed a NCT identification [model](https://dl.acm.org/citation.cfm?id=3144753), which is considered as an essential step for harmonic analysis in the literature. Once the model identifies and removes NHTs from the music, a dictionary is defined to map harmonic tones into chords. The traditional workflow of harmonic analysis, compared to the proposed "non-chord-tone-first" appraoch, is illustrated in the figure below on the left and right side, respectively. 
 ![image](https://user-images.githubusercontent.com/9313094/50607126-262edf00-0e96-11e9-8f64-d0b9945a58f8.png)
 
-## Current Progress and Result
+## Current Progress and Results
 
 Currently, all the experiments are conducted on the maximally melodic annotations for 366 Bach chorales. All the experiments are using 10-fold cross validation. For evaluation metrics, I use f1-measure (abbreviated as F1) for NCT identification accuracy; frame accuracy (abbreviated as FA) to indicate the accuracy for each slice; chord accuracy (abbreviated as CA) to indicate the predicted chord accuracy compared to the ground truth annotations. The chart below specifies all the results I have got so far: The row header indicates all the experimented input features, the column header indicates all combinations between the output and different models. To save space, I use a series of acronyms for the choice of input and output architectures. Specifically:
 
@@ -117,7 +117,7 @@ BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
 * Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually undermines the performance by about 0.002 in f1-measure, since it causes the problem of overfitting. Therefore, we need more training data in order to use these features. 
 * By collapsing 7th chord into triads, the performance further improves into 0.836 in f1-measure, and frame accuracy and chord accuracy is above 88%.
 
-## Examples of the Result
+## Examples of the Results
 
 The program can output the predicted results, along with the ground truth annotations, into musicXML files. The figure below is an example:
 
@@ -125,7 +125,7 @@ The program can output the predicted results, along with the ground truth annota
 
 There are 6 rows underneath the score. The first one is the ground truth chord labels, the second one is the corresponding ground truth non-chord tones, the third one is the model’s predicted NCTs, the fourth one entails whether the predicted NCTs are correct. The fifth one is the inferred chord label (based on a heuristic algorithm I wrote), and the last one entails whether the predicted chord label is correct.
 
-## Current Problem to Solve
+## Current Problems to Solve
 
 * Not enough data to train: There are many other features to experiment, but once the scale of the input vector increases, even only adding voice leading information by introducing 12-d pitch class for each voice will lead to the problem of over-fitting. Although the model achieves an f1-measure of 0.822 using only 12-d pitch class, the information of voice leading is very limited in this case, and some voice leading errors can be observed in the generated musicXML files.  Therefore, by introducing 12-d pitch class for each voice (12*4=48 in total), the performance should improve once we have enough data.
 * Bad performances on the 7th chords: The machine learning model has a poor performance distinguishing 7th chords and their corresponding triads (the majority of the errors are 7th chords mis-classified as triads, and the accuracy of all 7th chords are below 50% in average), comprising more than 10% of the total errors. Once the 7th chords are collapsed into traids, the f1-measure improves from 0.815 to 0.836, where the error rate decreases by more than 10%. 
