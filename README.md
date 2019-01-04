@@ -78,6 +78,7 @@ Currently, all the experiments are conducted on the maximally melodic annotation
 * For (B)LSTM models, the timestep is 2 (for best performances).
 * I also ignored the number of hidden layers and hidden nodes across different models since they have little effect on the performances.
 Here are the results:
+
 ### Results
 Parameters   |PC12   | PC12+M|PC12+W|PC12+M+W|PC7+M+W|PC48+M+W|PC12+M+W+O12
 ---|---|---|---|---|---|---|---
