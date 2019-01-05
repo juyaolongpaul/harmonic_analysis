@@ -44,7 +44,10 @@ BLSTM+12||||f1:0.801±0.023<br/>|||f1:0.809±0.025<br/>FA:0.866±0.020<br/>
 ### Useful Findings
 
 * Overall, using the same input and output structures, DNN achieves the best performance, BLSTM is 0.001 consistantly lower than DNN appraoch in f1-measure; SVM has about 1.5-2% consistant lower chord accuracy compared to DNN.
-* The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.822.
+* The best input combination so far is PC12+M+W+O12, reaching a f1-measure of 0.822. Notice that in this case, the chord accuracy is lower than the frame accuracy by more than 1%. To explain this, please refer to the figure below as an example: Although the NCTs are identified correctly for some slices (such as slice third and fourth in the example), it does not contain a legal chord (will be labeled as "Undetermined"), and it has to refer to the adjacent slices for the final chord label. However, if the final chord label (in the fifth slice, E chord) is different from the ground truth (E7 chord), these "Undertermined" slices (the third and fourth slices) will all inherit the wrong label, which drags down the chord accuracy performance.  
+
+![image](https://user-images.githubusercontent.com/9313094/50726953-0db30480-10e2-11e9-9d8e-be22368a25cc.png)
+
 * Results show that if only PC12 is used as input feature on DNN+12, f1-measure is only 0.617, but with a small window as context, the performance boosts significantly to 0.782, and with the meter features, it further improves to 0.815. By specifying the sign of real/fake attack on 12 pitch class, the performance further improves to 0.822.
 * Results show that using pitch class for 4 voices (to incorporate more voice leading infomation) actually undermines the performance by about 0.002 in f1-measure, since it causes the problem of overfitting. Therefore, we need more training data in order to use these features. 
 * By collapsing 7th chord into triads, the performance further improves into 0.836 in f1-measure, and frame accuracy and chord accuracy is above 88%.
