@@ -8,8 +8,18 @@ title: Current Problems to Solve
 
 * Not enough data to train: There are many other features to experiment, but once the scale of the input vector increases, even only adding voice leading information by introducing 12-d pitch class for each voice will lead to the problem of over-fitting. Although the model achieves an f1-measure of 0.822 using only 12-d pitch class, the information of voice leading is very limited in this case, and some voice leading errors can be observed in the generated musicXML files.  Therefore, by introducing 12-d pitch class for each voice (12*4=48 in total), the performance should improve once we have enough data.
 * Bad performances on the 7th chords: The machine learning model has a poor performance distinguishing 7th chords and their corresponding triads (the majority of the errors are 7th chords mis-classified as triads, and the accuracy of all 7th chords are below 50% in average), comprising more than 10% of the total errors. Once the 7th chords are collapsed into traids, the f1-measure improves from 0.815 to 0.836, where the error rate decreases by more than 10%. 
-* Chord mapping problem: The model has poor performances distinguishing chords that are subsets, supersets, or intersections of each other. For example, `dm` chord and `b/o7` chord: In chorale 031 measure 12, the annotation is b/o7, with B (coloured in blue) being a chord tone (see the first figure); However, in chorale 023 measure 4 and measure 7, the annotations are dm, with B (coloured in blue) being a non-chord tone (see the second figure), where you can see my model's predictions are b/o7 in both cases. These slices seem essentially similar to me, but why are the annotations  different? ![image](https://user-images.githubusercontent.com/9313094/50719891-0d2e5580-1071-11e9-9c33-9889d5bf36cf.png)
+    * I cannot find out the schema which is used to decide the 7th note as a chord tone/non-chord tone, since some annotations seem contradictory to me. For example, in the figures below, the 7th note in blue are both potential passing tone, but why the first one is chord one, and the second one is a non-chord tone? 
+    
+    ![image](https://user-images.githubusercontent.com/9313094/50793253-8d350500-1295-11e9-9242-b910195d3980.png)
+    
+    ![image](https://user-images.githubusercontent.com/9313094/50793372-fc125e00-1295-11e9-9780-7eb6b39fe491.png)
+    
+* Chord mapping problem: The model has poor performances distinguishing chords that are subsets, supersets, or intersections of each other. For example, `dm` chord and `b/o7` chord: In chorale 031 measure 12, the annotation is b/o7, with B (coloured in blue) being a chord tone (see the first figure); However, in chorale 023 measure 4 and measure 7, the annotations are dm, with B (coloured in blue) being a non-chord tone (see the second figure), where you can see my model's predictions are b/o7 in both cases. These slices seem essentially similar to me, but why are the annotations different? 
+
+![image](https://user-images.githubusercontent.com/9313094/50719891-0d2e5580-1071-11e9-9c33-9889d5bf36cf.png)
+
 ![image](https://user-images.githubusercontent.com/9313094/50719954-5b902400-1072-11e9-9824-b1d0e6fcbab8.png)
+
 * Some of the ground truth annotations are problematic: There are some annotations where my model constantly makes mistakes, but when I examine these slices, those annotations do not make a lot of sense to me, especially the ones around cadences. Overall, the annotations often choose V64-I around cadences, but there are inconsistencies. For example, in chorale 233, the annotations choose I64-V-I(m), coloured in blue, where you can see my model adopts V64-I, and compared to the annotations, they are considered as "mistakes":
 
 ![image](https://user-images.githubusercontent.com/9313094/50620390-fbac4880-0ecc-11e9-8297-dae321e1adf7.png)
@@ -41,3 +51,18 @@ In chorale 352 measure 17, the annotations are three E minor in a row where ther
 As you can see almost all the ground truth chords in the first measure barely match the pitch classes, although this create the most NCTs, the quality of the ground truth is hardly convincing. 
 	
 As a part of the training data, I am afraid that these problematic annotations will be detrimental to my training process, and they will create an artificial ceiling for the evaluation as well.
+
+### How are the Ground Truth Annotations Generated?
+
+In order to further improve the performance, we need to know how the rule-based algorithm generates these preliminary harmonic analyses, and expose these kinds of information to the machine learning models to learn. You can refer to [this paper](http://ismir2018.ircam.fr/doc/pdfs/283_Paper.pdf) for full details, but the core idea is to exhaustively list all the potential NCTs (PNCTs), and selectively choose some of them to be the final NCTs based on a series of analytical preferences uses can specify. Besides that, other constraints include:
+* Mutual exclusivity: Like CDEFG moving all the way up stepwise, DEF are all PNCTs, but either DF or E can be NCTs, since they are mutually exclusive.
+* If stripping away all NCTs, the rest CTs do not form a legal chord, then some NCTs need to turn into CT to make a chord, most preferably a complete chord.
+* The algorithm first divides the music into a series of “contextual windows”. Each window must contain at least one chord. If the window only contains one slice, the slice must contain a chord, meaning some PNCTs need to be CTs to form a chord. Here is how the contextual window is determined:
+    * If all voices attack on a strong beat.
+    * All voices attack and one or more voices do not attack in the previous slice.
+    * In an offbeat slice, more than two voices attack and at least one sustains into/past the next beat. 
+    * After a phrase boundary.
+    
+    The figure below is the illustration:
+    
+    ![image](https://user-images.githubusercontent.com/9313094/50794948-abe9ca80-129a-11e9-807c-c0c1da21a7b5.png)

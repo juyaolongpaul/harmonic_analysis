@@ -877,44 +877,6 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                             correct_num_chord += 1
                             thisChord.addLyric('✓')
-                            #print(chord_label_list[j])
-                            # if chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                            #     # Currently, this function is rarely used since most of the chords are renamed by infer_chord_label1 so it can be processed by harmony.ChordSymbol
-                            #     if chord_label_list[j].find('incomplete') != -1:
-                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]) or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                            #             correct_num_chord += 1
-                            #             thisChord.addLyric('✓')
-                            #     else:
-                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == sorted(chord_tone_list[j]):
-                            #             correct_num_chord += 1
-                            #             thisChord.addLyric('✓')
-                            # else: # the other cases, which are most the cases, can be processed by harmony.ChordSymbolic to have the pitch class
-                            #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                            #         correct_num_chord += 1
-                            #         thisChord.addLyric('✓')
-                        # else:
-                        #     thisChord.addLyric(chord_label_list[j])
-                        #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(
-                        #             chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(
-                        #             chord_label_list[j]).orderedPitchClasses:
-                        #         correct_num_chord += 1
-                        #         thisChord.addLyric('✓')
-                            #print(chord_label_list[j])
-                            # if harmony.chordSymbolFigureFromChord(chord.Chord(chord_tone_list[j])).find('Identified') != -1 or chord_label_list[j].find('add') != -1 or chord_label_list[j].find('incomplete') != -1 or chord_label_list[j].find('seventh') != -1 or chord_label_list[j].find('diminished') != -1 or chord_label_list[j].find('un-determined') != -1: # harmony chord symbol cannot handle incomplete chord!
-                            #     if chord_label_list[j].find('incomplete') != -1:
-                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]) or set(chord_tone_list[j]).issubset(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses): # incomplete chord should be the right answer if the only difference is being incomplete
-                            #             correct_num_chord += 1
-                            #             thisChord.addLyric('✓')
-                            #     else:
-                            #         if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == sorted(chord_tone_list[j]):
-                            #             correct_num_chord += 1
-                            #             thisChord.addLyric('✓')
-                            #         else:
-                            #             print(harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses, sorted(chord_tone_list[j]))
-                            # else:
-                            #     if harmony.ChordSymbol(translate_chord_name_into_music21(translate_chord_name_into_music21(chord_label_list_gt[j]))).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
-                            #         correct_num_chord += 1
-                            #         thisChord.addLyric('✓')
                 a_counter_correct_chord += correct_num_chord
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
