@@ -22,7 +22,7 @@ This repository specifically deals with the last step of the proposal. The first
 
 Specifically, I proposed a NCT identification [model](https://dl.acm.org/citation.cfm?id=3144753), which is considered as an essential step for harmonic analysis in the literature. Once the model identifies and removes NHTs from the music, a dictionary is defined to map harmonic tones into chords. The traditional workflow of harmonic analysis, compared to the proposed "non-chord-tone-first" appraoch, is illustrated in the figure below on the left and right side, respectively. 
 
-![image](https://user-images.githubusercontent.com/9313094/50607126-262edf00-0e96-11e9-8f64-d0b9945a58f8.png)
+![image](https://user-images.githubusercontent.com/9313094/50776583-5942eb00-1267-11e9-8362-95442d735ae7.png)
 
 ### Overview of the Chord Inferring Algorithm
 Although mapping chord tones into chord labels sounds like a trivial job, it can be quite complicated since the chord tones in many slices will not comprise a chord, and thus have to refer to adjacent slices to determine the final chord label. Therefore, I wrote a rule-based algorithm for this purpose. The pseudo-code of this algorithm can be divided into the following steps:

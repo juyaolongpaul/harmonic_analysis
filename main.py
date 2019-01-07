@@ -68,7 +68,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
-                        type=str, default='N')
+                        type=str, default='Y')
     args = parser.parse_args()
 
     if args.source == 'Rameau':
