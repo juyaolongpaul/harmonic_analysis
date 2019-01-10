@@ -831,7 +831,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     if outputtype == 'CL':
                         thisChord.addLyric(chord_name[test_yy_int[a_counter]])
                         thisChord.addLyric(chord_name[predict_y[a_counter]])
-                        if test_yy_int[a_counter] == predict_y[a_counter]:
+                        if test_yy_int[a_counter] == predict_y[a_counter] or harmony.ChordSymbol(translate_chord_name_into_music21(chord_name[predict_y[a_counter]])).orderedPitchClasses == harmony.ChordSymbol(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]])).orderedPitchClasses:
                             correct_num += 1
                             print(chord_name[predict_y[a_counter]], end=' ', file=f_all)
                             thisChord.addLyric('✓')
@@ -920,8 +920,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
     elif outputtype == "CL":
         for i in range(len(cvscores_test)):
-            print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
+            print('Test acc:', i, cvscores_test[i], '%', 'Frame acc:', frame_acc[i], '%', file=cv_log)
     print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+    if outputtype.find("CL") != -1:
+        print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
         print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
