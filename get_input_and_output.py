@@ -385,7 +385,7 @@ def fill_in_pitch_class_binary(pitchclass, list, thisChord, s, bad):
     return pitchclass, bad
 
 
-def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s):
+def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
     """
     :param pitchclass: The pitch class vector that needs to label
     :param list: The pitch class encoded in number, [0,3,6,9]
@@ -395,7 +395,7 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s):
     for i in list:
         pitchclass[i] = 1
     ori_pitchclass = pitchclass[:]
-
+    NCT_sign = pitchclass[:]
     if inputtype.find('NewOnset') != -1:
         list, this_pitch_list = get_pitch_class_for_four_voice(thisChord, s)
         # pitchclass = []
@@ -407,21 +407,42 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s):
                     # fake attacks
                     #print('fake attacks')
                     pitchclass[this_pitch_list[i].pitch.pitchClass] = 0 # set the pitch class of the fake attack as 0
-                    # pitchclass.append(0)
-                    # pitchclass.append(1)
-            #     elif this_pitch_list[i].tie.type == 'let-ring' or this_pitch_list[i].tie.type == 'continue-let-ring':
-            #         input('we do have let-ring and continue-let-ring')
-            #         # pitchclass.append(1)
-            #         # pitchclass.append(0)
-            #     else:  # the start of the attack is the real one
-            #         print('real attacks')
-            #         # pitchclass.append(1)
-            #         # pitchclass.append(0)
-            # else:  # no tie, so the attack is real
-            #     print('real attacks')
-            #     # pitchclass.append(1)
-            #     # pitchclass.append(0)
         pitchclass.extend(ori_pitchclass)
+    if inputtype.find('NCT') != -1:
+        if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
+            # so we can add NCT features for the current slice
+            lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
+            last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
+            nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
+            next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+            # print('debug')
+            for i, item in enumerate(list):
+                if item != -1 and last_pitch_list[i].name != 'rest' and next_pitch_list[i].name != 'rest':
+                    # need to judge NCT if there is a note in all 3 slices
+                    if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                           this_pitch_list[i].pitch.nameWithOctave,
+                                                           next_pitch_list[
+                                                               i].pitch.nameWithOctave).couldBeNeighborTone() \
+                            or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                   this_pitch_list[i].pitch.nameWithOctave,
+                                                                   next_pitch_list[i].pitch.nameWithOctave).couldBePassingTone():
+                        if len(this_pitch_list[i].expressions) > 0:
+                            for item2 in this_pitch_list[i].expressions:
+                                if item2.name == 'fermata': # Don't consider PNCT on a fermata
+                                    NCT_sign[item] = 0
+                        if len(last_pitch_list[i].expressions) > 0:
+                            for item2 in last_pitch_list[i].expressions:
+                                if item2.name == 'fermata': # or the slice after the fermata
+                                    NCT_sign[item] = 0
+
+                        #print('this pitch class is either a possible P or N')
+                    else:
+                        NCT_sign[item] = 0
+                else:  # if any of these 3 slices has a rest, it must not be a NCT
+                    NCT_sign[item] = 0
+        else:  # we cannot add NCT for the current slice
+            NCT_sign = [0] * len(ori_pitchclass)
+        pitchclass.extend(NCT_sign)
     return ori_pitchclass, pitchclass
 
 
@@ -1043,7 +1064,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                         only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
-                        only_pitch_class, pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord, inputtype, s)
+                        only_pitch_class, pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord, inputtype, s, sChords, i)
                         #only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                         pitchClass,                              = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,

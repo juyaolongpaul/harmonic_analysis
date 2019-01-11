@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='rule_MaxMel_NoSeventh')
+                        type=str, default='rule_MaxMel')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -62,7 +62,7 @@ def main():
                         type=str, default='NCT_pitch_class')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter_NewOnset')
+                        type=str, default='3meter_NewOnset_NCT')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=0)
