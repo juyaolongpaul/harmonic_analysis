@@ -918,11 +918,15 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         else:
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
-    elif outputtype == "CL":
-        for i in range(len(cvscores_test)):
-            print('Test acc:', i, cvscores_test[i], '%', 'Frame acc:', frame_acc[i], '%', file=cv_log)
+    elif outputtype.find("CL") != -1:
+        if predict == 'Y':
+            for i in range(len(cvscores_test)):
+                print('Test acc:', i, cvscores_test[i], '%', 'Frame acc:', frame_acc[i], '%', file=cv_log)
+        else:
+            for i in range(len(cvscores_test)):
+                print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
     print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
-    if outputtype.find("CL") != -1:
+    if outputtype.find("CL") != -1 and predict == 'Y':
         print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
         print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
