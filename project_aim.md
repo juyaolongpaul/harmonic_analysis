@@ -36,3 +36,4 @@ Although mapping chord tones into chord labels sounds like a trivial job, it can
             * Major third becomes a major triad where the fifth is supplemented.
             * Perfect fifth becomes a major triad where the third is supplemented.
             * Tritone becomes a diminished triad where the third is supplemented. 
+    * It seems like the algorithm still has room to improve. I ran the algorithm on the ground truth NCTs, and got an accuracy of 96%. I will look into the 4% errors and improve the algorithm accordingly. 
