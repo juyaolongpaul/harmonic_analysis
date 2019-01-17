@@ -544,6 +544,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     frame_acc = []
     frame_acc_2 = [] # Use it without generating XML, and also use it to cross validate the one above
     chord_acc = []
+    chord_acc_gt = []
     batch_size = 256
     epochs = 500
     if modelID == 'DNN':
@@ -805,6 +806,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             a_counter = 0
             a_counter_correct = 0
             a_counter_correct_chord = 0 # correct chord labels predicted by NCT approach
+            a_counter_correct_chord_gt = 0 # correct chord labels predicted by the ground truth NCTs
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID)):
@@ -820,12 +822,15 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
+                correct_num_chord_gt = 0 # record the correct predicted chord labels from the ground truth NCTs
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 s.insert(0, sChords)
                 chord_tone_list = []  # store all the chord tones predicted by the model
+                chord_tone_list_gt = []  # store all the chord tones by the ground truth
                 chord_label_list = []  # store all the chord labels predicted by the model
-                chord_label_list_gt = []
+                chord_label_list_gt = [] # store the ground truth chord label
+                chord_label_list_gt_infer = [] # store the inferred chord label by ground truth NCTs
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     if outputtype == 'CL':
@@ -853,7 +858,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         dimension = test_xx_only_pitch.shape[1]
                         realdimension = int(dimension / (2 * windowsize + 1))
                         x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
-                        output_NCT_to_XML(x, gt, thisChord, outputtype)
+                        chord_tone_gt = output_NCT_to_XML(x, gt, thisChord, outputtype)
                         chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
                         if (correct_bit == len(gt)):
                             correct_num += 1
@@ -862,6 +867,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             thisChord.addLyric(' ')
                         chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
                                                                                chord_label_list)
+                        chord_tone_list_gt, chord_label_list_gt_infer = infer_chord_label1(thisChord, chord_tone_gt, chord_tone_list_gt,
+                                                                               chord_label_list_gt_infer)
                     a_counter += 1
                 a_counter_correct += correct_num
 
@@ -873,11 +880,21 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
                         thisChord.addLyric(chord_label_list[j])
-                        #print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                             correct_num_chord += 1
                             thisChord.addLyric('✓')
+                        else:
+                            thisChord.addLyric(' ')
+                        if (chord_label_list_gt_infer[j] == 'un-determined' or chord_label_list_gt_infer[j].find('interval') != -1):  # sometimes the last
+                            # chord is un-determined because there are only two tones!
+                            infer_chord_label2(j, thisChord, chord_label_list_gt_infer, chord_tone_list_gt)  # determine the final chord
+                        thisChord.addLyric(chord_label_list_gt_infer[j])
+                        #print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
+                        if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list_gt_infer[j]).orderedPitchClasses:
+                            correct_num_chord_gt += 1
+                            thisChord.addLyric('✓')
                 a_counter_correct_chord += correct_num_chord
+                a_counter_correct_chord_gt += correct_num_chord_gt
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
                 print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
@@ -887,12 +904,14 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
                       file=f_all)
                 print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
+                print('accumulative chord ground truth accucary: ' + str(a_counter_correct_chord_gt / a_counter), end='\n', file=f_all)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, fileName[i][
                                                                                               :-4]) + '.xml')
                 # output result in musicXML
             frame_acc.append((a_counter_correct / a_counter) * 100)
             chord_acc.append((a_counter_correct_chord / a_counter) * 100)
+            chord_acc_gt.append((a_counter_correct_chord_gt / a_counter) * 100)
     if predict == 'Y':
         counts = Counter(error_list)
         print(counts, file=f_all)
@@ -914,7 +933,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], file=cv_log)
         else:
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
@@ -939,6 +958,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         if predict == 'Y':
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
     cv_log.close()
 
 if __name__ == "__main__":
