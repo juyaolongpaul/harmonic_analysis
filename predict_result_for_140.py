@@ -432,6 +432,31 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
                     chord_label_list[j] = chord_label_list[j].replace('-interval class 4', '')
                 elif chord_label_list[j].find('-interval class 3') != -1: # m3 and missing 5th (minor third will be considered as minor triads)
                     chord_label_list[j] = chord_label_list[j].replace('-interval class 3', '') + 'm'
+
+
+def infer_chord_label3(j, thisChord, chord_label_list, chord_tone_list):
+    # replace chord with adjacent chords which fully contain the chord tones
+    if j < len(chord_tone_list) - 1 and j > 0:
+        for jj, itemitem in enumerate(chord_label_list[j + 1:]):
+            if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
+                break
+        jj = jj + j + 1
+        common_tone1 = list(
+            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+        common_tone2 = list(
+            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+        if len(common_tone1) == len(harmony.ChordSymbol(chord_label_list[j]).pitchClasses) and len(
+                harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses) > len(
+            harmony.ChordSymbol(chord_label_list[j]).pitchClasses):
+            chord_label_list[j] = chord_label_list[j - 1]
+        if len(common_tone2) == len(harmony.ChordSymbol(chord_label_list[j]).pitchClasses) and len(
+                harmony.ChordSymbol(chord_label_list[jj]).pitchClasses) > len(
+            harmony.ChordSymbol(chord_label_list[j]).pitchClasses):
+            chord_label_list[j] = chord_label_list[jj]
+
+
 def create_3D_data(x, timestep):
     """
     generate 3D data for RNN like network to train based on 2D data.
@@ -879,6 +904,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
+                        #infer_chord_label3(j, thisChord, chord_label_list, chord_tone_list) # TODO: Look into this later: chorale 011 M6, also the function will stumble on chorale 187
                         thisChord.addLyric(chord_label_list[j])
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                             correct_num_chord += 1
@@ -888,6 +914,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         if (chord_label_list_gt_infer[j] == 'un-determined' or chord_label_list_gt_infer[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list_gt_infer, chord_tone_list_gt)  # determine the final chord
+                        #infer_chord_label3(j, thisChord, chord_label_list_gt_infer, chord_tone_list_gt)
                         thisChord.addLyric(chord_label_list_gt_infer[j])
                         #print('slice number:', j, 'gt:', chord_label_list_gt[j], 'prediction:', chord_label_list[j])
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list_gt_infer[j]).orderedPitchClasses:

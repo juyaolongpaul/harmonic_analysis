@@ -36,4 +36,15 @@ Although mapping chord tones into chord labels sounds like a trivial job, it can
             * Major third becomes a major triad where the fifth is supplemented.
             * Perfect fifth becomes a major triad where the third is supplemented.
             * Tritone becomes a diminished triad where the third is supplemented. 
-    * It seems like the algorithm still has room to improve. I ran the algorithm on the ground truth NCTs, and got an accuracy of 96%. I will look into the 4% errors and improve the algorithm accordingly. 
+    * It seems like the algorithm still has room to improve. I ran the algorithm on the ground truth NCTs, and got an accuracy of 96%. I will look into the 4% errors and improve the algorithm accordingly.
+        * I looked into the 4% errors, and about 2/3 of the errors are because the original annotations are problematic. For example, chorale 018 measure 12:
+            ![image](https://user-images.githubusercontent.com/9313094/51352277-2543a300-1a7b-11e9-92c3-896da3f84950.png)
+            
+            Since most of the chord tones for`c` do not exist in the sonorities (the annotations and the sonorities hardly match), so it is impossible for the chord inferring algorithm to know these missing chord tones and predict the chord label which matches the ground truth. As a result, the predicted chord labels are "errors", but the real errors are the annotations.
+        * For the rest 1/3 errors, correcting them by updating the algorithm will usually lead to other errors. For example, chorale 023 measure 11:
+            ![image](https://user-images.githubusercontent.com/9313094/51352977-38577280-1a7d-11e9-8438-5d99362763cb.png)
+            
+            For these two slices, the chord tones are a major third apart, since they can be contained by `am` chord, the algorithm consider the chord as `am`, not `c`, which causes errors. However, if I fix the errors (so the major/minor third will ALWAYS become a major/minor triad), the slice on measure 9, second half of the third beat will be wrong, since the chord tones are `EG`, and it can make up a `em` chord.
+        * Also notice that, the annotations are generated in the style of maximally melodic, and when the style changes, the annotations might change drastically. Therefore, I want to develop a general algorithm that can work equally well (or badly...) for each style.
+        * Alternatively, we might want to consider a machine learning chord inferring model, which can offer more flexibilities to cater for each analytical style. However, it is uncertain that the machine learning model will beat the performance of the rule-based one. I will try it at some point, although this is not the top priority now. 
+        
