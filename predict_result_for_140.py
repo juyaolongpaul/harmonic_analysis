@@ -596,7 +596,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
                            append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
-    for times in range(cv):
+    for times in range(2):
         # if times != 9:
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -986,6 +986,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
             print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%')
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%')
     cv_log.close()
 
 if __name__ == "__main__":
