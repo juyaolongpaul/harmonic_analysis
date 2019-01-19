@@ -552,27 +552,33 @@ def add_beat_into(pitchclass, beat, inputtype, beatstrength):
     adding two dimension to the input vector, specifying whether the current slice is on/off beat.
     :return:
     """
+    meter = []
     if inputtype.find('2meter') != -1:
         if (len(beat) == 1):  # on beat
             pitchclass.append(1)
             pitchclass.append(0)
+            meter = [1, 0]
         else:  # off beat
             pitchclass.append(0)
             pitchclass.append(1)
+            meter = [0, 1]
     elif inputtype.find('3meter') != -1:
         if (len(beat) == 1):  # on beat
             if beat == '1':  # on a strong beat
                 pitchclass.append(1)
                 pitchclass.append(0)
                 pitchclass.append(0)
+                meter = [1, 0, 0]
             else:  # on a weak beat
                 pitchclass.append(0)
                 pitchclass.append(1)
                 pitchclass.append(0)
+                meter = [0, 1, 0]
         else:  # off beat
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(1)
+            meter = [0, 0, 1]
     elif inputtype.find('5meter') != -1: # we use beat strength of 1, 0.5, 0.25, 0.125, 0.0625
         if beatstrength == 1.0:
             pitchclass.append(1)
@@ -580,33 +586,38 @@ def add_beat_into(pitchclass, beat, inputtype, beatstrength):
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(0)
+            meter = [1, 0, 0, 0, 0]
         elif beatstrength == 0.5:
             pitchclass.append(0)
             pitchclass.append(1)
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(0)
+            meter = [0, 1, 0, 0, 0]
         elif beatstrength == 0.25:
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(1)
             pitchclass.append(0)
             pitchclass.append(0)
+            meter = [0, 0, 1, 0, 0]
         elif beatstrength == 0.125:
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(1)
             pitchclass.append(0)
+            meter = [0, 0, 0, 1, 0]
         elif beatstrength <= 0.0625:
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(0)
             pitchclass.append(1)
+            meter = [0, 0, 0, 0, 1]
         else:
             input('debug')
-    return pitchclass
+    return meter, pitchclass
 
 
 def get_non_chord_tone(x, y, outputdim):
@@ -1035,6 +1046,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
             # pitch class is used. This one is used to indicate which one is NCT.
             chorale_x_only_pitch_class = []
+            chorale_x_only_meter = [] # we want to save the meter info for the gt chord label as input feature to do chord inferral
             if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
                 f = open(
                     os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
@@ -1085,10 +1097,10 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     # pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)  # add voice leading (or not)
                     # (thisChord.pitchClasses)
                     #print('beat strength is:', thisChord.beatStrength)
-                    pitchClass = add_beat_into(pitchClass, thisChord.beatStr, inputtype, thisChord.beatStrength)  # add on/off beat info
+                    meter, pitchClass = add_beat_into(pitchClass, thisChord.beatStr, inputtype, thisChord.beatStrength)  # add on/off beat info
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # add beat info for 12 pitch class
                         # if generic pitch is used
-                        pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr, inputtype, thisChord.beatStrength)
+                        meter, pitchClass_12 = add_beat_into(pitchClass_12, thisChord.beatStr, inputtype, thisChord.beatStrength)
                 else:  # if binary encoding is used, each voice is specified with a pitch-class
                     input('binary encoding is depreciated!')
                     # if inputdim > 8 and inputdim <= 16:
@@ -1106,11 +1118,13 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         chorale_x_12 = np.concatenate((chorale_x_12, pitchClass_12))
                     chorale_x = np.concatenate((chorale_x, pitchClass))
                     chorale_x_only_pitch_class = np.concatenate((chorale_x_only_pitch_class, only_pitch_class))
+                    chorale_x_only_meter = np.concatenate((chorale_x_only_meter, meter))
                 else:
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:
                         chorale_x_12 = np.vstack((chorale_x_12, pitchClass_12))
                     chorale_x = np.vstack((chorale_x, pitchClass))
                     chorale_x_only_pitch_class = np.vstack((chorale_x_only_pitch_class, only_pitch_class))
+                    chorale_x_only_meter = np.vstack((chorale_x_only_meter, meter))
             file_name_x = os.path.join('.', 'data_for_ML', sign, sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21, fn[:-4] + '.txt')
             file_name_xx = os.path.join('.', 'data_for_ML', sign, sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                        fn[:-4] + '_pitch_class.txt')
@@ -1127,6 +1141,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             slice_counter = 0  # remember what slice in order to get the pitch class info
             yy = []  # save output by each chorale
             yy_pitch_class = []
+            xx_chord_tone = [] # this is the input feature vector for chord inferral
             for line in f.readlines():
                 line = get_chord_line(line, sign)
                 for chord in line.split():
@@ -1144,10 +1159,16 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                                 input('Do not use 12-d output when the pitch class is used for each of 4 voices!')
                             chord_class_pitch_class = chord_class[:-1]
                             NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter]) # we want NCT pitch class
+                            CT_pitch_class = list(chorale_x_only_pitch_class[slice_counter])
                             for iii, itemm in enumerate(NCT_pitch_class):
                                 if itemm == 1:
                                     if int(chord_class_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
                                         NCT_pitch_class[iii] = 0
+                            for iii, itemm in enumerate(NCT_pitch_class): # Save only CT
+                                if int(itemm) == 1: # it is a NCT
+                                    if int(CT_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
+                                        CT_pitch_class[iii] = 0
+                            CT_pitch_class.extend(list(chorale_x_only_meter[slice_counter])) # Add meter as input features for chord inferral
                         if pitch != 'pitch_class_binary':
                             chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
                                                                outputdim,
@@ -1164,10 +1185,12 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         yy = np.concatenate((yy, chord_class))
                         if outputtype.find("_pitch_class") != -1:
                             yy_pitch_class = np.concatenate((yy_pitch_class, NCT_pitch_class))
+                            xx_chord_tone = np.concatenate((xx_chord_tone, CT_pitch_class))
                     else:
                         yy = np.vstack((yy, chord_class))
                         if outputtype.find("_pitch_class") != -1:
                             yy_pitch_class = np.vstack((yy_pitch_class, NCT_pitch_class))
+                            xx_chord_tone = np.vstack((xx_chord_tone, CT_pitch_class))
             print('slices of output: ', slice_counter, "slices of input", slice_input)
             file_name_y = os.path.join('.', 'data_for_ML', sign, sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                        fn[:-4] + '.txt')
@@ -1177,6 +1200,11 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                                            sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                            fn[:-4] + '_pitch_class.txt')
                 np.savetxt(file_name_y_pitch_class, yy_pitch_class, fmt='%.1e')
+                file_name_x_chord_tone = os.path.join('.', 'data_for_ML', sign,
+                                                       sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                       fn[:-4] + '_chord_tone.txt')
+                #xx_chord_tone_window = adding_window_one_hot(xx_chord_tone, windowsize + 1)
+                np.savetxt(file_name_x_chord_tone, xx_chord_tone, fmt='%.1e')
             if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
                 input('fix this or delete this')
 

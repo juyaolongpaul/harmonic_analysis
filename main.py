@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='rule_MaxMel')
+                        type=str, default='Example2')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -34,7 +34,7 @@ def main():
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
-                             'input feature. You can also append 7 in the end to use '
+                             'input feature. You can a lso append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
@@ -62,7 +62,7 @@ def main():
                         type=str, default='NCT_pitch_class')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter_NewOnset')
+                        type=str, default='3meterss_NewOnset')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=0)
