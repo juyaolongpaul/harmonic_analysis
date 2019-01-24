@@ -666,6 +666,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     chord_acc_gt = []
     chord_tone_acc = [] # chord inferral ML model accuracy
     direct_harmonic_analysis_acc = []
+    percentage_of_agreements_for_chord_inferral_algorithms = []
     batch_size = 256
     epochs = 500
     if modelID == 'DNN':
@@ -700,7 +701,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + '_direct_harmonic_analysis_' + 'predict_log.csv',
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
-    for times in range(cv):
+    for times in range(1):
         # if times != 9:
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -937,6 +938,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             a_counter_correct_chord_gt = 0 # correct chord labels predicted by the ground truth NCTs
             a_counter_correct_chord_tone = 0 # correct chord labels predicted by the chord inferral ML model
             a_counter_correct_direct_harmonic_analysis = 0  # correct chord labels predicted by direct harmonic analysis
+            a_counter_number_of_agreements = 0 # the accumulative number of agreements over all chorales
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID)):
@@ -956,6 +958,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 correct_num_chord_tone = 0 # record the correct predicted chord labels from the chord inferral ML model
                 correct_num_direct_harmonic_analysis = 0  # record the correct predicted chord labels from direct harmonic analysis
                 num_of_disagreement = [] # record the number of disagreement across all chord inferring algorithms
+                num_of_agreement_per_chorale = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 s.insert(0, sChords)
@@ -1117,6 +1120,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_label_list_gt_infer[j])
                         # output the number of disagreement
                         if num_of_disagreement[j] != 0:
+                            num_of_agreement_per_chorale += 1
+
                             thisChord.addLyric(num_of_disagreement[j])
                         else:
                             thisChord.addLyric(' ')
@@ -1124,6 +1129,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 a_counter_correct_chord_gt += correct_num_chord_gt
                 a_counter_correct_chord_tone += correct_num_chord_tone
                 a_counter_correct_direct_harmonic_analysis += correct_num_direct_harmonic_analysis
+                a_counter_number_of_agreements += num_of_agreement_per_chorale
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
                 print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(num_salami_slice),
@@ -1147,7 +1153,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             chord_acc_gt.append((a_counter_correct_chord_gt / a_counter) * 100)
             chord_tone_acc.append((a_counter_correct_chord_tone / a_counter) * 100)
             direct_harmonic_analysis_acc.append((a_counter_correct_direct_harmonic_analysis / a_counter) * 100)
-
+            percentage_of_agreements_for_chord_inferral_algorithms.append((a_counter_number_of_agreements / a_counter) * 100)
     if predict == 'Y':
         counts = Counter(error_list)
         print(counts, file=f_all)
@@ -1169,7 +1175,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i],  'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i],  'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], '% of agreements:', percentage_of_agreements_for_chord_inferral_algorithms[i], file=cv_log)
         else:
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
@@ -1197,12 +1203,15 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
             print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%', file=cv_log)
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', np.std(direct_harmonic_analysis_acc), '%', file=cv_log)
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%')
             print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%')
             print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%')
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±',
                   np.std(direct_harmonic_analysis_acc), '%')
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%')
+
     cv_log.close()
 
 if __name__ == "__main__":
