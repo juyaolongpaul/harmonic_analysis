@@ -700,7 +700,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + '_direct_harmonic_analysis_' + 'predict_log.csv',
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
-    for times in range(1):
+    for times in range(cv):
         # if times != 9:
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -950,11 +950,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 if fileName[i][-7:-4] == '043':
                     print('debug')
                 num_salami_slice = numSalamiSlices[i]
-                correct_num = 0
+                correct_num = 0 # Record either the correct slice/chord in direct harmonic analysis or NCT approach
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
                 correct_num_chord_gt = 0 # record the correct predicted chord labels from the ground truth NCTs
                 correct_num_chord_tone = 0 # record the correct predicted chord labels from the chord inferral ML model
                 correct_num_direct_harmonic_analysis = 0  # record the correct predicted chord labels from direct harmonic analysis
+                num_of_disagreement = [] # record the number of disagreement across all chord inferring algorithms
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 s.insert(0, sChords)
@@ -964,6 +965,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 chord_label_list_gt = [] # store the ground truth chord label
                 chord_label_list_gt_infer = [] # store the inferred chord label by ground truth NCTs
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    num_of_disagreement.append(0) # we don't have disagreement at this point
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     if outputtype == 'CL':
                         if j == 0:
@@ -1016,9 +1018,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                         predict_y_chord_tone[a_counter]] + '✓')
                             #thisChord.addLyric('✓')
                         else:
+                            num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric(
-                                     + chord_name[predict_y_chord_tone[a_counter]])
+                                     chord_name[predict_y_chord_tone[a_counter]])
                             else:
                                 thisChord.addLyric(
                                     chord_name[
@@ -1040,6 +1043,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]] + '✓')
                             #thisChord.addLyric('✓')
                         else:
+                            num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric('Direct harmonic analysis chord label: ' + chord_name[
                                     predict_y_direct_harmonic_analysis[a_counter]])
@@ -1087,6 +1091,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_label_list[j] + '✓')
                             #thisChord.addLyric('✓')
                         else:
+                            num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric('Chord inferral (RB) chord label: ' + chord_label_list[j])
                             else:
@@ -1105,10 +1110,16 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_label_list_gt_infer[j] + '✓')
                             # thisChord.addLyric('✓')
                         else:
+                            num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric('Ground truth chord inferral (RB) chord label: ' + chord_label_list_gt_infer[j])
                             else:
                                 thisChord.addLyric(chord_label_list_gt_infer[j])
+                        # output the number of disagreement
+                        if num_of_disagreement[j] != 0:
+                            thisChord.addLyric(num_of_disagreement[j])
+                        else:
+                            thisChord.addLyric(' ')
                 a_counter_correct_chord += correct_num_chord
                 a_counter_correct_chord_gt += correct_num_chord_gt
                 a_counter_correct_chord_tone += correct_num_chord_tone
