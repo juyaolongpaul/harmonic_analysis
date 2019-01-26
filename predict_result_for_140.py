@@ -446,7 +446,10 @@ def infer_chord_label3(j, thisChord, chord_label_list, chord_tone_list):
         common_tone1 = list(
             set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
                 harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
-        common_tone2 = list(
+        if chord_label_list[jj] == 'un-determined': # Edge case: 187, the last slice is un-determined
+            common_tone2 = []
+        else:
+            common_tone2 = list(
             set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
                 harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
         if len(common_tone1) == len(harmony.ChordSymbol(chord_label_list[j]).pitchClasses) and len(
@@ -949,7 +952,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i][-7:-4])
-                if fileName[i][-7:-4] == '043':
+                if fileName[i][-7:-4] == '187':
                     print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0 # Record either the correct slice/chord in direct harmonic analysis or NCT approach
