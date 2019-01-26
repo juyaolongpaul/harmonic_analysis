@@ -1120,10 +1120,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_label_list_gt_infer[j])
                         # output the number of disagreement
                         if num_of_disagreement[j] != 0:
-                            num_of_agreement_per_chorale += 1
-
                             thisChord.addLyric(num_of_disagreement[j])
                         else:
+                            num_of_agreement_per_chorale += 1
                             thisChord.addLyric(' ')
                 a_counter_correct_chord += correct_num_chord
                 a_counter_correct_chord_gt += correct_num_chord_gt
