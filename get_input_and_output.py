@@ -915,7 +915,7 @@ def find_id(input, version):
 
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
-    id_sum_strip.remove('316')  # this file does not align
+    id_sum_strip.remove('316')  # this file does not align, chordify thinks a quarter note rest should form a slice, which is wrong.
     # id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
     # delete all these crap files
     if version == 153:
@@ -1218,19 +1218,18 @@ def get_id(id_sum, num_of_chorale, times):
     :return:
     """
     placement = int(num_of_chorale / 10)
-    placement2 = int(num_of_chorale / 10)
-    valid_id = id_sum[times * placement2:(times + 1) * placement2]
-    if (times != 9):
-        test_id = id_sum[((times + 1)) * placement2:((times + 2)) * placement2]
+    train_id = []
+    if times == 9:
+        valid_id = id_sum[times * placement:] # need to incorporate the rest remnant
     else:
-        test_id = id_sum[((times + 1) % 10) * placement2:((times + 2) % 10) * placement2]
-    if (times * placement != 0):
-        if (times != 9):
-            train_id = id_sum[:times * placement] + id_sum[(times + 2) * placement:]
-        else:
-            train_id = id_sum[((times + 2) % 10) * placement2:times * placement2]
+        valid_id = id_sum[times * placement:(times + 1) * placement]
+    if times != 8:
+        test_id = id_sum[((times + 1) % 10) * placement:((times + 2) % 10) * placement]
     else:
-        train_id = id_sum[((times + 2) % 10) * placement:]
+        test_id = id_sum[((times + 1) % 10) * placement:] # need to incorporate the rest remnant
+    for i, item in enumerate(id_sum):
+        if item not in valid_id and item not in test_id:
+            train_id.append(item)
     return train_id, valid_id, test_id
 
 

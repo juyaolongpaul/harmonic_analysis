@@ -365,7 +365,8 @@ def annotation_translation(input, output, version, source):
     if version == 367:
         cwd_annotation = cwd_annotation_r_MaxMel
     #print(os.listdir(cwd_annotation))
-    corrupt_rule_chorale_ID = ['130'] # 130 is missing, other 6 are corrupted. Beginning 168 is corrupted because of the 'rest' problem
+    corrupt_rule_chorale_ID = ['130'] # 130 has 24 slices in krn file, but 25 when converted into musicxml
+
     p = re.compile(r'\d{3}')
     for fn in os.listdir(cwd_annotation):
         if fn.find('.') == -1 or fn.find('DS_Store') != -1: # skip folder and Mac os file
