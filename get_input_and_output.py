@@ -396,6 +396,7 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
         pitchclass[i] = 1
     ori_pitchclass = pitchclass[:]
     NCT_sign = pitchclass[:]
+    NewOnset_sign = pitchclass[:]
     if inputtype.find('NewOnset') != -1:
         list, this_pitch_list = get_pitch_class_for_four_voice(thisChord, s)
         # pitchclass = []
@@ -407,6 +408,7 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
                     # fake attacks
                     #print('fake attacks')
                     pitchclass[this_pitch_list[i].pitch.pitchClass] = 0 # set the pitch class of the fake attack as 0
+        NewOnset_sign = pitchclass[:]
         pitchclass.extend(ori_pitchclass)
     if inputtype.find('NCT') != -1:
         if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
@@ -443,7 +445,7 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
         else:  # we cannot add NCT for the current slice
             NCT_sign = [0] * len(ori_pitchclass)
         pitchclass.extend(NCT_sign)
-    return ori_pitchclass, pitchclass
+    return ori_pitchclass, pitchclass, NewOnset_sign
 
 
 def fill_in_pitch_class_7(list, name):
@@ -1047,6 +1049,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             # pitch class is used. This one is used to indicate which one is NCT.
             chorale_x_only_pitch_class = []
             chorale_x_only_meter = [] # we want to save the meter info for the gt chord label as input feature to do chord inferral
+            chorale_x_only_newOnset = []
             if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
                 f = open(
                     os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
@@ -1076,7 +1079,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                         pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                         only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
-                        only_pitch_class, pitchClass = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord, inputtype, s, sChords, i)
+                        only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord, inputtype, s, sChords, i)
                         #only_pitch_class = list(pitchClass)
                     elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                         pitchClass,                              = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
@@ -1119,12 +1122,14 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     chorale_x = np.concatenate((chorale_x, pitchClass))
                     chorale_x_only_pitch_class = np.concatenate((chorale_x_only_pitch_class, only_pitch_class))
                     chorale_x_only_meter = np.concatenate((chorale_x_only_meter, meter))
+                    chorale_x_only_newOnset = np.concatenate((chorale_x_only_newOnset, newOnset))
                 else:
                     if pitch.find('pitch') != -1 and pitch.find('7') != -1:
                         chorale_x_12 = np.vstack((chorale_x_12, pitchClass_12))
                     chorale_x = np.vstack((chorale_x, pitchClass))
                     chorale_x_only_pitch_class = np.vstack((chorale_x_only_pitch_class, only_pitch_class))
                     chorale_x_only_meter = np.vstack((chorale_x_only_meter, meter))
+                    chorale_x_only_newOnset = np.vstack((chorale_x_only_newOnset, newOnset))
             file_name_x = os.path.join('.', 'data_for_ML', sign, sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21, fn[:-4] + '.txt')
             file_name_xx = os.path.join('.', 'data_for_ML', sign, sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                        fn[:-4] + '_pitch_class.txt')
@@ -1168,6 +1173,9 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                                 if int(itemm) == 1: # it is a NCT
                                     if int(CT_pitch_class[iii]) == 1: # If NCT pitch class is chord tone, set it to 0
                                         CT_pitch_class[iii] = 0
+                                        chorale_x_only_newOnset[slice_counter][iii] = 0
+                            if inputtype.find('NewOnset') != -1:
+                                CT_pitch_class.extend(list(chorale_x_only_newOnset[slice_counter]))
                             CT_pitch_class.extend(list(chorale_x_only_meter[slice_counter])) # Add meter as input features for chord inferral
                         if pitch != 'pitch_class_binary':
                             chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
