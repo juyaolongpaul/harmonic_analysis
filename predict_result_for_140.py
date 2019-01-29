@@ -732,7 +732,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                                                                           sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
         valid_xx = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        valid_xx_chord_tone = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+        valid_xx_chord_tone = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize + 1, ts,
                                       os.path.join('.', 'data_for_ML', sign,
                                                    sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'C')
         valid_yy_chord_tone = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
@@ -750,7 +750,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                               os.path.join('.', 'data_for_ML', sign,
                                                            sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                               'Y')
-            train_xx_chord_tone = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+            train_xx_chord_tone = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize + 1, ts,
                                                      os.path.join('.', 'data_for_ML', sign,
                                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                                      'C')
@@ -802,6 +802,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         # visualize the result and put into file
         test_xx = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
+        test_xx_no_window = generate_ML_matrix(augmentation, 'test', test_id, modelID, 0, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         test_xx_only_pitch = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
         test_xx_only_pitch_no_window = generate_ML_matrix(augmentation, 'test', test_id, modelID, 0, ts,
@@ -816,7 +819,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                                                                     sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
         test_yy_chord_label = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_y_' + 'CL' + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
-        test_xx_chord_tone = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+        test_xx_chord_tone = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize + 1, ts,
                                                  os.path.join('.', 'data_for_ML', sign,
                                                               sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                                  'C')
@@ -859,16 +862,26 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         i[j] = 1
                     else:
                         i[j] = 0
+
+
             for i, item in enumerate(test_xx_only_pitch_no_window):
+                 if inputtype.find('NewOnset') != -1:
+                     NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
                  for j, item2 in enumerate(item):
-                     if int(predict_y[i][j]) == 1:
-                        if int(item2) == 1:
-                            predict_xx_chord_tone[i][j] = 0
+                     if int(predict_y[i][j]) == 1: # predict_y predicts NCT label for each slice
+                        if int(item2) == 1: # if the there is a current pitch class and it is predicted as a NCT
+                            predict_xx_chord_tone[i][j] = 0 # remove this pitch class since predict_xx should be all predicted CT
+                            if inputtype.find('NewOnset') != -1:
+                                NewOnset[j] = 0
                         # else:
                         #     input('there is a NCT for a non-existing pitch class?!')
-                 predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][12:])) # add beat feature
-            predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize)
-            predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0)
+                 if inputtype.find('NewOnset') != -1:
+                     predict_xx_chord_tone[i] = np.concatenate(
+                         (predict_xx_chord_tone[i], NewOnset))
+                 predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
+                 # TODO: 3 might not be modular enough
+            predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
+            predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0) # TODO: we need to make this part modular so it can deal with all possible specs
             gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
             correct_num2 = 0
             for i, item in enumerate(predict_y):

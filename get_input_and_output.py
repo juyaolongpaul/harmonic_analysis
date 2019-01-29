@@ -409,7 +409,7 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
                     #print('fake attacks')
                     pitchclass[this_pitch_list[i].pitch.pitchClass] = 0 # set the pitch class of the fake attack as 0
         NewOnset_sign = pitchclass[:]
-        pitchclass.extend(ori_pitchclass)
+        pitchclass = ori_pitchclass + pitchclass # We need the order of pitch class, onset sign to be uniformed
     if inputtype.find('NCT') != -1:
         if ii != 0 and ii < len(sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
             # so we can add NCT features for the current slice
