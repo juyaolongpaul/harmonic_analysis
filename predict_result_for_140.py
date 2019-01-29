@@ -668,6 +668,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     chord_acc = []
     chord_acc_gt = []
     chord_tone_acc = [] # chord inferral ML model accuracy
+    chord_tone_acc_gt = [] # chord inferral ML model accuracy using GT NCTs
     direct_harmonic_analysis_acc = []
     percentage_of_agreements_for_chord_inferral_algorithms = []
     batch_size = 256
@@ -868,6 +869,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                  predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][12:])) # add beat feature
             predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize)
             predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0)
+            gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
             correct_num2 = 0
             for i, item in enumerate(predict_y):
                 if np.array_equal(item,test_yy[i]): # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
@@ -940,6 +942,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             a_counter_correct_chord = 0 # correct chord labels predicted by NCT approach
             a_counter_correct_chord_gt = 0 # correct chord labels predicted by the ground truth NCTs
             a_counter_correct_chord_tone = 0 # correct chord labels predicted by the chord inferral ML model
+            a_counter_correct_chord_tone_gt = 0 # correct chord labels predicted by the chord inferral ML model using GT NCTs
             a_counter_correct_direct_harmonic_analysis = 0  # correct chord labels predicted by direct harmonic analysis
             a_counter_number_of_agreements = 0 # the accumulative number of agreements over all chorales
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
@@ -959,26 +962,34 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
                 correct_num_chord_gt = 0 # record the correct predicted chord labels from the ground truth NCTs
                 correct_num_chord_tone = 0 # record the correct predicted chord labels from the chord inferral ML model
+                correct_num_chord_tone_gt = 0 # record the correct predicted chord labels from the chord inferral ML model using GT NCTs
                 correct_num_direct_harmonic_analysis = 0  # record the correct predicted chord labels from direct harmonic analysis
                 num_of_disagreement = [] # record the number of disagreement across all chord inferring algorithms
                 num_of_agreement_per_chorale = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                s_bb = converter.parse(os.path.join(input, fileName[i]))
                 sChords = s.chordify()
+                sChords_bb = s_bb.chordify()
                 s.insert(0, sChords)
+                s_bb.insert(0, sChords_bb)
                 chord_tone_list = []  # store all the chord tones predicted by the model
                 chord_tone_list_gt = []  # store all the chord tones by the ground truth
                 chord_label_list = []  # store all the chord labels predicted by the model
                 chord_label_list_gt = [] # store the ground truth chord label
                 chord_label_list_gt_infer = [] # store the inferred chord label by ground truth NCTs
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    thisChord_bb = sChords_bb.recurse().getElementsByClass('Chord')[j]
                     num_of_disagreement.append(0) # we don't have disagreement at this point
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    thisChord_bb.closedPosition(forceOctave=4, inPlace=True)
                     if outputtype == 'CL':
                         if j == 0:
                             thisChord.addLyric('Grouth truth chord label: ' + chord_name[test_yy_int[a_counter]])
+                            thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
                             #thisChord.addLyric('Direct harmonic analysis chord label: ' +chord_name[predict_y[a_counter]])
                         else:
                             thisChord.addLyric(chord_name[test_yy_int[a_counter]])
+                            thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
                             #thisChord.addLyric(chord_name[predict_y[a_counter]])
                         if test_yy_int[a_counter] == predict_y[a_counter] or harmony.ChordSymbol(translate_chord_name_into_music21(chord_name[predict_y[a_counter]])).orderedPitchClasses == harmony.ChordSymbol(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]])).orderedPitchClasses:
                             correct_num += 1
@@ -1001,10 +1012,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     elif outputtype.find("NCT") != -1:
                         if j == 0:
                             thisChord.addLyric('Grouth truth chord label: ' + chord_name[test_yy_int[a_counter]])  # the first line is the original GT
+                            thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
                         # This insert a lane of chord inferral results
                             #thisChord.addLyric('Chord inferral (ML) chord label: ' + chord_name[predict_y_chord_tone[a_counter]])
                         else:
                             thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
+                            thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
                             # This insert a lane of chord inferral results
                             #thisChord.addLyric(chord_name[predict_y_chord_tone[a_counter]])
                         if test_yy_int[a_counter] == predict_y_chord_tone[a_counter] or harmony.ChordSymbol(
@@ -1026,12 +1039,39 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
-                                thisChord.addLyric(
+                                thisChord.addLyric('Chord inferral (ML) chord label: ' +
                                      chord_name[predict_y_chord_tone[a_counter]])
                             else:
                                 thisChord.addLyric(
                                     chord_name[
                                         predict_y_chord_tone[a_counter]])
+
+                        # This insert a lane of ML chord inferral results from GT NCT labels
+                        if test_yy_int[a_counter] == gt_y_chord_tone[a_counter] or harmony.ChordSymbol(
+                                translate_chord_name_into_music21(
+                                    chord_name[
+                                        gt_y_chord_tone[a_counter]])).orderedPitchClasses == harmony.ChordSymbol(
+                            translate_chord_name_into_music21(
+                                chord_name[test_yy_int[a_counter]])).orderedPitchClasses:
+                            correct_num_chord_tone_gt += 1
+                            print(chord_name[gt_y_chord_tone[a_counter]], end=' ', file=f_all)
+                            if j == 0:
+                                thisChord.addLyric(
+                                    'Chord inferral (ML) chord label from GT NCTs: ' + chord_name[gt_y_chord_tone[a_counter]] + '✓')
+                            else:
+                                thisChord.addLyric(
+                                    chord_name[
+                                        gt_y_chord_tone[a_counter]] + '✓')
+                            #thisChord.addLyric('✓')
+                        else:
+                            num_of_disagreement[j] += 1
+                            if j == 0:
+                                thisChord.addLyric('Chord inferral (ML) chord label from GT NCTs: ' +
+                                     chord_name[gt_y_chord_tone[a_counter]])
+                            else:
+                                thisChord.addLyric(
+                                    chord_name[
+                                        gt_y_chord_tone[a_counter]])
                         # This insert a lane of direct harmonic analysis results
 
                         if test_yy_int[a_counter] == predict_y_direct_harmonic_analysis[a_counter] or harmony.ChordSymbol(
@@ -1130,6 +1170,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 a_counter_correct_chord += correct_num_chord
                 a_counter_correct_chord_gt += correct_num_chord_gt
                 a_counter_correct_chord_tone += correct_num_chord_tone
+                a_counter_correct_chord_tone_gt += correct_num_chord_tone_gt
                 a_counter_correct_direct_harmonic_analysis += correct_num_direct_harmonic_analysis
                 a_counter_number_of_agreements += num_of_agreement_per_chorale
                 print(end='\n', file=f_all)
@@ -1144,16 +1185,23 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('accumulative chord ground truth accucary: ' + str(a_counter_correct_chord_gt / a_counter), end='\n', file=f_all)
                 print('accumulative chord inferral (ML) accucary: ' + str(a_counter_correct_chord_tone / a_counter),
                       end='\n', file=f_all)
+                print('accumulative chord inferral (ML) accucary using GT NCTs: ' + str(a_counter_correct_chord_tone_gt / a_counter),
+                      end='\n', file=f_all)
                 print('accumulative direct harmonic analysis accucary: ' + str(a_counter_correct_direct_harmonic_analysis / a_counter),
                       end='\n', file=f_all)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, fileName[i][
                                                                                               :-4]) + '.xml')
+                s_bb.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID,
+                                        fileName[i][
+                                        :-4]) + '_bb.xml')
                 # output result in musicXML
             frame_acc.append((a_counter_correct / a_counter) * 100)
             chord_acc.append((a_counter_correct_chord / a_counter) * 100)
             chord_acc_gt.append((a_counter_correct_chord_gt / a_counter) * 100)
             chord_tone_acc.append((a_counter_correct_chord_tone / a_counter) * 100)
+            chord_tone_acc_gt.append((a_counter_correct_chord_tone_gt / a_counter) * 100)
             direct_harmonic_analysis_acc.append((a_counter_correct_direct_harmonic_analysis / a_counter) * 100)
             percentage_of_agreements_for_chord_inferral_algorithms.append((a_counter_number_of_agreements / a_counter) * 100)
     if predict == 'Y':
@@ -1177,7 +1225,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i],  'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], '% of agreements:', percentage_of_agreements_for_chord_inferral_algorithms[i], file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i], 'Chord tone gt acc:', chord_tone_acc_gt[i], 'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], '% of agreements:', percentage_of_agreements_for_chord_inferral_algorithms[i], file=cv_log)
         else:
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
@@ -1204,12 +1252,14 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
             print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
             print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%', file=cv_log)
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%', file=cv_log)
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', np.std(direct_harmonic_analysis_acc), '%', file=cv_log)
             print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
             print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%')
             print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%')
             print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%')
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%')
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±',
                   np.std(direct_harmonic_analysis_acc), '%')
             print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%')
