@@ -50,6 +50,7 @@ from sklearn.svm import SVC
 from test_musicxml_gt import translate_chord_name_into_music21
 from keras_self_attention import SeqSelfAttention
 from get_input_and_output import adding_window_one_hot
+from collections import defaultdict
 
 
 def format_sequence_data(inputdim, outputdim, batchsize, x, y):
@@ -633,7 +634,12 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
         train_yy_int_SVM = np.concatenate((train_yy_int, valid_yy_int))
         print('new training set', train_xx_SVM.shape, train_yy_int_SVM.shape)
         model.fit(train_xx_SVM, train_yy_int_SVM)
-
+def unify_GTChord_and_inferred_chord(name):
+    if name.find('M')!= -1 and name.find('M7') == -1:
+        name = name.replace('M', '')
+    if name.find('maj7') != -1:
+        name = name.replace('maj7', 'M7')
+    return name[0].lower() + name[1:]
 
 
 def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
@@ -705,9 +711,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + '_direct_harmonic_analysis_' + 'predict_log.csv',
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
-    for times in range(1):
-        # if times != 9:
-        #     continue
+    for times in range(cv):
+        if times != 9:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -990,11 +996,24 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 chord_label_list = []  # store all the chord labels predicted by the model
                 chord_label_list_gt = [] # store the ground truth chord label
                 chord_label_list_gt_infer = [] # store the inferred chord label by ground truth NCTs
+                all_answers_per_chorale = [{} for j in range(1000)] # create an empty 2-d list that has 1000 slots to save results
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     thisChord_bb = sChords_bb.recurse().getElementsByClass('Chord')[j]
                     num_of_disagreement.append(0) # we don't have disagreement at this point
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     thisChord_bb.closedPosition(forceOctave=4, inPlace=True)
+                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]])), 0) + 1 # add GT
+                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[predict_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
+                          # add direct harmonic analysis
+                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[gt_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[gt_y_chord_tone[a_counter]])), 0) + 1
+                          # add chord inferral (ML) model
+                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[predict_y_direct_harmonic_analysis[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[predict_y_direct_harmonic_analysis[a_counter]])), 0) + 1
+                          # add chord inferral (ML) model from gt NCTs
+
                     if outputtype == 'CL':
                         if j == 0:
                             thisChord.addLyric('Grouth truth chord label: ' + chord_name[test_yy_int[a_counter]])
@@ -1024,13 +1043,13 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 thisChord.addLyric(chord_name[predict_y[a_counter]])
                     elif outputtype.find("NCT") != -1:
                         if j == 0:
-                            thisChord.addLyric('Grouth truth chord label: ' + chord_name[test_yy_int[a_counter]])  # the first line is the original GT
+                            thisChord.addLyric('Grouth truth chord label: ' + unify_GTChord_and_inferred_chord(chord_name[test_yy_int[a_counter]]))  # the first line is the original GT
                             thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
                         # This insert a lane of chord inferral results
                             #thisChord.addLyric('Chord inferral (ML) chord label: ' + chord_name[predict_y_chord_tone[a_counter]])
                         else:
-                            thisChord.addLyric(chord_name[test_yy_int[a_counter]])  # the first line is the original GT
-                            thisChord_bb.addLyric(chord_name[test_yy_int[a_counter]])
+                            thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_name[test_yy_int[a_counter]]))  # the first line is the original GT
+                            thisChord_bb.addLyric(unify_GTChord_and_inferred_chord(chord_name[test_yy_int[a_counter]]))
                             # This insert a lane of chord inferral results
                             #thisChord.addLyric(chord_name[predict_y_chord_tone[a_counter]])
                         if test_yy_int[a_counter] == predict_y_chord_tone[a_counter] or harmony.ChordSymbol(
@@ -1043,21 +1062,21 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             print(chord_name[predict_y_chord_tone[a_counter]], end=' ', file=f_all)
                             if j == 0:
                                 thisChord.addLyric(
-                                    'Chord inferral (ML) chord label: ' + chord_name[predict_y_chord_tone[a_counter]] + '✓')
+                                    'Chord inferral (ML) chord label: ' + unify_GTChord_and_inferred_chord(chord_name[predict_y_chord_tone[a_counter]]) + '✓')
                             else:
                                 thisChord.addLyric(
-                                    chord_name[
-                                        predict_y_chord_tone[a_counter]] + '✓')
+                                    unify_GTChord_and_inferred_chord(chord_name[
+                                        predict_y_chord_tone[a_counter]]) + '✓')
                             #thisChord.addLyric('✓')
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric('Chord inferral (ML) chord label: ' +
-                                     chord_name[predict_y_chord_tone[a_counter]])
+                                                   unify_GTChord_and_inferred_chord(chord_name[predict_y_chord_tone[a_counter]]))
                             else:
                                 thisChord.addLyric(
-                                    chord_name[
-                                        predict_y_chord_tone[a_counter]])
+                                    unify_GTChord_and_inferred_chord(chord_name[
+                                        predict_y_chord_tone[a_counter]]))
 
                         # This insert a lane of ML chord inferral results from GT NCT labels
                         if test_yy_int[a_counter] == gt_y_chord_tone[a_counter] or harmony.ChordSymbol(
@@ -1070,21 +1089,21 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             print(chord_name[gt_y_chord_tone[a_counter]], end=' ', file=f_all)
                             if j == 0:
                                 thisChord.addLyric(
-                                    'Chord inferral (ML) chord label from GT NCTs: ' + chord_name[gt_y_chord_tone[a_counter]] + '✓')
+                                    'Chord inferral (ML) chord label from GT NCTs: ' + unify_GTChord_and_inferred_chord(chord_name[gt_y_chord_tone[a_counter]]) + '✓')
                             else:
                                 thisChord.addLyric(
-                                    chord_name[
-                                        gt_y_chord_tone[a_counter]] + '✓')
+                                    unify_GTChord_and_inferred_chord(chord_name[
+                                        gt_y_chord_tone[a_counter]]) + '✓')
                             #thisChord.addLyric('✓')
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
                                 thisChord.addLyric('Chord inferral (ML) chord label from GT NCTs: ' +
-                                     chord_name[gt_y_chord_tone[a_counter]])
+                                                   unify_GTChord_and_inferred_chord(chord_name[gt_y_chord_tone[a_counter]]))
                             else:
                                 thisChord.addLyric(
-                                    chord_name[
-                                        gt_y_chord_tone[a_counter]])
+                                    unify_GTChord_and_inferred_chord(chord_name[
+                                        gt_y_chord_tone[a_counter]]))
                         # This insert a lane of direct harmonic analysis results
 
                         if test_yy_int[a_counter] == predict_y_direct_harmonic_analysis[a_counter] or harmony.ChordSymbol(
@@ -1096,18 +1115,18 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             correct_num_direct_harmonic_analysis += 1
                             print(chord_name[predict_y_direct_harmonic_analysis[a_counter]], end=' ', file=f_all)
                             if j == 0:
-                                thisChord.addLyric('Direct harmonic analysis chord label: ' + chord_name[
-                                    predict_y_direct_harmonic_analysis[a_counter]] + '✓')
+                                thisChord.addLyric('Direct harmonic analysis chord label: ' + unify_GTChord_and_inferred_chord(chord_name[
+                                    predict_y_direct_harmonic_analysis[a_counter]]) + '✓')
                             else:
-                                thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]] + '✓')
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_name[predict_y_direct_harmonic_analysis[a_counter]]) + '✓')
                             #thisChord.addLyric('✓')
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
-                                thisChord.addLyric('Direct harmonic analysis chord label: ' + chord_name[
-                                    predict_y_direct_harmonic_analysis[a_counter]])
+                                thisChord.addLyric('Direct harmonic analysis chord label: ' + unify_GTChord_and_inferred_chord(chord_name[
+                                    predict_y_direct_harmonic_analysis[a_counter]]))
                             else:
-                                thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]])
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_name[predict_y_direct_harmonic_analysis[a_counter]]))
                         chord_label_list_gt.append(chord_name[test_yy_int[a_counter]])
                         # pitch spelling does not affect the final results
                         gt = test_yy[a_counter]
@@ -1145,16 +1164,16 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list[j]).orderedPitchClasses:
                             correct_num_chord += 1
                             if j == 0:
-                                thisChord.addLyric('Chord inferral (RB) chord label: ' + chord_label_list[j] + '✓')
+                                thisChord.addLyric('Chord inferral (RB) chord label: ' + unify_GTChord_and_inferred_chord(chord_label_list[j]) + '✓')
                             else:
-                                thisChord.addLyric(chord_label_list[j] + '✓')
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_label_list[j]) + '✓')
                             #thisChord.addLyric('✓')
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
-                                thisChord.addLyric('Chord inferral (RB) chord label: ' + chord_label_list[j])
+                                thisChord.addLyric('Chord inferral (RB) chord label: ' + unify_GTChord_and_inferred_chord(chord_label_list[j]))
                             else:
-                                thisChord.addLyric(chord_label_list[j])
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_label_list[j]))
                         if (chord_label_list_gt_infer[j] == 'un-determined' or chord_label_list_gt_infer[j].find('interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
                             infer_chord_label2(j, thisChord, chord_label_list_gt_infer, chord_tone_list_gt)  # determine the final chord
@@ -1164,22 +1183,33 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         if harmony.ChordSymbol(translate_chord_name_into_music21(chord_label_list_gt[j])).orderedPitchClasses == harmony.ChordSymbol(chord_label_list_gt_infer[j]).orderedPitchClasses:
                             correct_num_chord_gt += 1
                             if j == 0:
-                                thisChord.addLyric('Ground truth chord inferral (RB) chord label: ' + chord_label_list_gt_infer[j] + '✓')
+                                thisChord.addLyric('Ground truth chord inferral (RB) chord label: ' + unify_GTChord_and_inferred_chord(chord_label_list_gt_infer[j]) + '✓')
                             else:
-                                thisChord.addLyric(chord_label_list_gt_infer[j] + '✓')
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_label_list_gt_infer[j]) + '✓')
                             # thisChord.addLyric('✓')
                         else:
                             num_of_disagreement[j] += 1
                             if j == 0:
-                                thisChord.addLyric('Ground truth chord inferral (RB) chord label: ' + chord_label_list_gt_infer[j])
+                                thisChord.addLyric('Ground truth chord inferral (RB) chord label: ' + unify_GTChord_and_inferred_chord(chord_label_list_gt_infer[j]))
                             else:
-                                thisChord.addLyric(chord_label_list_gt_infer[j])
+                                thisChord.addLyric(unify_GTChord_and_inferred_chord(chord_label_list_gt_infer[j]))
                         # output the number of disagreement
                         if num_of_disagreement[j] != 0:
                             thisChord.addLyric(num_of_disagreement[j])
                         else:
                             num_of_agreement_per_chorale += 1
                             thisChord.addLyric(' ')
+                        all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j]))] = \
+                        all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])), 0) + 1
+                        # add Chord inferral (RB) chord label
+                        all_answers_per_chorale[j][
+                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list_gt_infer[j]))] = all_answers_per_chorale[
+                                                                                                   j].get(
+                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list_gt_infer[j])),
+                            0) + 1  # add Ground truth chord inferral (RB) chord label
+                        sorted_result = sorted(all_answers_per_chorale[j].items(), key=lambda d: d[1], reverse=True)
+                        print(sorted_result)
+                        thisChord.addLyric(sorted_result[0][0])
                 a_counter_correct_chord += correct_num_chord
                 a_counter_correct_chord_gt += correct_num_chord_gt
                 a_counter_correct_chord_tone += correct_num_chord_tone
