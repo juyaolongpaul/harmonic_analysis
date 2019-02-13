@@ -665,6 +665,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     cvscores_test = []
     cvscores_chord_tone = []
     cvscores_test_chord_tone = []
+    cvscores_percentage_of_NCT_per_slice = []
     tp = []
     tn = []
     fp = []
@@ -712,8 +713,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        if times != 9:
-            continue
+        # if times != 9:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
@@ -926,6 +927,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     chord_name2.remove(item)
         if outputtype.find('CL') != -1:
             print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
+
+
+
         if outputtype.find("NCT") != -1:
             print(classification_report(test_yy_int, predict_y_direct_harmonic_analysis, target_names=chord_name2), file=cv_log)
             precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
@@ -933,7 +937,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
                                                                                                             test_xx,
                                                                                                             test_yy,
-                                                                                                            modelID)
+                                                                                                          modelID)
+            num_of_NCT_slices = 0
+            for i, item in enumerate(test_yy):
+                if 1 in item:
+                    num_of_NCT_slices += 1
+            cvscores_percentage_of_NCT_per_slice.append((num_of_NCT_slices/test_yy.shape[0]) * 100)
             pre.append(precision * 100)
             pre_test.append(precision_test * 100)
             rec.append(recall * 100)
@@ -1287,6 +1296,9 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
         print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%',)
+        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±', np.std(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
+              np.std(cvscores_percentage_of_NCT_per_slice), '%')
         print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
         print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
         print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
