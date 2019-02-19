@@ -1217,7 +1217,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list_gt_infer[j])),
                             0) + 1  # add Ground truth chord inferral (RB) chord label
                         sorted_result = sorted(all_answers_per_chorale[j].items(), key=lambda d: d[1], reverse=True)
-                        print(sorted_result)
+                        #print(sorted_result)
                         thisChord.addLyric(sorted_result[0][0])
                 a_counter_correct_chord += correct_num_chord
                 a_counter_correct_chord_gt += correct_num_chord_gt
