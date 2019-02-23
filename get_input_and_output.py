@@ -981,7 +981,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
             if id_id[0] in data_id:  # if the digit found in the list, add this file
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                     if pitch.find('oriKey') == -1:  # we want transposed key
-                        if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                        if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                             fn_total.append(fn)
                     else:
                         if fn.find('_ori') != -1:  # no transposition
@@ -996,7 +996,7 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                 # This section of code aims to add all the file IDs across training validation and test set
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                     if pitch.find('oriKey') == -1:  # we want transposed key
-                        if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                        if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                             fn_total_all.append(fn)
                     else:
                         if fn.find('_ori') != -1:  # no transposition

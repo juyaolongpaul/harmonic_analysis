@@ -4,7 +4,7 @@ import re
 from transpose_to_C_chords import get_displacement
 def transpose_polyphony(source, input):
     print('Step 3: Translate the music into 12 keys')
-    c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
+    c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'g-', 'g', 'a-', 'a', 'b-', 'b']
     #for fn in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'):
     if source != 'Rameau':
         format = '.xml'
@@ -15,9 +15,10 @@ def transpose_polyphony(source, input):
         id_id = p.findall(fn)
         if len(id_id) == 0:
             continue
-        if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBcKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBc_oriKE' + id_id[0] + format)):
-            continue
-        print(os.path.join(input, 'transposed_') + 'KBcKE' + id_id[0] + format)
+        if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBCKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBC_oriKE' + id_id[0] + format)
+                or os.path.isfile(os.path.join(input, 'transposed_') + 'KBa_oriKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBaKE' + id_id[0] + format)):
+            continue  # TODO: Need to change the name of this later!
+        print(os.path.join(input, 'transposed_') + id_id[0] + format)
         if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
             s = converter.parse(os.path.join(input, fn))
@@ -25,16 +26,18 @@ def transpose_polyphony(source, input):
             displacement = get_displacement(k)
 
             #print(i)
-
+            # transpose on the flat side
             for key_transpose in range(12):
-
                 if k.mode == 'minor':
-                    i = interval.Interval(k.tonic, pitch.Pitch(c1[(displacement - key_transpose - 3) % len(c1)]))
+                    i = interval.Interval(k.tonic, pitch.Pitch(c2[(displacement - key_transpose - 3) % len(c2)]))
+                    key_name = c2[(displacement - key_transpose - 3) % len(c2)].lower()
                 else:
-                    i = interval.Interval(k.tonic, pitch.Pitch(c1[displacement - key_transpose]))
+                    i = interval.Interval(k.tonic, pitch.Pitch(c2[displacement - key_transpose]))
+                    key_name = c2[(displacement - key_transpose) % len(c2)].upper()
                 print(i)
-                key_name = c1[(displacement - key_transpose) % len(c1)]
-                if i.directedName == 'P1' or i.directedName == 'd-2':  # account for pitch spelling
+                # if key_name != 'C' and key_name != 'a':
+                #     continue  # TODO: only the transposition only works for C major or A minor, for other keys, I need to do F## processing!
+                if i.directedName == 'P1':  # account for pitch spelling
                     key_name += '_ori'
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):

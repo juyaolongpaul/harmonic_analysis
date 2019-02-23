@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelays')
+                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPS')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -70,7 +70,6 @@ def main():
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
                         type=str, default='Y')
     args = parser.parse_args()
-
     if args.source == 'Rameau':
         input = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'

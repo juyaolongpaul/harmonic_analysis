@@ -88,7 +88,6 @@ def get_displacement(k):
     ptr = k.name.find(' ')
     key_tonic = k.name[:ptr]
     key_tonic = key_tonic.lower()
-    key_tonic = key_tonic.replace('-', 'b')
     #print('key=' + key_tonic)
     if key_tonic in c1:
         #print(c1.index(key_tonic))

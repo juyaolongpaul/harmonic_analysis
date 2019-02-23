@@ -435,7 +435,7 @@ def annotation_translation(input, output, version, source):
                 r_MaxMel_translated= translate_rule_based_annotation(r_MaxMel_ori, source)
                 fr_MaxMel = open(os.path.join(cwd_annotation_r_MaxMel, 'translated_') + file_name + fn[ptr:ptr2] + source + '.txt', 'w')
                 for i, item in enumerate(r_MaxMel_translated):
-                    print(r_MaxMel_translated[i], end=' ', file=fr_MaxMel)
+                    print(r_MaxMel_translated[i], end='\n', file=fr_MaxMel)
                 #print(r_MaxMel_translated)
     if(source=='Rameau' and version == 153):
         write_to_files(input=cwd_annotation, output=cwd_annotation_ori, source=source)
@@ -541,13 +541,15 @@ def translate_rule_based_annotation(ori, source):
     ori_backup = list(ori)
     for i, item in enumerate(ori):
         if item.find('(') != -1: # if there is ()
-            if item.find('?') != -1 or item.find('P') != -1: # if there is ? or P, discard the () part
+            if (item.find('?') != -1 and item.find('?m') == -1 and item.find('?M') == -1) or item.find('P') != -1: # if there is ? (except for ?m and ?M) or P, discard the () part,
                 ptr = item.find('(')
                 ori_backup[i] = item[:ptr]
                 item = ori_backup[i]
             else: # only take () away
                 item = item.replace('(', '')
                 item = item.replace(')', '')
+                if item.find('?m') != -1 or item.find('?M') != -1:
+                    item = item.replace('?', '')
                 ori_backup[i] = item
         if item == 'N' or item == '??' or item == '.': # replace with the previous chord
             if(i != 0):
@@ -586,8 +588,8 @@ def translate_rule_based_annotation(ori, source):
                 ori_backup[i] = ori_backup[i].replace('mm', 'm7')
             if ori_backup[i].find('Mm') != -1: # Mm means dominant-seventh
                 ori_backup[i] = ori_backup[i].replace('Mm', '7')
-            if ori_backup[i].find('-') != -1: # Mm means flat
-                ori_backup[i] = ori_backup[i].replace('-', 'b') # ^ means major 7th
+            if ori_backup[i].find('M7') == -1 and ori_backup[i].find('M') != -1:
+                ori_backup[i] = ori_backup[i].replace('M', '') # Delete the redundant 'M'
     return ori_backup
 if __name__ == "__main__":
     #multi = int(input("Do you want multiple interpretations or not? (1 yes 0 no)"))

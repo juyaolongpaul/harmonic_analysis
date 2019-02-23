@@ -82,7 +82,7 @@ def get_predict_file_name(input, data_id, augmentation):
             if id_id[0] in data_id:  # if the digit found in the list, add this file
 
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                    if (fn.find('cKE') != -1 or fn.find('c_oriKE') != -1):  # only wants key c
+                    if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                         filename.append(fn)
                 elif fn.find('_ori') != -1:
                     filename.append(fn)
@@ -511,7 +511,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
             if fn.find('_chord_tone') == -1:
                 continue
         if augmentation == 'N':
-            if fn.find('cKE') == -1 and fn.find('c_oriKE') == -1: # we cannot find key of c, skip
+            if fn.find('CKE') == -1 and fn.find('C_oriKE') == -1 and fn.find('aKE') == -1 and fn.find('a_oriKE') == -1: # we cannot find key of c, skip
                 continue
         elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
             if fn.find('_ori') == -1:
