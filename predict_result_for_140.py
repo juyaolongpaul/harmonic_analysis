@@ -84,7 +84,7 @@ def get_predict_file_name(input, data_id, augmentation):
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                     if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                         filename.append(fn)
-                elif fn.find('_ori') != -1:
+                else:
                     filename.append(fn)
     filename.sort()
     for id, fn in enumerate(filename):
@@ -513,9 +513,9 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if augmentation == 'N':
             if fn.find('CKE') == -1 and fn.find('C_oriKE') == -1 and fn.find('aKE') == -1 and fn.find('a_oriKE') == -1: # we cannot find key of c, skip
                 continue
-        elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
-            if fn.find('_ori') == -1:
-                continue
+        # elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
+        #     if fn.find('_ori') == -1:
+        #         continue
         p = re.compile(r'\d{3}')  # find 3 digit in the file name
         id_id = p.findall(fn)
         if id_id[0] in id:
@@ -550,6 +550,10 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
 def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign, FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx, valid_yy):
     INPUT_DIM = train_xx.shape[1]
     OUTPUT_DIM = train_yy.shape[1]
+    print('train_xx shape:', train_xx.shape)
+    print('train_yy shape:', train_yy.shape)
+    print('valid_xx shape:', valid_xx.shape)
+    print('valid_yy shape:', valid_yy.shape)
     if modelID.find('SVM') == -1:
         model = Sequential()
         # model.add(Embedding(36, 256, input_length=batch))
@@ -684,8 +688,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         patience = 50
     else:
         patience = 20
-    extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(
-        patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
+    # extension2 = 'batch_size' + str(batch_size) + 'epochs' + str(epochs) + 'patience' + str(
+    #     patience) + 'bootstrap' + str(bootstraptime) + 'balanced' + str(balanced)
     print('Loading data...')
     extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
         train_num)
@@ -693,10 +697,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                  str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                 + str(timestep) + extension + extension2
+                 + str(timestep) + extension
     MODEL_NAME_chord_tone = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                             str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                            + str(timestep) + extension + extension2 + '_chord_tone'
+                            + str(timestep) + extension + '_chord_tone'
     print('Loading data...')
     print('Build model...')
     if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
@@ -713,20 +717,20 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        # if times != 9:
-        #     continue
+        if times != 9:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                     + str(timestep) + extension + extension2 + '_cv_' + str(times + 1)
+                     + str(timestep) + extension  + '_cv_' + str(times + 1)
         MODEL_NAME_chord_tone = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                     + str(timestep) + extension + extension2 + '_cv_' + str(times + 1) + '_chord_tone'
+                     + str(timestep) + extension + '_cv_' + str(times + 1) + '_chord_tone'
         MODEL_NAME_direct_harmonic_analysis = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                                 str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                                + str(timestep) + extension + extension2 + '_cv_' + str(times + 1) + '_direct_harmonic_analysis'
+                                + str(timestep) + extension + '_cv_' + str(times + 1) + '_direct_harmonic_analysis'
         FOLDER_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
-                     + str(timestep) + extension + extension2
+                     + str(timestep) + extension
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
         train_num = len(train_id)
         valid_num = len(valid_id)
@@ -791,10 +795,6 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     train_yy = onehot_encode(train_yy_balanced, train_yy_imbalanced.shape[1])
                     train_yy = np.asarray(train_yy)
             print('training and predicting...')
-            print('train_xx shape:', train_xx.shape)
-            print('train_yy shape:', train_yy.shape)
-            print('valid_xx shape:', valid_xx.shape)
-            print('valid_yy shape:', valid_yy.shape)
             train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
                            FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx,
                            valid_yy) # train the machine learning model

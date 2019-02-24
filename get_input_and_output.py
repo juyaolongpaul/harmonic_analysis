@@ -986,12 +986,8 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                     else:
                         if fn.find('_ori') != -1:  # no transposition
                             fn_total.append(fn)
-                elif augmentation == 'Y' and portion == 'train':
-                    fn_total.append(fn)  # we want 12 keys on training set
-                elif augmentation == 'Y' and (
-                        portion == 'valid' or portion == 'test'):  # original keys on the valid and test set:
-                    if (fn.find('_ori') != -1):  # only add original key
-                        fn_total.append(fn)
+                elif augmentation == 'Y':
+                    fn_total.append(fn)  # we want 12 keys on all sets
             if id_id[0] in data_id_total:
                 # This section of code aims to add all the file IDs across training validation and test set
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
