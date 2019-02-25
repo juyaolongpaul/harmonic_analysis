@@ -1,7 +1,6 @@
 import unittest
 import os
 from music21 import *
-from transpose_to_C_chords import change_length
 from transpose_to_C_chords import get_displacement
 from translate_output import is_next_a_chord
 from translate_output import remove_candidates

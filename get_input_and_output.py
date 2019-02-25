@@ -917,7 +917,7 @@ def find_id(input, version):
 
     id_sum_strip = []
     [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
-    id_sum_strip.remove('316')  # this file does not align, chordify thinks a quarter note rest should form a slice, which is wrong.
+    #id_sum_strip.remove('316')  # this file does not align, chordify thinks a quarter note rest should form a slice, which is wrong.
     # id_sum_strip = ['001','002','003','004','005','006','007','008','010','012',]
     # delete all these crap files
     if version == 153:

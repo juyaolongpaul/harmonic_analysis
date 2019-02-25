@@ -643,7 +643,7 @@ def unify_GTChord_and_inferred_chord(name):
         name = name.replace('M', '')
     if name.find('maj7') != -1:
         name = name.replace('maj7', 'M7')
-    return name[0].lower() + name[1:]
+    return name[0] + name[1:]
 
 
 def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
@@ -652,7 +652,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     print('Step 5: Training and testing the machine learning models')
     id_sum = find_id(output, '')  # get 3 digit id of the chorale
     num_of_chorale = len(id_sum)
-    train_num = num_of_chorale - int((num_of_chorale * (1 - ratio) / 2)) * 2
+    train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
     # train_num = int(num_of_chorale * ratio)
     test_num = int((num_of_chorale - train_num) / 2)
     # keys, music21 = determine_middle_name(augmentation, sign, portion)
@@ -717,8 +717,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        if times != 9:
-            continue
+        # if times != 9:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
