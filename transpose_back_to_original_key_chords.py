@@ -145,7 +145,7 @@ if __name__ == "__main__":
                     #continue
                 ptr = file_name.find('.')
                 s = converter.parse(os.getcwd() + '\\bach_chorales_scores\\original_midi+PDF\\' + file_name[ptr-3:ptr]+'.mid')
-                k = s.analyze('key')
+                k = s.analyze('AardenEssen')
                 #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)
                 displacement = len(c1) - displacement  # transpose back to the original key

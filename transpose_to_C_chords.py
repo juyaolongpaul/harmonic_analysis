@@ -69,7 +69,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                     p = re.compile(r'\d{3}')
                     ptr = p.findall(file_name)
                     s = converter.parse(os.path.join(input, 'chor') + ptr[0] + f1)
-                k = s.analyze('key')
+                k = s.analyze('AardenEssen')
 
                 #print('acc ' + str(k.tonic._accidental.alter))
                 displacement = get_displacement(k)

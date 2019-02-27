@@ -22,7 +22,7 @@ def transpose_polyphony(source, input):
         if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
             print(fn)
             s = converter.parse(os.path.join(input, fn))
-            k = s.analyze('key')
+            k = s.analyze('AardenEssen')
             displacement = get_displacement(k)
 
             #print(i)
