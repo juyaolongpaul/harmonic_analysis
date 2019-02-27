@@ -6,7 +6,14 @@ title: Current Progress and Results
 
 ## Current Progress and Results
 
-Currently, all the experiments are conducted on the maximally melodic annotations for 366 Bach chorales. All the experiments are using 10-fold cross validation. For evaluation metrics, I use f1-measure (abbreviated as F1) for NCT identification accuracy; frame accuracy (abbreviated as FA) to indicate the accuracy for each slice; chord accuracy (abbreviated as CA) to indicate the predicted chord accuracy compared to the ground truth annotations. The chart below specifies all the results I have got so far: The row header indicates all the experimented input features, the column header indicates all combinations between the output and different models. To save space, I use a series of acronyms for the choice of input and output architectures. Specifically:
+Currently, all the experiments are conducted on 330 annotated Bach chorales in a harmonic style. The specific filters I used are:
+* “Chord~sapply(Durations, min)<0.5”: Prefer chords whose durations are no less than half a beat. Without this filter, the model will occasion- ally arrange new chords on 16th beat, which is unnecessary in homorhythmic music.
+* “Chord~sapply(SeventhsResolve, function(bool) any(bool %in% c(FALSE)))”: Perfer seventh chords only when the seventh note is resolved properly.
+* “NCTs~Count”: Prefer chords with fewest NCTs.
+* “Chord~Count”: If there are multiple analyses with the same number of NCTs, prefer the one with fewest chords. Since it prevents unnecessary chord changes, especially when a triad has a delayed sev- enth note. Instead of considering a triad changing into a seventh chord, the whole section will be la- beled with a seventh chord.
+* “Chord~sapply(CompletionDelay$Durations, mean)”: If there are multiple analyses with the same number of NCTs as well as chords, prefer chords with the minimum delay of completion (e.g., all the chord tones of the chord label should appear as soon as possible).
+
+All the experiments are using 10-fold cross validation. For evaluation metrics, I use f1-measure (abbreviated as F1) for NCT identification accuracy; frame accuracy (abbreviated as FA) to indicate the accuracy for each slice; chord accuracy (abbreviated as CA) to indicate the predicted chord accuracy compared to the ground truth annotations. CAD stands for chord accuracy using direct harmonic analysis approach; CAN stands for chord accuracy using non-chord-tone-first appraoch. The chart below specifies all the results I have got so far: The row header indicates all the experimented input features, the column header indicates all combinations between the output and different models. To save space, I use a series of acronyms for the choice of input and output architectures. Specifically:
 
 ### Acronyms for the Row Header
 
@@ -29,7 +36,7 @@ Here are the results:
 
 Parameters   |PC12   | PC12+M|PC12+W|PC12+M+W|PC7+M+W|PC48+M+W|PC12+M+W+O12
 ---|---|---|---|---|---|---|---
-DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020|f1:0.815±0.025<br/>FA:0.867±0.020<br/>CA:0.852±0.021|||**f1:0.822±0.024<br/>FA:0.869±0.021<br/>CA:0.855±0.021**
+DNN+12|f1:0.617±0.024<br/>FA:0.775±0.017|f1:0.648±0.029<br/>FA:0.787±0.019|f1:0.782±0.027<br/>FA:0.852±0.020|f1:0.815±0.025<br/>FA:0.867±0.020<br/>CA:0.852±0.021|||**f1:0.846±0.018<br/>FA:0.947±0.008<br/>CAN:0.899±0.016<br/>CAD:0.890±0.017**
 DNN+12+NO7th||||**f1:0.836±0.024<br/>FA:0.882±0.018<br/>CA:0.883±0.018**|||**f1:0.840±0.023<br/>FA:0.881±0.019<br/>CA:0.884±0.019**
 DNN+CL+NO7th||||**CA:0.885±0.018**|||**CA:0.887±0.018**
 DNN+4||||f1:0.810±0.025<br/>FA:0.863±0.021|f1:0.799±0.020|f1:0.789±0.028<br/>FA:0.842±0.022
