@@ -888,7 +888,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                  if inputtype.find('3meter') != -1:
                     predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
-            predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
+            if modelID.find('SVM') != -1 or modelID.find('DNN') != -1:
+                predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
+
+            else:
+                predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts + 1)
+            #predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
             predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0) # TODO: we need to make this part modular so it can deal with all possible specs
             gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
             correct_num2 = 0
