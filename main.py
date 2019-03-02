@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPSs')
+                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPS_f')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)

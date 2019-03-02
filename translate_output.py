@@ -365,11 +365,11 @@ def annotation_translation(input, output, version, source):
     if version == 367:
         cwd_annotation = cwd_annotation_r_MaxMel
     #print(os.listdir(cwd_annotation))
+    # corrupt_rule_chorale_ID = ['130', '316']
     corrupt_rule_chorale_ID = ['130', '316', '099', '193', '210', '345', '053', '071', '104', '133', '182', '227',
                                '232', '238', '243', '245', '259', '261', '271', '294', '346', '239', '282', '080',
                                '121', '136', '137', '139', '141', '156', '179', '201', '247', '260', '272', '275',
-                               '278', '289', '308', '333', '365'] # 130 has 24 slices in krn file, but 25 when converted into musicxml
-
+                               '278', '289', '308', '333', '365']  #
     p = re.compile(r'\d{3}')
     for fn in os.listdir(cwd_annotation):
         if fn.find('.') == -1 or fn.find('DS_Store') != -1: # skip folder and Mac os file

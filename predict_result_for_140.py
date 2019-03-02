@@ -696,10 +696,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
     timestep = ts
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                 str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                  + str(timestep) + extension
     MODEL_NAME_chord_tone = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                            str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                            str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                             + str(timestep) + extension + '_chord_tone'
     print('Loading data...')
     print('Build model...')
@@ -720,16 +720,16 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         # if times != 9:
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                     str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
         MODEL_NAME_chord_tone = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                     str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension + '_cv_' + str(times + 1) + '_chord_tone'
         MODEL_NAME_direct_harmonic_analysis = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                                str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                                str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                                 + str(timestep) + extension + '_cv_' + str(times + 1) + '_direct_harmonic_analysis'
         FOLDER_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                     str(windowsize) + 'training_data' + str(portion) + 'timestep' \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
         train_num = len(train_id)
@@ -885,7 +885,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                  if inputtype.find('NewOnset') != -1:
                      predict_xx_chord_tone[i] = np.concatenate(
                          (predict_xx_chord_tone[i], NewOnset))
-                 predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
+                 if inputtype.find('3meter') != -1:
+                    predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
             predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
             predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0) # TODO: we need to make this part modular so it can deal with all possible specs
@@ -975,10 +976,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             a_counter_number_of_agreements = 0 # the accumulative number of agreements over all chorales
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
-            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID)):
-                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1)))
 
-            f_all = open(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, 'ALTOGETHER') + '.txt', 'w')  # create this file to track every type of mistakes
+            f_all = open(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1), 'ALTOGETHER') + '.txt', 'w')  # create this file to track every type of mistakes
 
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
@@ -996,10 +997,13 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 num_of_agreement_per_chorale = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 s_bb = converter.parse(os.path.join(input, fileName[i]))
+                s_exclamation = converter.parse(os.path.join(input, fileName[i]))
                 sChords = s.chordify()
                 sChords_bb = s_bb.chordify()
+                sChords_exclamation = s_exclamation.chordify()
                 s.insert(0, sChords)
                 s_bb.insert(0, sChords_bb)
+                s_exclamation.insert(0, sChords_exclamation)
                 chord_tone_list = []  # store all the chord tones predicted by the model
                 chord_tone_list_gt = []  # store all the chord tones by the ground truth
                 chord_label_list = []  # store all the chord labels predicted by the model
@@ -1008,9 +1012,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 all_answers_per_chorale = [{} for j in range(1000)] # create an empty 2-d list that has 1000 slots to save results
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     thisChord_bb = sChords_bb.recurse().getElementsByClass('Chord')[j]
+                    thisChord_exclamation = sChords_exclamation.recurse().getElementsByClass('Chord')[j]
                     num_of_disagreement.append(0) # we don't have disagreement at this point
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     thisChord_bb.closedPosition(forceOctave=4, inPlace=True)
+                    thisChord_exclamation.closedPosition(forceOctave=4, inPlace=True)
                     all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[test_yy_int[a_counter]])), 0) + 1 # add GT
                     all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[predict_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
                           # add direct harmonic analysis
@@ -1163,6 +1169,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
                 if outputtype.find("NCT") != -1: # always compare the pitch class from the lowest ones to the highest ones, so dimished chord with different inversions should always be right answers
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        thisChord_exclamation = sChords_exclamation.recurse().getElementsByClass('Chord')[j]
                         if j == 77 and fileName[i][-7:-4] == '002':
                             print('debug')
                         if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find('interval') != -1):  # sometimes the last
@@ -1205,9 +1212,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         # output the number of disagreement
                         if num_of_disagreement[j] != 0:
                             thisChord.addLyric(num_of_disagreement[j])
+                            thisChord_exclamation.addLyric('_!')
                         else:
                             num_of_agreement_per_chorale += 1
                             thisChord.addLyric(' ')
+                            thisChord_exclamation.addLyric(' ')
                         all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j]))] = \
                         all_answers_per_chorale[j].get(unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])), 0) + 1
                         # add Chord inferral (RB) chord label
@@ -1242,12 +1251,17 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('accumulative direct harmonic analysis accucary: ' + str(a_counter_correct_direct_harmonic_analysis / a_counter),
                       end='\n', file=f_all)
                 s.write('musicxml',
-                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID, fileName[i][
+                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1), fileName[i][
                                                                                               :-4]) + '.xml')
                 s_bb.write('musicxml',
-                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID,
+                        fp=os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1),
                                         fileName[i][
                                         :-4]) + '_bb.xml')
+                s_exclamation.write('musicxml',
+                           fp=os.path.join('.', 'predicted_result', sign,
+                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1),
+                                           fileName[i][
+                                           :-4]) + '_exclamation.xml')
                 # output result in musicXML
             frame_acc.append((a_counter_correct / a_counter) * 100)
             chord_acc.append((a_counter_correct_chord / a_counter) * 100)
