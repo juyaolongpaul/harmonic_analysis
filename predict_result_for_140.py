@@ -528,9 +528,10 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if path.find('_x_') != -1:  # we need to add windows
             if model.find('SVM') != -1 or model.find('DNN') != -1:
                 encoding_window = adding_window_one_hot(encoding, windowsize)
-
-            else:
+            elif ts != 0:
                 encoding_window = create_3D_data(encoding, ts)
+            else:
+                encoding_window = list(encoding) # If ts is 0, we dont do anything
             if counter == 0:
                 encoding_all = list(encoding_window)
                 encoding_all = np.array(encoding_all)
@@ -814,10 +815,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
         test_xx_only_pitch = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                     sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'Y')
-        test_xx_only_pitch_no_window = generate_ML_matrix(augmentation, 'test', test_id, modelID, 0, ts,
+        test_xx_only_pitch_no_window = generate_ML_matrix(augmentation, 'test', test_id, modelID, 0, 0,
                                                 os.path.join('.', 'data_for_ML', sign,
                                                              sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
-                                                'Y')
+                                                'Y') # we need to first reconstruct the feature
+        # vector and then turns into 3D
         if outputtype.find('_pitch_class') == -1:
             test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts, os.path.join('.', 'data_for_ML', sign,
                                                                                         sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21)
@@ -873,7 +875,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
             for i, item in enumerate(test_xx_only_pitch_no_window):
                  if inputtype.find('NewOnset') != -1:
-                     NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
+                     if modelID != 'SVM' and modelID != 'DNN':
+                        NewOnset = list(test_xx_no_window[i][-1][12:24])
+                     else:
+                        NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
                  for j, item2 in enumerate(item):
                      if int(predict_y[i][j]) == 1: # predict_y predicts NCT label for each slice
                         if int(item2) == 1: # if the there is a current pitch class and it is predicted as a NCT
@@ -886,13 +891,17 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                      predict_xx_chord_tone[i] = np.concatenate(
                          (predict_xx_chord_tone[i], NewOnset))
                  if inputtype.find('3meter') != -1:
-                    predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
+                     if modelID != 'SVM' and modelID != 'DNN':
+                         predict_xx_chord_tone[i] = np.concatenate(
+                             (predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-1][-3:]))
+                     else:
+                        predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
             if modelID.find('SVM') != -1 or modelID.find('DNN') != -1:
                 predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
 
             else:
-                predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts + 1)
+                predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts)
             #predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
             predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0) # TODO: we need to make this part modular so it can deal with all possible specs
             gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
@@ -1157,7 +1166,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                                 correct_bit += 1
                         dimension = test_xx_only_pitch.shape[1]
                         realdimension = int(dimension / (2 * windowsize + 1))
-                        x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
+                        if modelID != 'SVM' and modelID != 'DNN':
+                            x = test_xx_only_pitch[a_counter][-1] # no window if the matrix is 3D
+                        else:
+                            x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                         chord_tone_gt = output_NCT_to_XML(x, gt, thisChord, outputtype)
                         chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
                         if (correct_bit == len(gt)):
