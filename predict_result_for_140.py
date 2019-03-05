@@ -47,10 +47,12 @@ from imblearn.over_sampling import RandomOverSampler
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
 from sklearn.svm import SVC
+from sklearn.multiclass import OneVsRestClassifier
 from test_musicxml_gt import translate_chord_name_into_music21
 from keras_self_attention import SeqSelfAttention
 from get_input_and_output import adding_window_one_hot
 from collections import defaultdict
+from sklearn.metrics import accuracy_score
 
 
 def format_sequence_data(inputdim, outputdim, batchsize, x, y):
@@ -631,14 +633,24 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
         hist = model.fit(train_xx, train_yy, batch_size=batch_size, epochs=epochs, shuffle=True, verbose=2,
                          validation_data=(valid_xx, valid_yy),
                          callbacks=[early_stopping, checkpointer, csv_logger, tbCallBack])
+        return model
     elif modelID == "SVM":
-        model = SVC(verbose=True)
-        train_yy_int = np.asarray(onehot_decode(train_yy))
-        valid_yy_int = np.asarray(onehot_decode(valid_yy))
-        train_xx_SVM = np.vstack((train_xx, valid_xx))
-        train_yy_int_SVM = np.concatenate((train_yy_int, valid_yy_int))
-        print('new training set', train_xx_SVM.shape, train_yy_int_SVM.shape)
-        model.fit(train_xx_SVM, train_yy_int_SVM)
+        if outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
+            model = SVC(verbose=True)
+            train_yy_int = np.asarray(onehot_decode(train_yy))
+            valid_yy_int = np.asarray(onehot_decode(valid_yy))
+            train_xx_SVM = np.vstack((train_xx, valid_xx))
+            train_yy_int_SVM = np.concatenate((train_yy_int, valid_yy_int))
+            print('new training set', train_xx_SVM.shape, train_yy_int_SVM.shape)
+            model.fit(train_xx_SVM, train_yy_int_SVM)
+            return model
+        elif outputtype.find("NCT") != -1:  # we need to do multilabel classification
+            model = OneVsRestClassifier(SVC(verbose=True))
+            train_xx_SVM = np.vstack((train_xx, valid_xx))
+            train_yy_SVM = np.concatenate((train_yy, valid_yy))
+            model.fit(train_xx_SVM, train_yy_SVM)
+            return model
+
 def unify_GTChord_and_inferred_chord(name):
     if name.find('M')!= -1 and name.find('M7') == -1:
         name = name.replace('M', '')
@@ -796,14 +808,14 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                     train_yy = onehot_encode(train_yy_balanced, train_yy_imbalanced.shape[1])
                     train_yy = np.asarray(train_yy)
             print('training and predicting...')
-            train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+            model = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
                            FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx,
                            valid_yy) # train the machine learning model
             if outputtype.find("NCT") != -1: # if NCT, add the training of the chord inferral model
-                train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+                model_chord_tone = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
                                FOLDER_NAME, MODEL_NAME_chord_tone, batch_size, epochs, csv_logger_chord_tone, train_xx_chord_tone, train_yy_chord_tone, valid_xx_chord_tone,
                                valid_yy_chord_tone)  # train the machine learning model
-                train_ML_model(modelID, HIDDEN_NODE, layer, timestep, 'CL', patience, sign,
+                model_direct_harmonic_analysis = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, 'CL', patience, sign,
                                FOLDER_NAME, MODEL_NAME_direct_harmonic_analysis, batch_size, epochs, csv_logger_direct_harmonic_analysis,
                                train_xx, train_yy_chord_tone, valid_xx,
                                valid_yy_chord_tone)  # train the direct harmonic analysis model
@@ -845,16 +857,22 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 predict_y = model.predict_classes(test_xx, verbose=0)
             elif modelID == "SVM":
                 predict_y = model.predict(test_xx)
-                from sklearn.metrics import accuracy_score
                 test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
                 test_acc = accuracy_score(test_yy_int, predict_y)
         elif outputtype.find("NCT") != -1:
-            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
-            model_chord_tone = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME_chord_tone) + ".hdf5")
-            model_direct_harmonic_analysis = load_model(
-                os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME_direct_harmonic_analysis) + ".hdf5")
-            predict_y = model.predict(test_xx, verbose=0)  # Predict the probability for each bit of NCT
-            predict_y_direct_harmonic_analysis = model_direct_harmonic_analysis.predict_classes(test_xx, verbose=0)
+            if modelID != "SVM":
+                model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+                model_chord_tone = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME_chord_tone) + ".hdf5")
+                model_direct_harmonic_analysis = load_model(
+                    os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME_direct_harmonic_analysis) + ".hdf5")
+                predict_y_direct_harmonic_analysis = model_direct_harmonic_analysis.predict_classes(test_xx)
+            # TODO: 3.5
+            else:
+                predict_y_direct_harmonic_analysis = model_direct_harmonic_analysis.predict(test_xx)
+            predict_y = model.predict(test_xx)  # Predict the probability for each bit of NCT
+
+            test_yy_int = np.asarray(onehot_decode(test_yy_chord_label))
+            test_acc = accuracy_score(test_yy_int, predict_y_direct_harmonic_analysis)
             predict_xx_chord_tone = list(test_xx_only_pitch_no_window)
             # for i, item in enumerate(test_xx_only_pitch_no_window):
             #      for j, item2 in enumerate(item):
@@ -903,8 +921,13 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
             else:
                 predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts)
             #predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
-            predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window, verbose=0) # TODO: we need to make this part modular so it can deal with all possible specs
-            gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
+            if modelID == 'SVM':
+                predict_y_chord_tone = model_chord_tone.predict(predict_xx_chord_tone_window) # TODO: we need to make this part modular so it can deal with all possible specs
+                gt_y_chord_tone = model_chord_tone.predict(test_xx_chord_tone)
+            else:
+                predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window,
+                                                                        verbose=0)  # TODO: we need to make this part modular so it can deal with all possible specs
+                gt_y_chord_tone = model_chord_tone.predict_classes(test_xx_chord_tone, verbose=0)
             correct_num2 = 0
             for i, item in enumerate(predict_y):
                 if np.array_equal(item,test_yy[i]): # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise

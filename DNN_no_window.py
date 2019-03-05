@@ -240,8 +240,8 @@ def evaluate_multi_label(model, x,y):
 def evaluate_f1score(model, x,y, modelname):
     mini = 0.000000001
 
-    yyy = model.predict(x, verbose=0)
-    yy = model.predict(x, verbose=0)
+    yyy = model.predict(x)
+    yy = model.predict(x)
     for i in yy:
         #print(i)
         for j, item in enumerate(i):
