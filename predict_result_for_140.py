@@ -636,7 +636,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
         return model
     elif modelID == "SVM":
         if outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
-            model = SVC(verbose=True)
+            model = SVC(verbose=True, kernel='linear')
             train_yy_int = np.asarray(onehot_decode(train_yy))
             valid_yy_int = np.asarray(onehot_decode(valid_yy))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
@@ -645,7 +645,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             model.fit(train_xx_SVM, train_yy_int_SVM)
             return model
         elif outputtype.find("NCT") != -1:  # we need to do multilabel classification
-            model = OneVsRestClassifier(SVC(verbose=True))
+            model = OneVsRestClassifier(SVC(verbose=True, kernel='linear'))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
             train_yy_SVM = np.concatenate((train_yy, valid_yy))
             model.fit(train_xx_SVM, train_yy_SVM)
@@ -1188,11 +1188,15 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                             if (gt[ii] == prediction[ii]):  # the label is correct
                                 correct_bit += 1
                         dimension = test_xx_only_pitch.shape[1]
+
                         realdimension = int(dimension / (2 * windowsize + 1))
                         if modelID != 'SVM' and modelID != 'DNN':
                             x = test_xx_only_pitch[a_counter][-1] # no window if the matrix is 3D
                         else:
-                            x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
+                            if windowsize < 0:
+                                x = test_xx_only_pitch[a_counter]
+                            else:
+                                x = test_xx_only_pitch[a_counter][realdimension * windowsize:realdimension * (windowsize + 1)]
                         chord_tone_gt = output_NCT_to_XML(x, gt, thisChord, outputtype)
                         chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
                         if (correct_bit == len(gt)):

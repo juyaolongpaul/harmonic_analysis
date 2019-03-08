@@ -6,6 +6,8 @@ def adding_window_one_hot(onehot, windowsize):
     :param windowsize:
     :return:
     """
+    if windowsize < 0:
+        windowsize = 0
     onehot_window_matrix = []
     length = onehot.shape[0]
     for i in range(length):

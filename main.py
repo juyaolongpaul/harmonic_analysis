@@ -34,12 +34,12 @@ def main():
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
-                             'input feature. You can a lso append 7 in the end to use '
+                             'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
                         type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=-1)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
