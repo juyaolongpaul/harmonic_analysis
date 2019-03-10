@@ -5,6 +5,8 @@ Only handles basic functionality right now.
 import re
 import os
 from midiutil.MidiFile import MIDIFile
+from music21 import *
+import re
 
 PITCHES_RE = re.compile('[ra-gA-Gn#\-]+')
 RECIP_RE = re.compile('[0-9.]+')
@@ -232,9 +234,58 @@ def extract_chord_labels(file_path, filetype):
     :param source:
     :return:
     """
+    from transpose_to_C_chords import get_displacement
+    from transpose_to_C_chords import transpose
+    c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'g-', 'g', 'a-', 'a', 'b-', 'b']
     print('Step 0: Extract chord labels from the Kern files')
     x = KernScore()
     for file_name in os.listdir(file_path):
         if file_name[-4:] == filetype:
             print(file_name)
-            x.import_kernfile(os.path.join(file_path,file_name))
+            x.import_kernfile(os.path.join(file_path, file_name))
+            p = re.compile(r'\d{3}')
+            id = p.findall(file_name)
+            x.import_kernfile(os.path.join(file_path, file_name))
+            for file_name_read_GT in os.listdir(os.path.join(file_path, 'Real_GT')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
+                if id[0] in file_name_read_GT:
+                    if id[0] == '259':
+                        print('debug')
+                    if os.path.isfile(os.path.join(file_path,file_name)[:-3] + 'txt'): # Save Nat's data in a difference name
+                        f_nat = open(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt', 'w')
+                    f = open(os.path.join(file_path,file_name)[:-3] + 'txt', 'w')
+                    s = converter.parse(os.path.join(file_path, 'Real_GT', file_name_read_GT))
+                    s_key = converter.parse(os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[0] + '.krn')
+                    k = s_key.analyze('AardenEssen')
+                    displacement = get_displacement(k)
+                    if k.mode == 'minor':
+                        transposed_interval = interval.Interval(pitch.Pitch('A'), k.tonic)
+                    else:
+                        transposed_interval = interval.Interval(pitch.Pitch('C'), k.tonic)
+                    p = re.compile(r'[#-]+')
+                    sChords = s.parts[-1]
+                    # length = len(sChords.recurse().getElementsByClass('Chord'))
+                    for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        ptr = thisChord.lyrics[-1].text.find('>')
+                        if ptr != -1:
+                            print(thisChord.lyrics[-1].text[:ptr], file=f_nat) # Preserve the original chord
+                            chord = thisChord.lyrics[-1].text[ptr + 1:]
+                        else:
+                            print(thisChord.lyrics[-1].text, file=f_nat)  # Preserve the original chord
+                            chord = thisChord.lyrics[-1].text
+                        id_id = p.findall(chord)
+                        if id_id != []:  # has flat or sharp
+                            root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+                            transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+                            print(transposed_result)
+                            print(transposed_result, file=f)
+                            # print('original: ', line, 'transposed: ', transposed_result)
+                        else:  # no flat or sharp, which means only the first element is the root
+                            transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+                            print(transposed_result)
+                            print(transposed_result, file=f)
+                            # print('original: ', line, 'transposed: ', transposed_result)
+                    f.close()
+                    if os.path.isfile(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt'):
+                        f_nat.close()
+                else:
+                    continue

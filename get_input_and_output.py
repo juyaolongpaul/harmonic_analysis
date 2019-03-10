@@ -894,7 +894,7 @@ def determine_middle_name2(augmentation, source, pitch):
     return keys, keys1, music21
 
 
-def find_id(input, version):
+def find_id(input, version, exclude=[]):
     """
 
     Find three digit of the labeled chorales in the folder
@@ -911,7 +911,7 @@ def find_id(input, version):
         if fn.find('translated') == -1:  # only look for non-"chor" like annotation files
             continue
         id = p.findall(fn)
-        if (id != []):
+        if (id != [] and id[0] not in exclude): # only add the chorales other than 39 ones
             id_sum.append(id[0])
             # print(id[0])
 
