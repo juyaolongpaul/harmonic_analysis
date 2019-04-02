@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPS_f')
+                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPS_fff')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -31,7 +31,7 @@ def main():
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='DNN')
+                        type=str, default='SVM')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
@@ -104,9 +104,9 @@ def main():
                                                                  args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
 
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                     args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
+    # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+    #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+    #                                  args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
     train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,

@@ -649,6 +649,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             model = OneVsRestClassifier(SVC(verbose=True, kernel='linear'))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
             train_yy_SVM = np.concatenate((train_yy, valid_yy))
+            print('new training set', train_xx_SVM.shape, train_yy_SVM.shape)
             model.fit(train_xx_SVM, train_yy_SVM)
             return model
 
