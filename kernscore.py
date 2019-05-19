@@ -331,7 +331,7 @@ def extract_chord_labels(file_path, filetype):
                                     else:  # no flat or sharp, which means only the first element is the root
                                         transposed_result = transpose(chord_new[0], transposed_interval) + chord_new[1:]
                                         #print(transposed_result)
-                                    if transposed_result not in chord[i]:  # AM7AM7 changed to AAM7 with spot-checking,
+                                    if transposed_result not in chord[i] and chord[i] not in transposed_result:  # AM7AM7 changed to AAM7 with spot-checking,
                                         # Discard analyses like this
                                         print(transposed_result, file=f)
                                     else:

@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='No16_7Res_FewNCT_FewChord_NoDelayPS_fff')
+                        type=str, default='ISMIR2019')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -31,7 +31,7 @@ def main():
                         type=int, default=300)
     parser.add_argument('-m', '--model',
                         help='DNN, RNN and LSTM to choose from (default: %(default)s)',
-                        type=str, default='SVM')
+                        type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
@@ -46,7 +46,7 @@ def main():
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
-                        type=int, default=10)
+                        type=int, default=1)
     parser.add_argument('-r', '--ratio',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
@@ -62,7 +62,7 @@ def main():
                         type=str, default='NCT_pitch_class')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter_NewOnset_f')
+                        type=str, default='3meter_NewOnset')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=0)
