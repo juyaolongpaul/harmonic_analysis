@@ -4,6 +4,7 @@ import os
 from music21 import *
 from get_input_and_output import *
 from predict_result_for_140 import get_predict_file_name
+from transpose_to_C_chords import transpose
 
 def generate_ML_matrix(path, windowsize, sign='N'):
     counter = 0
@@ -49,16 +50,19 @@ def get_input_encoding(inputpath, encoding_path):
 
     for id, fn in enumerate(os.listdir(
             inputpath)):  # this part should be executed no matter what since we want a updated version of chord list
-        if fn.find('KB') != -1:
-            if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1:
-                fn_total.append(fn)
-            if fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
-                fn_total.append(fn)
-            else:
-                print('they are not qualified', fn)
+        if fn.find('C_ori') != -1:
+            fn_total.append(fn)
+        if fn.find('CKE') != -1:
+            fn_total.append(fn)
+
+        if fn.find('aKE') != -1:
+            fn_total.append(fn)
+        if fn.find('a_oriKE') != -1:  # only wants key c
+            fn_total.append(fn)
+
+
 
     for id, fn in enumerate(fn_total):
-        if len(os.listdir(encoding_path)) > 200: break
         chorale_x = []
         # pitch class is used. This one is used to indicate which one is NCT.
         chorale_x_only_pitch_class = []
@@ -74,16 +78,22 @@ def get_input_encoding(inputpath, encoding_path):
             for each_part in s.parts:
                 each_part.insert(0, meter.TimeSignature('4/4'))
                 s_new.append(each_part)
-
-            s_new.append(sChords)
             s_new.write('musicxml',
-                fp=os.path.join(inputpath, fn))
+                        fp=os.path.join(inputpath, fn))
             s = converter.parse(os.path.join(inputpath, fn))
             sChords = s.chordify(removeRedundantPitches=False)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
             pitchClass = [0] * 12
-            only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses, thisChord,
-                                                                         'NewOnset', s, sChords, i)
+            if inputpath.find('Schutz') != -1:  # New onset does not work in Schutz
+                only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
+                                                                             thisChord,
+                                                                             '', s, sChords, i)
+                pitchClass = pitchClass + newOnset
+            else:
+                only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
+                                                                             thisChord,
+                                                                             'NewOnset', s, sChords,
+                                                                             i)  # New onset does not work in Schutz
 
             meters, pitchClass = add_beat_into(pitchClass, thisChord.beatStr, '3meter', thisChord.beatStrength)
 
@@ -106,9 +116,10 @@ def get_input_encoding(inputpath, encoding_path):
 
 
 def predict_new_music(modelpath_NCT, modelpath_CL, inputpath):
-
     transpose_polyphony(inputpath, inputpath)  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
+    if not os.path.isdir(os.path.join(inputpath, 'encodings')):
+        os.mkdir(os.path.join(inputpath, 'encodings'))
     get_input_encoding(inputpath, encoding_path)  # generate input encodings
     xx = generate_ML_matrix(encoding_path, 1)
     xx_no_window = generate_ML_matrix(encoding_path, 0)
@@ -139,16 +150,14 @@ def predict_new_music(modelpath_NCT, modelpath_CL, inputpath):
         xx_chord_tone[i] = np.concatenate(
             (xx_chord_tone[i], NewOnset))
 
-
         xx_chord_tone[i] = np.concatenate(
             (xx_chord_tone[i], xx_no_window[i][-3:]))  # add beat feature
         # TODO: 3 might not be modular enough
 
     predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(xx_chord_tone), 2)
 
-
     predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window,
-                                                                verbose=0)  # TODO: we need to make this part modular so it can deal with all possible specs
+                                                            verbose=0)  # TODO: we need to make this part modular so it can deal with all possible specs
 
     fileName, numSalamiSlices = get_predict_file_name(inputpath, [], 'N')
     length = len(fileName)
@@ -157,19 +166,71 @@ def predict_new_music(modelpath_NCT, modelpath_CL, inputpath):
     a_counter = 0
     if not os.path.isdir(os.path.join(inputpath, 'predicted_result')):
         os.mkdir(os.path.join(inputpath, 'predicted_result'))
+    if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key')):
+        os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key'))
     for i in range(length):
         num_salami_slice = numSalamiSlices[i]
         print(fileName[i][-7:-4])
         s = converter.parse(os.path.join(inputpath, fileName[i]))
+        s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
         sChords = s.chordify()
         s.insert(0, sChords)
-        for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            thisChord.addLyric(
-                (chord_name[predict_y_chord_tone[a_counter]]))
-            a_counter += 1
-        s.write('musicxml',
-                fp=os.path.join(inputpath, 'predicted_result', fileName[i][
-                                                     :-4]) + '.xml')
+        # transpose back to the original keys
+        p = re.compile(r'\d{3}')
+        id = p.findall(fileName[i])
+        for fn in os.listdir(inputpath):
+            if id[0] in fn and '_ori' in fn:  # get the key info
+                ptr = fn.find('KB')
+                if '-' not in fn and '#' not in fn:  # keys do not have accidentals
+                    key_info = fn[ptr + 2]
+                else:
+                    key_info = fn[ptr + 2: ptr + 4]
+                if key_info.isupper():  # major key
+                    mode = 'major'
+                else:
+                    mode = 'minor'
+                if mode == 'minor':
+                    transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
+                else:
+                    transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
+                if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info)):
+                    os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info))
+                sNew = s_ori.transpose(transposed_interval)
+                sChords_new = sNew.chordify()
+                sNew.insert(0, sChords_new)
+                acc = re.compile(r'[#-]+')
+                f_transposed = open(os.path.join(inputpath, 'predicted_result', fileName[i][
+                                                                       :-4]) + '_chord_labels.txt', 'w')
+                f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
+                                                                       :-4]) + '_chord_labels.txt', 'w')
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    thisChord.addLyric(
+                        (chord_name[predict_y_chord_tone[a_counter]]))  # Output chords in the transposed key
+                    print(chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                    chord = chord_name[predict_y_chord_tone[a_counter]]  # output chords in the original key
+                    id_id = acc.findall(chord)
+                    if id_id != []:  # has flat or sharp
+                        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+                        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                        print(transposed_result, file=f_ori)
+                        # print('original: ', line, 'transposed: ', transposed_result)
+                    else:  # no flat or sharp, which means only the first element is the root
+                        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                        print(transposed_result, file=f_ori)
+                    a_counter += 1
+                f_ori.close()
+                f_transposed.close()
+                s.write('musicxml',
+                        fp=os.path.join(inputpath, 'predicted_result', fileName[i][
+                                                                       :-4]) + '.xml')
+
+                sNew.write('musicxml',
+                        fp=os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
+                                                                       :-4]) + '.xml')
+
+
 if __name__ == "__main__":
     modelpath_NCT = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019',
                                  '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39',
@@ -177,9 +238,9 @@ if __name__ == "__main__":
     modelpath_CL = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019',
                                 '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39',
                                 '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39_cv_1_chord_tone.hdf5')
-    # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Bach')
-    # predict_new_music(modelpath_NCT, modelpath_CL, inputpath)
+    inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Bach')
+    predict_new_music(modelpath_NCT, modelpath_CL, inputpath)
     # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Praetorius')
     # predict_new_music(modelpath_NCT, modelpath_CL, inputpath)
-    inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Schutz')
-    predict_new_music(modelpath_NCT, modelpath_CL, inputpath)
+    # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Schutz')
+    # predict_new_music(modelpath_NCT, modelpath_CL, inputpath)

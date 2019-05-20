@@ -13,7 +13,7 @@ GPU command:
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
-
+from keras import optimizers
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 # from keras.utils.visualize_util import plot # draw fig
@@ -23,7 +23,6 @@ from keras.layers.embeddings import Embedding
 from keras.layers import LSTM, Bidirectional, RNN, SimpleRNN, TimeDistributed
 from keras.datasets import imdb
 from scipy.io import loadmat
-from keras.optimizers import SGD, RMSprop
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
@@ -82,7 +81,7 @@ def get_predict_file_name(input, data_id, augmentation):
         if fn.find('KB') != -1:
             p = re.compile(r'\d{3}')  # find 3 digit in the file name
             id_id = p.findall(fn)
-            if id_id[0] in data_id:  # if the digit found in the list, add this file
+            if id_id[0] in data_id or data_id == []:  # if the digit found in the list, add this file
 
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
                     if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
@@ -613,17 +612,18 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
                     model.add(
                         LSTM(units=HIDDEN_NODE, dropout=0.2))
         model.add(Dense(OUTPUT_DIM))
-
+        nadam = optimizers.nadam(lr=0.001)
         if outputtype.find("NCT") != -1:
+
             if MODEL_NAME.find('chord_tone') == -1: # this is just normal NCT training
                 model.add(Activation('sigmoid'))
-                model.compile(optimizer='Nadam', loss='binary_crossentropy', metrics=['binary_accuracy'])
+                model.compile(optimizer=nadam, loss='binary_crossentropy', metrics=['binary_accuracy'])
             else: # training chord inferral model for NCT
                 model.add(Activation('softmax'))
-                model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+                model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
         elif outputtype == "CL":
             model.add(Activation('softmax'))
-            model.compile(optimizer='Nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+            model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
         early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5",

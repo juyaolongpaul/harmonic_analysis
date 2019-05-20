@@ -19,7 +19,7 @@ def transpose_polyphony(source, input):
                 or os.path.isfile(os.path.join(input, 'transposed_') + 'KBa_oriKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBaKE' + id_id[0] + format)):
             continue  # TODO: Need to change the name of this later!
         print(os.path.join(input, 'transposed_') + id_id[0] + format)
-        if fn[-3:] == 'krn' or fn[-3:] == 'mid':  # we want to transpose krn file into musicxml file
+        if fn[-3:] == 'krn' or fn[-3:] == 'mid' or fn[-3:] == 'xml':  # we want to transpose krn file into musicxml file
             print(fn)
             s = converter.parse(os.path.join(input, fn))
             k = s.analyze('AardenEssen')
