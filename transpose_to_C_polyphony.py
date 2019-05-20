@@ -37,7 +37,7 @@ def transpose_polyphony(source, input):
                 print(i)
                 # if key_name != 'C' and key_name != 'a':
                 #     continue  # TODO: only the transposition only works for C major or A minor, for other keys, I need to do F## processing!
-                if i.directedName == 'P1':  # account for pitch spelling
+                if i.directedName == 'P1' or i.directedName == 'd2':  # account for pitch spelling
                     key_name += '_ori'
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):

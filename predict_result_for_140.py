@@ -111,7 +111,6 @@ def binary_decode(arr):
         for index, val in enumerate(reversed(item)):
             total += (val * 2 ** index)
         arr_decoded.append(int(total))
-
     return arr_decoded
 
 

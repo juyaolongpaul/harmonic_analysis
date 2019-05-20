@@ -26,7 +26,6 @@ def generate_ML_matrix(path, windowsize, sign='N'):
         #     if fn.find('_ori') == -1:
         #         continue
         fn_all.append(fn)
-    print(fn_all)
     fn_all.sort()
     print(fn_all)
     for fn in fn_all:
