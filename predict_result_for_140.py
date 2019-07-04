@@ -74,13 +74,17 @@ def format_sequence_data(inputdim, outputdim, batchsize, x, y):
     return x, y
 
 
-def get_predict_file_name(input, data_id, augmentation):
+def get_predict_file_name(input, data_id, augmentation, bach='Y'):
     filename = []
     num_salami_slices = []
     for id, fn in enumerate(os.listdir(input)):
         if fn.find('KB') != -1:
-            p = re.compile(r'\d{3}')  # find 3 digit in the file name
-            id_id = p.findall(fn)
+            if bach == 'Y':
+                p = re.compile(r'\d{3}')  # find 3 digit in the file name
+                id_id = p.findall(fn)
+            else:
+                id_id = []
+                id_id.append(os.path.splitext(fn)[0])
             if id_id[0] in data_id or data_id == []:  # if the digit found in the list, add this file
 
                 if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys

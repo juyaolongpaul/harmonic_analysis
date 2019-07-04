@@ -84,7 +84,7 @@ def get_input_encoding(inputpath, encoding_path):
             s = converter.parse(os.path.join(inputpath, fn))
             sChords = s.chordify(removeRedundantPitches=False)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            # print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
+            #print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
             pitchClass = [0] * 12
             if inputpath.find('Schutz') != -1:  # New onset does not work in Schutz
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
@@ -117,8 +117,8 @@ def get_input_encoding(inputpath, encoding_path):
         np.savetxt(file_name_xx, chorale_x_only_pitch_class, fmt='%.1e')
 
 
-def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
-    transpose_polyphony(inputpath, inputpath)  # tranpose to 12 keys
+def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
+    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
@@ -163,7 +163,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
     predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window,
                                                             verbose=0)  # TODO: we need to make this part modular so it can deal with all possible specs
 
-    fileName, numSalamiSlices = get_predict_file_name(inputpath, [], 'N')
+    fileName, numSalamiSlices = get_predict_file_name(inputpath, [], 'N', bach='N')
     length = len(fileName)
     with open('chord_name_retrained.txt') as f:
         chord_name = f.read().splitlines()
@@ -177,16 +177,20 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
         chord_label_list = []  # For RB chord inferred labels
         chord_tone_list = []  # store all the chord tones predicted by the model
         all_answers_per_chorale = [{} for j in range(1000)]
-        print(fileName[i][-7:-4])
+        print(fileName[i])
         s = converter.parse(os.path.join(inputpath, fileName[i]))
         s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
         sChords = s.chordify()
         s.insert(0, sChords)
         # transpose back to the original keys
-        p = re.compile(r'\d{3}')
-        id = p.findall(fileName[i])
+        if bach == 'Y':
+            p = re.compile(r'\d{3}')
+            id = p.findall(fileName[i])
+        else:
+            id = []
+            id.append(os.path.splitext(fileName[i])[0])
         for fn in os.listdir(inputpath):
-            if id[0] in fn and '_ori' in fn:  # get the key info
+            if id[0] in fn:  # get the key info
                 ptr = fn.find('KB')
                 if '-' not in fn and '#' not in fn:  # keys do not have accidentals
                     key_info = fn[ptr + 2]
@@ -213,6 +217,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
                              'w')
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     x = xx_only_pitch[a_counter]
                     chord_tone = output_NCT_to_XML(x, predict_y[a_counter], thisChord, '_pitch_class')
                     chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
@@ -236,18 +241,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
                         chord_name[predict_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(
                         unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
                             chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
-                    chord = chord_name[predict_y_chord_tone[a_counter]]  # output chords in the original key
-                    id_id = acc.findall(chord)
-                    if id_id != []:  # has flat or sharp
-                        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
-                        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
-                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
-                        print(transposed_result, file=f_ori)
-                        # print('original: ', line, 'transposed: ', transposed_result)
-                    else:  # no flat or sharp, which means only the first element is the root
-                        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
-                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
-                        print(transposed_result, file=f_ori)
+
                     a_counter += 1
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find(
@@ -275,21 +269,29 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath):
                         if unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])) == \
                                 sorted_result[jj][0]:  # when there are all different answers, choose the RB one!
                             break
-                    if j == 0:
-                        if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
-                            thisChord.addLyric('Voting: ' + str(sorted_result[jj][0]))
-                        else:
-                            thisChord.addLyric('Voting: ' + str(sorted_result[0][0]))
+                    if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
+                        chord = sorted_result[jj][0] # output chords in the original key
                     else:
-                        if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
-                            thisChord.addLyric(str(sorted_result[jj][0]))
-                        else:
-                            thisChord.addLyric(str(sorted_result[0][0]))
+                        chord = sorted_result[0][0]
+                    if j == 0:
+                        thisChord.addLyric('Voting: ' + chord)
+                    else:
+                        thisChord.addLyric(chord)
                     if sorted_result[0] == sorted_result[-1]:  # Only one answer, agreed
                         thisChord.addLyric(' ')
                     else:
                         thisChord.addLyric('_!')
-
+                    id_id = acc.findall(chord)
+                    if id_id != []:  # has flat or sharp
+                        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+                        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                        print(transposed_result, file=f_ori)
+                        # print('original: ', line, 'transposed: ', transposed_result)
+                    else:  # no flat or sharp, which means only the first element is the root
+                        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                        print(transposed_result, file=f_ori)
                 f_ori.close()
                 f_transposed.close()
                 s.write('musicxml',

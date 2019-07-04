@@ -415,14 +415,15 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
         # Onset = [0] * 4
         for i, item in enumerate(this_pitch_list):
             # pitchclass = fill_in_4_voices(pitchclass, item)
-            if this_pitch_list[i].tie is not None:
-                if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
-                    # fake attacks
-                    # print('fake attacks')
-                    if hasattr(this_pitch_list[i], 'pitch'):
-                        pitchclass[this_pitch_list[i].pitch.pitchClass] = 0  # set the pitch class of the fake attack as 0
-                    else:
-                        continue
+            if hasattr(this_pitch_list[i], 'tie'):
+                if this_pitch_list[i].tie is not None:
+                    if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
+                        # fake attacks
+                        # print('fake attacks')
+                        if hasattr(this_pitch_list[i], 'pitch'):
+                            pitchclass[this_pitch_list[i].pitch.pitchClass] = 0  # set the pitch class of the fake attack as 0
+                        else:
+                            continue
         NewOnset_sign = pitchclass[:]
         pitchclass = ori_pitchclass + pitchclass  # We need the order of pitch class, onset sign to be uniformed
     if inputtype.find('NCT') != -1:

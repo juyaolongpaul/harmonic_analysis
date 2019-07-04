@@ -2,7 +2,7 @@ from music21 import *
 import os
 import re
 from transpose_to_C_chords import get_displacement
-def transpose_polyphony(source, input):
+def transpose_polyphony(source, input, bach='Y'):
     print('Step 3: Translate the music into 12 keys')
     c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
     #for fn in os.listdir('.\\genos-corpus\\answer-sheets\\bach-chorales\\New_annotation\\'):
@@ -11,13 +11,22 @@ def transpose_polyphony(source, input):
     else:
         format = '.mid'
     for fn in os.listdir(input):
-        p = re.compile(r'\d{3}')  # find 3 digit in the file name
-        id_id = p.findall(fn)
-        if len(id_id) == 0:
-            continue
-        if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBCKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBC_oriKE' + id_id[0] + format)
-                or os.path.isfile(os.path.join(input, 'transposed_') + 'KBa_oriKE' + id_id[0] + format) or os.path.isfile(os.path.join(input, 'transposed_') + 'KBaKE' + id_id[0] + format)):
-            continue  # TODO: Need to change the name of this later!
+        if bach == 'Y':
+            p = re.compile(r'\d{3}')  # find 3 digit in the file name
+            id_id = p.findall(fn)
+            if len(id_id) == 0:
+                continue
+            if (os.path.isfile(os.path.join(input, 'transposed_') + 'KBCKE' + id_id[0] + format) or os.path.isfile(
+                    os.path.join(input, 'transposed_') + 'KBC_oriKE' + id_id[0] + format)
+                    or os.path.isfile(
+                        os.path.join(input, 'transposed_') + 'KBa_oriKE' + id_id[0] + format) or os.path.isfile(
+                        os.path.join(input, 'transposed_') + 'KBaKE' + id_id[0] + format)):
+                continue  # TODO: Need to change the name of this later!
+        else:
+            id_id = []
+            id_id.append(os.path.splitext(fn)[0])
+            if 'transposed_' in fn:
+                continue
         print(os.path.join(input, 'transposed_') + id_id[0] + format)
         if fn[-3:] == 'krn' or fn[-3:] == 'mid' or fn[-3:] == 'xml':  # we want to transpose krn file into musicxml file
             print(fn)
