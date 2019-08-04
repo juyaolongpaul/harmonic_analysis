@@ -216,9 +216,6 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                                                                                                    :-4]) + '_chord_labels.txt',
                              'w')
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-
-                    print('current slice is:', j, 'DHA-d is:', len(predict_y_direct_harmonic_analysis), 'CT-d is:',
-                          len(predict_y_chord_tone), 'a_counter is:', a_counter)
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     x = xx_only_pitch[a_counter]
