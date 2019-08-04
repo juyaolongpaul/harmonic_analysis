@@ -735,18 +735,18 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         os.mkdir(os.path.join('.', 'ML_result', sign))
     if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
         os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
-    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + 'predict.txt', 'w')
-    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + 'predict_log.csv',
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+')  + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+')  + 'predict_log.csv',
                            append=True, separator=';')
-    csv_logger_chord_tone = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + '_chord_tone_' + 'predict_log.csv',
+    csv_logger_chord_tone = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+')  + '_chord_tone_' + 'predict_log.csv',
                            append=True, separator=';')
     csv_logger_direct_harmonic_analysis = CSVLogger(
-        os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + MODEL_NAME + '_direct_harmonic_analysis_' + 'predict_log.csv',
+        os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') +  '_direct_harmonic_analysis_' + 'predict_log.csv',
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        # if times != 9:
-        #     continue
+        if times != 0:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -756,9 +756,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         MODEL_NAME_direct_harmonic_analysis = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                                 + str(timestep) + extension + '_cv_' + str(times + 1) + '_direct_harmonic_analysis'
-        FOLDER_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
-                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
-                     + str(timestep) + extension
+        FOLDER_NAME = 'MODEL'
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
         if exclude != []:
             train_id.extend(test_id)
