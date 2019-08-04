@@ -84,7 +84,7 @@ def get_input_encoding(inputpath, encoding_path):
             s = converter.parse(os.path.join(inputpath, fn))
             sChords = s.chordify(removeRedundantPitches=False)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            #print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
+            # print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
             pitchClass = [0] * 12
             if inputpath.find('Schutz') != -1:  # New onset does not work in Schutz
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
@@ -176,7 +176,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         num_salami_slice = numSalamiSlices[i]
         chord_label_list = []  # For RB chord inferred labels
         chord_tone_list = []  # store all the chord tones predicted by the model
-        all_answers_per_chorale = [{} for j in range(1000)]
+        all_answers_per_chorale = [{} for j in range(10000)]
         print(fileName[i])
         s = converter.parse(os.path.join(inputpath, fileName[i]))
         s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
@@ -216,6 +216,9 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                                                                                                    :-4]) + '_chord_labels.txt',
                              'w')
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+
+                    print('current slice is:', j, 'DHA-d is:', len(predict_y_direct_harmonic_analysis), 'CT-d is:',
+                          len(predict_y_chord_tone), 'a_counter is:', a_counter)
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     x = xx_only_pitch[a_counter]
@@ -262,15 +265,15 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                             unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])),
                             0) + 1
                     sorted_result = sorted(all_answers_per_chorale[j].items(), key=lambda d: d[1], reverse=True)
-                    #print(sorted_result[0])
+                    # print(sorted_result[0])
                     ##print(sorted_result[0][-1])
-                    #print(chord_tone_list[j])
+                    # print(chord_tone_list[j])
                     for jj in range(len(sorted_result)):
                         if unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])) == \
                                 sorted_result[jj][0]:  # when there are all different answers, choose the RB one!
                             break
                     if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
-                        chord = sorted_result[jj][0] # output chords in the original key
+                        chord = sorted_result[jj][0]  # output chords in the original key
                     else:
                         chord = sorted_result[0][0]
                     if j == 0:
