@@ -1375,6 +1375,10 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 print('chord accucary: ' + str(correct_num_chord / num_salami_slice), end='\n', file=f_all)
                 print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
                       file=f_all)
+                print('chord Nat accucary: ' + str(correct_num_nat / num_salami_slice), end='\n', file=f_all)
+                print('num of correct chord Nat answers: ' + str(correct_num_nat) + ' number of salami slices: ' + str(
+                    num_salami_slice),
+                      file=f_all)
                 print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
                 print('accumulative chord ground truth accucary: ' + str(a_counter_correct_chord_gt / a_counter), end='\n', file=f_all)
                 print('accumulative chord voting accucary: ' + str(a_counter_correct_chord_vote / a_counter),
