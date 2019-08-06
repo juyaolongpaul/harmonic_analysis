@@ -4,10 +4,12 @@ import os
 from music21 import *
 from get_input_and_output import *
 from predict_result_for_140 import get_predict_file_name
-from transpose_to_C_chords import transpose
 from predict_result_for_140 import output_NCT_to_XML, infer_chord_label1, infer_chord_label2, infer_chord_label3, \
     unify_GTChord_and_inferred_chord
 from test_musicxml_gt import translate_chord_name_into_music21
+from predict_result_for_140 import find_tranposed_interval
+from predict_result_for_140 import transpose_chord
+
 
 
 def generate_ML_matrix(path, windowsize, sign='N'):
@@ -191,25 +193,12 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
             id.append(os.path.splitext(fileName[i])[0])
         for fn in os.listdir(inputpath):
             if id[0] in fn:  # get the key info
-                ptr = fn.find('KB')
-                if '-' not in fn and '#' not in fn:  # keys do not have accidentals
-                    key_info = fn[ptr + 2]
-                else:
-                    key_info = fn[ptr + 2: ptr + 4]
-                if key_info.isupper():  # major key
-                    mode = 'major'
-                else:
-                    mode = 'minor'
-                if mode == 'minor':
-                    transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
-                else:
-                    transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
+                transposed_interval, key_info = find_tranposed_interval(fn)
                 if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info)):
                     os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info))
                 sNew = s_ori.transpose(transposed_interval)
                 sChords_new = sNew.chordify()
                 sNew.insert(0, sChords_new)
-                acc = re.compile(r'[#-]+')
                 f_transposed = open(os.path.join(inputpath, 'predicted_result', fileName[i][
                                                                                 :-4]) + '_chord_labels.txt', 'w')
                 f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
@@ -281,17 +270,10 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         thisChord.addLyric(' ')
                     else:
                         thisChord.addLyric('_!')
-                    id_id = acc.findall(chord)
-                    if id_id != []:  # has flat or sharp
-                        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
-                        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
-                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
-                        print(transposed_result, file=f_ori)
-                        # print('original: ', line, 'transposed: ', transposed_result)
-                    else:  # no flat or sharp, which means only the first element is the root
-                        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
-                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
-                        print(transposed_result, file=f_ori)
+                    transposed_result = transpose_chord(transposed_interval, chord)
+
+                    sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                    print(transposed_result, file=f_ori)
                 f_ori.close()
                 f_transposed.close()
                 s.write('musicxml',

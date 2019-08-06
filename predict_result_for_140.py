@@ -28,15 +28,9 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
 from keras.callbacks import TensorBoard
-from keras.preprocessing.sequence import TimeseriesGenerator
-import h5py
 import re
 import os
 import numpy as np
-import keras.callbacks as CB
-import sys
-import string
-import time
 #import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
 from music21 import *
@@ -50,9 +44,41 @@ from sklearn.multiclass import OneVsRestClassifier
 from test_musicxml_gt import translate_chord_name_into_music21
 from keras_self_attention import SeqSelfAttention
 from get_input_and_output import adding_window_one_hot
-from collections import defaultdict
 from sklearn.metrics import accuracy_score
-from random import shuffle
+from transpose_to_C_chords import transpose
+
+
+def find_tranposed_interval(fn):
+    """
+    Get the key info from the file name, transpose back to the original key
+    :param fn:
+    :return:
+    """
+    ptr = fn.find('KB')
+    if '-' not in fn and '#' not in fn:  # keys do not have accidentals
+        key_info = fn[ptr + 2]
+    else:
+        key_info = fn[ptr + 2: ptr + 4]
+    if key_info.isupper():  # major key
+        mode = 'major'
+    else:
+        mode = 'minor'
+    if mode == 'minor':
+        transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
+    else:
+        transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
+    return transposed_interval, key_info
+
+
+def transpose_chord(transposed_interval, chord):
+    acc = re.compile(r'[#-]+')
+    id_id = acc.findall(chord)
+    if id_id != []:  # has flat or sharp
+        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+    else:  # no flat or sharp, which means only the first element is the root
+        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+    return transposed_result
 
 
 def format_sequence_data(inputdim, outputdim, batchsize, x, y):
@@ -91,7 +117,8 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
                     if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                         filename.append(fn)
                 else:
-                    filename.append(fn)
+                    if fn.find('ori') != -1:
+                        filename.append(fn)  # only include files that are in the original key
     filename.sort()
     for id, fn in enumerate(filename):
         length = 0
@@ -518,11 +545,13 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if augmentation == 'N':
             if fn.find('CKE') == -1 and fn.find('C_oriKE') == -1 and fn.find('aKE') == -1 and fn.find('a_oriKE') == -1: # we cannot find key of c, skip
                 continue
-        # elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
-        #     if fn.find('_ori') == -1:
-        #         continue
+        elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
+            if fn.find('_ori') == -1:
+                continue
         p = re.compile(r'\d{3}')  # find 3 digit in the file name
         id_id = p.findall(fn)
+        if id_id[0] == '137':
+            print('debug')
         if id_id[0] in id:
             fn_all.append(fn)
     print(fn_all)
@@ -929,7 +958,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                          predict_xx_chord_tone[i] = np.concatenate(
                              (predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-1][-3:]))
                      else:
-                        predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
+                         predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
             if modelID.find('SVM') != -1 or modelID.find('DNN') != -1:
                 predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
@@ -1045,14 +1074,17 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
                 num_salami_slice = numSalamiSlices[i]
                 if exclude != []:
-                    if augmentation == 'Y':
-                        input('Nat annotations are only in c major or a minor!') #TODO: Fix this when aug is used
                     for fileName_Sam in os.listdir(os.path.join(output, 'Nat_GT')):
                         if fileName[i][-7:-4] in fileName_Sam: # found the Nat's annotation, load it
                             f_nat = open(os.path.join(output, 'Nat_GT', fileName_Sam), 'r')
                             chord_label_list_Nat = []
                             for chord_nat in f_nat.readlines():
-                                chord_label_list_Nat.append(chord_nat.strip())
+                                if augmentation == 'Y':  # transpose these labels back to the original key
+                                    transposed_interval, root = find_tranposed_interval(fileName[i])
+                                    transposed_result = transpose_chord(transposed_interval, chord_nat.strip())
+                                    chord_label_list_Nat.append(transposed_result)
+                                else:  # don't transpose, so the annotation is either in C major or A minor
+                                    chord_label_list_Nat.append(chord_nat.strip())
                             break
                 correct_num = 0 # Record either the correct slice/chord in direct harmonic analysis or NCT approach
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
@@ -1373,6 +1405,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                       file=f_all)
                 print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
                 print('chord accucary: ' + str(correct_num_chord / num_salami_slice), end='\n', file=f_all)
+
                 print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
                       file=f_all)
                 print('chord Nat accucary: ' + str(correct_num_nat / num_salami_slice), end='\n', file=f_all)

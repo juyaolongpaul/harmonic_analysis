@@ -1,8 +1,7 @@
 from music21 import *
 import os
 import re
-c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
-c2=['c','d-','d','e-','e','f','g-','g','a-','a','b-','b']
+c2=['c','d-','d','e-','e','f','f#','g','a-','a','b-','b']
 
 
 def get_displacement(k):
@@ -21,11 +20,6 @@ def get_displacement(k):
             displacement = c2.index(key_tonic)
         else:
             displacement = (c2.index(key_tonic) + 3) % len(c2)
-    elif key_tonic in c1:
-        if (k.mode == 'major'):
-            displacement = c1.index(key_tonic)
-        else:
-            displacement = (c1.index(key_tonic) + 3) % len(c1)
     else:
         print('pitch class can not be found!')
         input('what do you think about it')
@@ -80,7 +74,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                     else:
                         transposed_interval = interval.Interval(k.tonic, pitch.Pitch(c2[displacement - key_transpose]))
                         key_name = c2[(displacement - key_transpose) % len(c2)].upper()
-                    if transposed_interval.directedName == 'P1':
+                    if transposed_interval.directedName == 'P1' or transposed_interval.directedName == 'd2':
                         key_name = key_name + '_ori'
                     f = open(os.path.join(output, file_name), 'r')
                     fnew = open(os.path.join(output, 'transposed_') + 'KB' + key_name + 'KE' + file_name, 'w')
