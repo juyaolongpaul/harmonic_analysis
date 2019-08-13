@@ -566,6 +566,30 @@ def add_beat_into_binary(pitchclass, beat):
     return pitchclass
 
 
+def add_duration_into(pitchclass, duration, inputtype):
+    """
+    Adding three dimension to the input vector, specifying whether the current slice is equal or less than half quarter
+    note, quarter note or longer than a quarter note.
+    :param pitchclass:
+    :param duration:
+    :param inputtype:
+    :return:
+    """
+    if '3dur' in inputtype:
+        if duration <= 0.5:
+            pitchclass.append(1)
+            pitchclass.append(0)
+            pitchclass.append(0)
+        elif duration == 1.0:
+            pitchclass.append(0)
+            pitchclass.append(1)
+            pitchclass.append(0)
+        else:
+            pitchclass.append(0)
+            pitchclass.append(0)
+            pitchclass.append(1)
+    return pitchclass
+
 def add_beat_into(pitchclass, beat, inputtype, beatstrength):
     """
     adding two dimension to the input vector, specifying whether the current slice is on/off beat.
