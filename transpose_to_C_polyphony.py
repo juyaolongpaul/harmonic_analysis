@@ -48,6 +48,13 @@ def transpose_polyphony(source, input, bach='Y'):
                 #     continue  # TODO: only the transposition only works for C major or A minor, for other keys, I need to do F## processing!
                 if i.directedName == 'P1' or i.directedName == 'd2':  # account for pitch spelling
                     key_name += '_ori'
+                    sFB = converter.parse(os.path.join(input, fn))
+                    sChords = sFB.chordify()
+                    sFB.insert(0, sChords)
+                    for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    sFB.write('musicxml', os.path.join(input, 'transposed_') + 'KB' + key_name + 'KE' + id_id[
+                        0] + '_FB' + format)  # convert krn into xml
                 sNew = s.transpose(i)
                 if(source == 'Rameau'):
                     sNew.write('midi', os.path.join(input,'transposed_') + 'KB' + key_name + 'KE' + id_id[0] + format)
