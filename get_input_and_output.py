@@ -182,10 +182,11 @@ def fill_in_pitch_class_with_voice(pitchclass, list):
 
 
 def get_pitch_class_for_four_voice(thisChord, s):
-    if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes
-        return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
-    else:
-        print('still less than 4 pitches in chordify???')
+    # if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes
+    #     return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
+    # This is wrong since thisChord is not organized by voice!
+    # else:
+        #print('still less than 4 pitches in chordify???')
         pitch_class_four_voice = []
         pitch_four_voice = []
         for j, part in enumerate(s.parts):  # all parts, starting with soprano
