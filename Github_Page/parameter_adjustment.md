@@ -10,7 +10,7 @@ In this program, there are many adjustable parameters, ranging from the analytic
 
 Parameters   |Values   | Explanation
 ---|---|---
---source (-s)   |`ISMIR2019`, and many other analytical styles you can specify (please the last paragraph of [this page](https://juyaolongpaul.github.io/harmonic_analysis/installation_guide.html) for guidelines)!   |The kind of annotations you want to use for training. Currently, only `ISMIR2019` went through the whole workflow, including partial manual modification and re-training. If you specify any other analytical styles, you can only obtain the pre-trained results!
+--source (-s)   |`ISMIR2019`, and many other analytical styles you can specify (please the last paragraph of [this page](https://juyaolongpaul.github.io/harmonic_analysis/Github_Page/installation_guide.html) for guidelines)!   |The kind of annotations you want to use for training. Currently, only `ISMIR2019` went through the whole workflow, including partial manual modification and re-training. If you specify any other analytical styles, you can only obtain the pre-trained results!
 --num_of_hidden_layer (-l)   |3, usually ranging from 2-5   |The number of hiddel layers (not effective in `SVM`)
 --num_of_hidden_node (-n)   |300, usually ranging from 100-500  |The number of hidden nodes (not effective in `SVM`)
 --model (-m)   |`DNN` is default, `SVM`   also available |The types of models you want to use
