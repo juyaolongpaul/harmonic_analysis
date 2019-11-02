@@ -8,7 +8,7 @@ title: The Aim of This Project
 
 ### Introduction
 
-Despite being a core component of Western music theory, Harmonic analysis is difficult because: (1) It is a time-consuming process requiring years of training. (2) Even expert analysts will often disagree in their interpretations of certain passages, and are often inconsistent in their interpretive styles. Due to these difficulties, harmonic analysis remains a subjective endeavor, resistant to automation. As a result, few large datasets of high-quality harmonic analysis data exist, a situation that has significantly retarded the systematic study ofWestern harmony.
+Despite being a core component of Western music theory, Harmonic analysis is difficult because: (1) It is a time-consuming process requiring years of training. (2) Even expert analysts will often disagree in their interpretations of certain passages, and are often inconsistent in their interpretive styles. Due to these difficulties, harmonic analysis remains a subjective endeavor, resistant to automation. As a result, few large datasets of high-quality harmonic analysis data exist, a situation that has significantly retarded the systematic study of Western harmony.
 
 In this project, I propose an innovative workflow to conduct harmonic analysis automatically with multiple analytical styles using artificial intelligence. This approach will be the first of its kind to explicitly address and systematically resolve the ambiguities and interpretive flexibility of harmonic analysis. Hence, the vast amounts of generated harmonic analyses can be curated into a searchable, large-scale database, serving as an invaluable resource for music theoretic, musicological, and music information retrieval research.
 
