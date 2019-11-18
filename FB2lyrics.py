@@ -62,6 +62,10 @@ def add_FB_content(j, each_fb, i, text):
             else:
                 text.text += translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i])
         return text
+    else:
+        if j == 0: # this is when a figured bass does not have as much layers as the following ones
+            text.text = ''
+        return text
 
 def add_FB_to_lyrics(note, fig):
     """
@@ -74,11 +78,11 @@ def add_FB_to_lyrics(note, fig):
     for i, each_fb in enumerate(fig):
         if number_of_layers < len(each_fb['number']):
             number_of_layers = len(each_fb['number'])
-    for i in range(number_of_layers):
+    for i in range(number_of_layers):  # i means the current number of layer, horizontally
         print('numer of layers', i)
         lyric = ET.SubElement(note, 'lyric', {'number':str(i + 1)})  # create lyric sub element
         text = ET.SubElement(lyric, 'text')
-        for j, each_fb in enumerate(fig):
+        for j, each_fb in enumerate(fig):  # j means the ID of figures for the bass in the current layer
             if j == 0:
                 text = add_FB_content(j, each_fb, i, text)
             else:
@@ -98,7 +102,7 @@ def adding_XXXfix(each_FB_digit, name, single_XXXfix):
 if __name__ == '__main__':
     for filename in os.listdir(os.path.join('.', '371_FB')):
         if 'FB.musicxml' not in filename: continue
-        if '013' in filename: continue
+        #if '017' not in filename: continue
         print(filename)
         tree = ET.ElementTree(file=os.path.join('.', '371_FB', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
@@ -130,10 +134,11 @@ if __name__ == '__main__':
                         fig.append(FB_digit)
                         print(fig)
                     if ele.tag == 'note':
-                        if fig != []:
+                        if fig != [] and fig != [{}] and 'number':
                             print("add the FB to lyrics")
-                            if fig[0]['number'] == ['5', '4'] and fig[0]['suffix'] == ['backslash', '']:
-                                print('debug')
+                            # if fig[0]['number'] == ['8', '4']:
+                            #     print('debug')
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
         tree.write(open(os.path.join('.', '371_FB', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
+        # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
