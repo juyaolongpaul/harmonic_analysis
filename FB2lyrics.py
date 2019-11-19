@@ -1,5 +1,6 @@
 import xml.etree.cElementTree as ET
 import os
+from music21 import *
 
 
 def translate_FB_as_lyrics(number, suffix, prefix):
@@ -15,7 +16,7 @@ def translate_FB_as_lyrics(number, suffix, prefix):
     elif prefix == 'flat':
         prefix_sign = 'b'
     elif prefix == 'natural':
-        prefix_sign = prefix
+        prefix_sign = 'n'
     else:
         if prefix != '':
             print(prefix)
@@ -25,7 +26,7 @@ def translate_FB_as_lyrics(number, suffix, prefix):
     if suffix == 'backslash' or suffix == 'cross':
         suffix_sign = '#'
     elif suffix == 'natural':
-        suffix_sign = suffix
+        suffix_sign = 'n'
     elif suffix == 'sharp':
         suffix_sign = '#'
     elif suffix == 'flat':
@@ -86,7 +87,7 @@ def add_FB_to_lyrics(note, fig):
             if j == 0:
                 text = add_FB_content(j, each_fb, i, text)
             else:
-                text.text += ', '
+                text.text += ','
                 text = add_FB_content(j, each_fb, i, text)
 
 
@@ -99,7 +100,47 @@ def adding_XXXfix(each_FB_digit, name, single_XXXfix):
     return single_XXXfix
 
 
-if __name__ == '__main__':
+def decode_FB_from_lyrics(lyrics):
+    """
+    Decoding the FB from the bassline line into list dictionary represetnation
+    :param lyrics:
+    :return:
+    """
+    fig = []
+    number_of_layers = len(lyrics)
+    for i ,each_layer in enumerate(lyrics):
+        figure_duration = each_layer.text.split(',')
+        #print (figure_duration)
+        for j, each_figure_duration in enumerate(figure_duration):
+            if '4' in each_figure_duration:
+                print('debug')
+            if i == 0:
+                each_figure_dic = {}
+                if '+' in each_figure_duration:
+                    each_figure = each_figure_duration.split('+')[0]
+                    each_duration = each_figure_duration.split('+')[1]
+                    temp = []
+                    temp.append(each_figure)
+                    each_figure_dic['number'] = temp
+                    each_figure_dic['duration'] = each_duration
+                else:  # just figures
+                    each_figure = each_figure_duration
+                    temp = []
+                    temp.append(each_figure)
+                    each_figure_dic['number'] = temp
+                fig.append(each_figure_dic)
+            else:  # add to existing FB dictionary
+                if '+' in each_figure_duration:
+                    each_figure = each_figure_duration.split('+')[0]
+                    each_duration = each_figure_duration.split('+')[1]
+                else:
+                    each_figure = each_figure_duration
+                fig[j]['number'].append(each_figure)
+
+    return fig
+
+
+def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', '371_FB')):
         if 'FB.musicxml' not in filename: continue
         #if '017' not in filename: continue
@@ -141,4 +182,35 @@ if __name__ == '__main__':
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
         tree.write(open(os.path.join('.', '371_FB', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
+
+
+def lyrics_to_chordify():
+    for filename in os.listdir(os.path.join('.', '371_FB')):
+        if 'lyric' not in filename: continue
+        elif 'chordify' in filename: continue
+        print(filename)
+        s = converter.parse(os.path.join('.', '371_FB', filename))
+        bassline = s.parts[-1]
+        sChords = s.chordify()
+        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+            thisChord.closedPosition(forceOctave=4, inPlace=True)
+            each_measure = bassline.measure(thisChord.measureNumber)
+            for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
+                if each_bass.beat == thisChord.beat:
+                    bassnote = each_bass
+                    if bassnote.lyrics != []:
+                        fig = decode_FB_from_lyrics(bassnote.lyrics)
+                        print(fig)
+                        for j, one_FB in enumerate(fig):
+                            for line in fig[j]['number']:
+                                sChords.recurse().getElementsByClass('Chord')[i + j].addLyric(line)
+                    break
+        s.insert(0, sChords)
+        s.write('musicxml', os.path.join('.', '371_FB', filename[:-4] + '_' + 'chordify' + '.xml'))
+
+
+if __name__ == '__main__':
+    #extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
+    lyrics_to_chordify()
+
