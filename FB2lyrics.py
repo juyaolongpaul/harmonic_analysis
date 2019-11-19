@@ -1,6 +1,7 @@
 import xml.etree.cElementTree as ET
 import os
 from music21 import *
+import re
 
 
 def translate_FB_as_lyrics(number, suffix, prefix):
@@ -160,6 +161,68 @@ def translate_FB_into_chords(fig, thisChord, ptr):
                 else:
                     chord_name = chord_label.pitchedCommonName.replace('-minor triad', 'm')
                 thisChord.addLyric(chord_name)
+            else:
+                thisChord.addLyric(' ')
+        else:
+            thisChord.addLyric(' ')
+    else:  # there is FB
+        for pitch in thisChord.pitchNames:
+            chord_pitch.append(pitch)
+        chord_label = chord.Chord(chord_pitch)
+        allowed_chord_quality = ['incomplete major-seventh chord', 'major seventh chord',
+                                 'incomplete minor-seventh chord', 'minor seventh chord',
+                                 'incomplete half-diminished seventh chord', 'half-diminished seventh chord',
+                                 'diminished seventh chord',
+                                 'incomplete dominant-seventh chord', 'dominant seventh chord',
+                                 'major triad',
+                                 'minor triad',
+                                 'diminished triad']
+        if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
+            if harmony.chordSymbolFigureFromChord(chord_label).find('Identified') != -1:  # harmony.chordSymbolFigureFromChord cannot convert pitch classes into chord name sometimes, and the examples are below
+                #print('debug')
+                if chord_label.pitchedCommonName.find('-diminished triad') != -1: # chord_label.pitchedCommonName is another version of the chord name, but usually I cannot use it to get harmony.ChordSymbol to get pitch classes, so I translate these cases which could be processed by harmony.ChordSymbol later on
+                    chord_name = chord_label.pitchedCommonName.replace('-diminished triad', 'o') # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete half-diminished seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-incomplete half-diminished seventh chord', '/o7') # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete minor-seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-incomplete minor-seventh chord', 'm7') # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete major-seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-incomplete major-seventh chord', 'M7') # translate to support
+                elif chord_label.pitchedCommonName.find('-incomplete dominant-seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7') # translate to support
+                elif chord_label.pitchedCommonName.find('-major triad') != -1: #(e.g., E--major triad) in  279 slice 33
+                    chord_name = chord_label.pitchedCommonName.replace('-major triad', '') # translate to support
+                elif chord_label.pitchedCommonName.find('-dominant seventh chord') != -1: #(e.g., E--major triad) in  279 slice 33
+                    chord_name = chord_label.pitchedCommonName.replace('-dominant seventh chord', '7')# translate to support
+                elif chord_label.pitchedCommonName.find('-half-diminished seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-half-diminished seventh chord', '/o7') # translate to support
+                elif chord_label.pitchedCommonName.find('-minor-seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-minor-seventh chord', 'm7') # translate to support
+                elif chord_label.pitchedCommonName.find('-major-seventh chord') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-major-seventh chord', 'M7') # translate to support
+                else:
+                    chord_name = chord_label.pitchedCommonName  # Just in case the function cannot accept any names (e.g., E--major triad)
+            else:
+                if chord_label.pitchedCommonName.find('-incomplete dominant-seventh chord') != -1: # contains "add" which does not work for harmony.ChordSymbol. This is probably becasue G D F, lacking of third to be 7th chord, and it is wrongly identified as GpoweraddX, so it needs modification.
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7'))  # remove 'add' part
+                elif chord_label.pitchedCommonName.find('-incomplete major-seventh chord') != -1: # contains "add" which does not work for harmony.ChordSymbol. This is probably becasue G D F, lacking of third to be 7th chord, and it is wrongly identified as GpoweraddX, so it needs modification.
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', chord_label.pitchedCommonName.replace('-incomplete major-seventh chord', 'M7'))  # remove 'add' part
+                elif harmony.chordSymbolFigureFromChord(chord_label).find('add') != -1: # contains "add" which does not work for harmony.ChordSymbol, at 095
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[:harmony.chordSymbolFigureFromChord(chord_label).find('add')]) # remove 'add' part
+                # elif harmony.chordSymbolFigureFromChord(chord_label).find('power') != -1: # assume power alone as major triad
+                #     chord_label_list.append(
+                #         re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[
+                #                                        :harmony.chordSymbolFigureFromChord(chord_label).find(
+                #                                            'power')]))  # remove 'add' part
+                elif harmony.chordSymbolFigureFromChord(chord_label).find('dim') != -1:
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label).replace('dim','o'))
+                else:
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)) # remove inversions, notice that half diminished also has /!
+                # the line above is the most cases, where harmony.chordSymbolFigureFromChord can give a chord name for the pitch classes, and Bdim is generated by this!
+            thisChord.addLyric(chord_name)
+        else:
+            thisChord.addLyric(' ')
+
 
 def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', '371_FB')):
@@ -205,7 +268,8 @@ def extract_FB_as_lyrics():
         tree.write(open(os.path.join('.', '371_FB', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
 
 
-def lyrics_to_chordify():
+
+def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', '371_FB')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
@@ -230,12 +294,21 @@ def lyrics_to_chordify():
             if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
                 translate_FB_into_chords('', thisChord, i)
 
+
         s.insert(0, sChords)
+        if want_IR:
+            IR = s.chordify()
+            for c in IR.recurse().getElementsByClass('Chord'):
+                c.closedPosition(forceOctave=4, inPlace=True)
+                c.annotateIntervals()
+            s.insert(0, IR)
+
         s.write('musicxml', os.path.join('.', '371_FB', filename[:-4] + '_' + 'chordify' + '.xml'))
 
 
 if __name__ == '__main__':
+    want_IR = True
     #extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify()
+    lyrics_to_chordify(want_IR)
 
