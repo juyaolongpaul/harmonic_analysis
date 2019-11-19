@@ -140,6 +140,27 @@ def decode_FB_from_lyrics(lyrics):
     return fig
 
 
+def translate_FB_into_chords(fig, thisChord, ptr):
+    """
+
+    :param fig:
+    :param thisChord:
+    :return:
+    """
+    chord_pitch = []
+    if fig == '':  # No figures, meaning it can have a root position triad
+        for pitch in thisChord.pitchNames:
+            chord_pitch.append(pitch)
+        chord_label = chord.Chord(chord_pitch)
+        allowed_chord_quality = [ 'major triad', 'minor triad']
+        if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
+            if thisChord.bass().pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:  # TODO: thisChord.bass() might not be correct to get the bass note!
+                if chord_label.pitchedCommonName.find('-major triad') != -1:
+                    chord_name = chord_label.pitchedCommonName.replace('-major triad', '')
+                else:
+                    chord_name = chord_label.pitchedCommonName.replace('-minor triad', 'm')
+                thisChord.addLyric(chord_name)
+
 def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', '371_FB')):
         if 'FB.musicxml' not in filename: continue
@@ -202,9 +223,13 @@ def lyrics_to_chordify():
                         fig = decode_FB_from_lyrics(bassnote.lyrics)
                         print(fig)
                         for j, one_FB in enumerate(fig):
+                            translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j], i + j)
                             for line in fig[j]['number']:
                                 sChords.recurse().getElementsByClass('Chord')[i + j].addLyric(line)
                     break
+            if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
+                translate_FB_into_chords('', thisChord, i)
+
         s.insert(0, sChords)
         s.write('musicxml', os.path.join('.', '371_FB', filename[:-4] + '_' + 'chordify' + '.xml'))
 
