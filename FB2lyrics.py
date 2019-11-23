@@ -176,12 +176,15 @@ def translate_FB_into_chords(fig, thisChord, ptr):
                                  'incomplete dominant-seventh chord', 'dominant seventh chord',
                                  'major triad',
                                  'minor triad',
-                                 'diminished triad']
+                                 'diminished triad',
+                                 'augmented triad']
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
             if harmony.chordSymbolFigureFromChord(chord_label).find('Identified') != -1:  # harmony.chordSymbolFigureFromChord cannot convert pitch classes into chord name sometimes, and the examples are below
                 #print('debug')
                 if chord_label.pitchedCommonName.find('-diminished triad') != -1: # chord_label.pitchedCommonName is another version of the chord name, but usually I cannot use it to get harmony.ChordSymbol to get pitch classes, so I translate these cases which could be processed by harmony.ChordSymbol later on
                     chord_name = chord_label.pitchedCommonName.replace('-diminished triad', 'o') # translate to support
+                elif chord_label.pitchedCommonName.find('-augmented triad') != -1: # chord_label.pitchedCommonName is another version of the chord name, but usually I cannot use it to get harmony.ChordSymbol to get pitch classes, so I translate these cases which could be processed by harmony.ChordSymbol later on
+                    chord_name = chord_label.pitchedCommonName.replace('-augmented triad', 'aug') # translate to support
                 elif chord_label.pitchedCommonName.find('-incomplete half-diminished seventh chord') != -1:
                     chord_name = chord_label.pitchedCommonName.replace('-incomplete half-diminished seventh chord', '/o7') # translate to support
                 elif chord_label.pitchedCommonName.find('-incomplete minor-seventh chord') != -1:
@@ -225,11 +228,11 @@ def translate_FB_into_chords(fig, thisChord, ptr):
 
 
 def extract_FB_as_lyrics():
-    for filename in os.listdir(os.path.join('.', '371_FB')):
+    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'FB.musicxml' not in filename: continue
         #if '017' not in filename: continue
-        print(filename)
-        tree = ET.ElementTree(file=os.path.join('.', '371_FB', filename))
+        print(filename, '---------------------')
+        tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
             if elem.attrib['id'] == 'P4':
                 child = elem
@@ -265,16 +268,16 @@ def extract_FB_as_lyrics():
                             #     print('debug')
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
-        tree.write(open(os.path.join('.', '371_FB', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
+        tree.write(open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
 
 
 
 def lyrics_to_chordify(want_IR):
-    for filename in os.listdir(os.path.join('.', '371_FB')):
+    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
         print(filename)
-        s = converter.parse(os.path.join('.', '371_FB', filename))
+        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
         sChords = s.chordify()
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -303,12 +306,12 @@ def lyrics_to_chordify(want_IR):
                 c.annotateIntervals()
             s.insert(0, IR)
 
-        s.write('musicxml', os.path.join('.', '371_FB', filename[:-4] + '_' + 'chordify' + '.xml'))
+        s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-4] + '_' + 'chordify' + '.xml'))
 
 
 if __name__ == '__main__':
     want_IR = True
-    #extract_FB_as_lyrics()
+    extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     lyrics_to_chordify(want_IR)
 
