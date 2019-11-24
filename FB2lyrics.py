@@ -224,17 +224,68 @@ def is_legal_chord(chord_label):
         return None
 
 
-def get_chord_tone(pitchNames, fig):
+def colllapse_interval(string):
+    """
+
+    :param str:
+    :return:
+    """
+    if type(string) == str:
+        if int(string) % 7 == 0:
+            return '7'
+        else:
+            return str(int(string) % 7)  # collapse all the intervals within an octave
+    elif type(string) == list:
+        for i, each_figure in enumerate(string):
+            if each_figure.find('9') != -1:
+                string[i] = '2'  #  9 as 2,
+            if each_figure.find('8') != -1:
+                string[i] = '1'  #  9 as 2,
+        return string
+
+
+def get_chord_tone(thisChord, fig, condition='N'):
     """
     Function to determine which sonorities are chord tones or not based on the given FB
     :param pitchNames:
     :param fig:
     :return:
     """
+    # There can be three cases: (1) FB indicates all the sonorities (2) FB only indicate part of the sonority
+    # (3) FB indicates some notes not in the sonorities
+    # For now label (2) as ??, for (3), look at the next slice, and the FB should be there, if not, output ?!
+    # So far, we collapse both figured bass and intervals, which means 9 and 2 are interchangable, etc.
     chord_pitch = []
-    for pitch in pitchNames:
-        chord_pitch.append(pitch)
-    return chord_pitch
+    if fig != '':
+        fig = colllapse_interval(fig)
+    if condition == 'N': # this means we need to choose which ones are CT based on the FB
+        mark = ''  # indicating weird slices
+        intervals = []
+        bass = thisChord.bass()  # TODO: this does not work when there is voice crossing between bass and tenor!
+        for note in thisChord._notes:
+            aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+            colllapsed_interval = colllapse_interval(aInterval.name[1:])
+            intervals.append(colllapsed_interval)
+            # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
+            if '3' in colllapsed_interval  or '5' in colllapsed_interval or '1' in colllapsed_interval:
+                chord_pitch.append(note)
+            elif colllapsed_interval in fig:
+                chord_pitch.append(note)
+            else: # sonority not in the FB
+                mark = '??'
+        for each_figure in fig:
+            if each_figure == '':
+                continue
+            if each_figure[-1] not in intervals:  # FB not in sonorities
+                if each_figure in ['n', '#', 'b'] and '3' in intervals: # this is an exception
+                    mark += ''
+                else:
+                    mark += '?!'
+        return chord_pitch, mark
+    else:
+        for each_pitch in thisChord.pitchNames:
+            chord_pitch.append(each_pitch)
+        return chord_pitch, ''
 
 def translate_FB_into_chords(fig, thisChord, ptr, sChord):
     """
@@ -244,7 +295,8 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord):
     :return:
     """
     chord_pitch = []
-
+    if '#5' in fig:
+        print('debug')
     if fig == '':  # No figures, meaning it can have a root position triad
         for pitch in thisChord.pitchNames:
             chord_pitch.append(pitch)
@@ -263,18 +315,19 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord):
             thisChord.addLyric(' ')
     else:  # there is FB
         # look at the figure bass and see which notes are included
-        chord_pitch = get_chord_tone(thisChord.pitchNames, fig)
+        chord_pitch, mark = get_chord_tone(thisChord, fig)
         chord_label = chord.Chord(chord_pitch)
         chord_name = is_legal_chord(chord_label)
         if chord_name:  # this slice contains a legal chord
-            thisChord.addLyric(chord_name)
+            thisChord.addLyric(mark + chord_name )
         else:
             if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice
-                next_chord_pitch = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1].pitchNames, '')
+                next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', 'Y')  ## TODO: shouldn't we give the actual FB to this function?
+                ## TODO: should we also consider the mark for the next chord in some ways?
                 next_chord_label = chord.Chord(next_chord_pitch)
                 next_chord_name = is_legal_chord(next_chord_label)
                 if next_chord_name:
-                    thisChord.addLyric(next_chord_name)  # use the chord name from the next slice
+                    thisChord.addLyric(mark + next_chord_name)  # use the chord name from the next slice
                 else:
                     thisChord.addLyric('?')  # this means that there is FB but does not form a legal chord
             else: # the last chord of the chorale, and it is not a legal chord
@@ -336,7 +389,7 @@ def lyrics_to_chordify(want_IR):
         bassline = s.parts[-1]
         sChords = s.chordify()
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            thisChord.closedPosition(forceOctave=4, inPlace=True)
+
             each_measure = bassline.measure(thisChord.measureNumber)
             for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
                 if each_bass.beat == thisChord.beat:
@@ -353,7 +406,8 @@ def lyrics_to_chordify(want_IR):
                     break
             if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
                 translate_FB_into_chords('', thisChord, i, sChords)
-
+            thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
+            # octave apart will be collapsed!
 
         s.insert(0, sChords)
         if want_IR:
