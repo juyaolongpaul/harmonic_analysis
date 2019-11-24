@@ -2,6 +2,7 @@ import xml.etree.cElementTree as ET
 import os
 from music21 import *
 import re
+from get_input_and_output import get_pitch_class_for_four_voice
 
 
 def translate_FB_as_lyrics(number, suffix, prefix):
@@ -156,51 +157,53 @@ def is_legal_chord(chord_label):
                              'minor triad',
                              'diminished triad',
                              'augmented triad']
-
-    if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
+    chord_name = chord_label.pitchedCommonName
+    chord_name = re.sub(r'\d', '', chord_name)  # remove all the octave information
+    if any(each in chord_name for each in allowed_chord_quality):
         if harmony.chordSymbolFigureFromChord(chord_label).find(
                 'Identified') != -1:  # harmony.chordSymbolFigureFromChord cannot convert pitch classes into chord name sometimes, and the examples are below
             # print('debug')
-            if chord_label.pitchedCommonName.find(
+            # print('debug')
+            if chord_name.find(
                     '-diminished triad') != -1:  # chord_label.pitchedCommonName is another version of the chord name, but usually I cannot use it to get harmony.ChordSymbol to get pitch classes, so I translate these cases which could be processed by harmony.ChordSymbol later on
-                chord_name = chord_label.pitchedCommonName.replace('-diminished triad', 'o')  # translate to support
-            elif chord_label.pitchedCommonName.find('-incomplete half-diminished seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-incomplete half-diminished seventh chord',
+                chord_name = chord_name.replace('-diminished triad', 'o')  # translate to support
+            elif chord_name.find('-incomplete half-diminished seventh chord') != -1:
+                chord_name = chord_name.replace('-incomplete half-diminished seventh chord',
                                                                    '/o7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-incomplete minor-seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-incomplete minor-seventh chord',
+            elif chord_name.find('-incomplete minor-seventh chord') != -1:
+                chord_name = chord_name.replace('-incomplete minor-seventh chord',
                                                                    'm7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-incomplete major-seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-incomplete major-seventh chord',
+            elif chord_name.find('-incomplete major-seventh chord') != -1:
+                chord_name = chord_name.replace('-incomplete major-seventh chord',
                                                                    'M7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-incomplete dominant-seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord',
+            elif chord_name.find('-incomplete dominant-seventh chord') != -1:
+                chord_name = chord_name.replace('-incomplete dominant-seventh chord',  # TODO: fix the octave inclusion issue
                                                                    '7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-major triad') != -1:  # (e.g., E--major triad) in  279 slice 33
-                chord_name = chord_label.pitchedCommonName.replace('-major triad', '')  # translate to support
-            elif chord_label.pitchedCommonName.find(
+            elif chord_name.find('-major triad') != -1:  # (e.g., E--major triad) in  279 slice 33
+                chord_name = chord_name.replace('-major triad', '')  # translate to support
+            elif chord_name.find(
                     '-dominant seventh chord') != -1:  # (e.g., E--major triad) in  279 slice 33
-                chord_name = chord_label.pitchedCommonName.replace('-dominant seventh chord',
+                chord_name = chord_name.replace('-dominant seventh chord',
                                                                    '7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-half-diminished seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-half-diminished seventh chord',
+            elif chord_name.find('-half-diminished seventh chord') != -1:
+                chord_name = chord_name.replace('-half-diminished seventh chord',
                                                                    '/o7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-minor-seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-minor-seventh chord', 'm7')  # translate to support
-            elif chord_label.pitchedCommonName.find('-major-seventh chord') != -1:
-                chord_name = chord_label.pitchedCommonName.replace('-major-seventh chord', 'M7')  # translate to support
+            elif chord_name.find('-minor-seventh chord') != -1:
+                chord_name = chord_name.replace('-minor-seventh chord', 'm7')  # translate to support
+            elif chord_name.find('-major-seventh chord') != -1:
+                chord_name = chord_name.replace('-major-seventh chord', 'M7')  # translate to support
             else:
-                chord_name = chord_label.pitchedCommonName  # Just in case the function cannot accept any names (e.g., E--major triad)
+                chord_name = chord_name  # Just in case the function cannot accept any names (e.g., E--major triad)
         else:
-            if chord_label.pitchedCommonName.find(
+            if chord_name.find(
                     '-incomplete dominant-seventh chord') != -1:  # contains "add" which does not work for harmony.ChordSymbol. This is probably becasue G D F, lacking of third to be 7th chord, and it is wrongly identified as GpoweraddX, so it needs modification.
                 chord_name = re.sub(r'/[A-Ga-g][b#-]*', '',
-                                    chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord',
+                                    chord_name.replace('-incomplete dominant-seventh chord',
                                                                           '7'))  # remove 'add' part
-            elif chord_label.pitchedCommonName.find(
+            elif chord_name.find(
                     '-incomplete major-seventh chord') != -1:  # contains "add" which does not work for harmony.ChordSymbol. This is probably becasue G D F, lacking of third to be 7th chord, and it is wrongly identified as GpoweraddX, so it needs modification.
                 chord_name = re.sub(r'/[A-Ga-g][b#-]*', '',
-                                    chord_label.pitchedCommonName.replace('-incomplete major-seventh chord',
+                                    chord_name.replace('-incomplete major-seventh chord',
                                                                           'M7'))  # remove 'add' part
             elif harmony.chordSymbolFigureFromChord(chord_label).find(
                     'add') != -1:  # contains "add" which does not work for harmony.ChordSymbol, at 095
@@ -236,15 +239,32 @@ def colllapse_interval(string):
         else:
             return str(int(string) % 7)  # collapse all the intervals within an octave
     elif type(string) == list:
-        for i, each_figure in enumerate(string):
+        string_2 = list(string)  # preserve the original FB
+        for i, each_figure in enumerate(string_2):
             if each_figure.find('9') != -1:
-                string[i] = '2'  #  9 as 2,
+                string_2[i] = '2'  #  9 as 2,
             if each_figure.find('8') != -1:
-                string[i] = '1'  #  9 as 2,
-        return string
+                string_2[i] = '1'  #  9 as 2,
+        return string_2
 
 
-def get_chord_tone(thisChord, fig, condition='N'):
+def get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, note='N'):
+    """
+    Little function deciding whether the bass note should be from the former or the latter
+    :param thisChord:
+    :param pitch_four_voice:
+    :return:
+    """
+    if pitch_class_four_voice[-1] != -1:  # if bass is not rest:
+        if note == 'Y':
+            bass = pitch_four_voice[-1]  # I want a note object, since the interval.interval function requires a note
+        else:
+            bass = pitch_four_voice[-1].pitch  # default
+    else:  # if bass is rest, which is pretty rare, then get whatever it is in thisChord
+        bass = thisChord.bass()
+    return bass
+
+def get_chord_tone(thisChord, fig, s, condition='N'):
     """
     Function to determine which sonorities are chord tones or not based on the given FB
     :param pitchNames:
@@ -257,23 +277,29 @@ def get_chord_tone(thisChord, fig, condition='N'):
     # So far, we collapse both figured bass and intervals, which means 9 and 2 are interchangable, etc.
     chord_pitch = []
     if fig != '':
-        fig = colllapse_interval(fig)
+        fig_collapsed = colllapse_interval(fig)
     if condition == 'N': # this means we need to choose which ones are CT based on the FB
         mark = ''  # indicating weird slices
         intervals = []
-        bass = thisChord.bass()  # TODO: this does not work when there is voice crossing between bass and tenor!
+        pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+        bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
         for note in thisChord._notes:
-            aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+            if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+                mark += '@'
+                bass_lower = bass.transpose(interval.Interval(-12))
+                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
+            else:
+                aInterval = interval.Interval(noteStart=bass, noteEnd=note)
             colllapsed_interval = colllapse_interval(aInterval.name[1:])
             intervals.append(colllapsed_interval)
             # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
             if '3' in colllapsed_interval  or '5' in colllapsed_interval or '1' in colllapsed_interval:
                 chord_pitch.append(note)
-            elif colllapsed_interval in fig:
+            elif any(colllapsed_interval in each for each in fig_collapsed):  # this won't match if 6 with #6
                 chord_pitch.append(note)
             else: # sonority not in the FB
-                mark = '??'
-        for each_figure in fig:
+                mark += '??'
+        for each_figure in fig_collapsed:
             if each_figure == '':
                 continue
             if each_figure[-1] not in intervals:  # FB not in sonorities
@@ -287,7 +313,18 @@ def get_chord_tone(thisChord, fig, condition='N'):
             chord_pitch.append(each_pitch)
         return chord_pitch, ''
 
-def translate_FB_into_chords(fig, thisChord, ptr, sChord):
+
+def add_chord(thisChord, chordname):
+    """
+    Remove unwanted symbolic from the chord name
+    :param thisChord:
+    :param chordname:
+    :return:
+    """
+
+    thisChord.addLyric(chordname)
+
+def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
     """
 
     :param fig:
@@ -295,41 +332,53 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord):
     :return:
     """
     chord_pitch = []
-    if '#5' in fig:
+    if '5' in fig:
         print('debug')
+    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice)
     if fig == '':  # No figures, meaning it can have a root position triad
         for pitch in thisChord.pitchNames:
             chord_pitch.append(pitch)
         chord_label = chord.Chord(chord_pitch)
         allowed_chord_quality = [ 'major triad', 'minor triad']
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
-            if thisChord.bass().pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:  # TODO: thisChord.bass() might not be correct to get the bass note!
+            if bass.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
                 if chord_label.pitchedCommonName.find('-major triad') != -1:
                     chord_name = chord_label.pitchedCommonName.replace('-major triad', '')
                 else:
                     chord_name = chord_label.pitchedCommonName.replace('-minor triad', 'm')
-                thisChord.addLyric(chord_name)
+                add_chord(thisChord, chord_name)
             else:
                 thisChord.addLyric(' ')
         else:
             thisChord.addLyric(' ')
     else:  # there is FB
         # look at the figure bass and see which notes are included
-        chord_pitch, mark = get_chord_tone(thisChord, fig)
+        chord_pitch, mark = get_chord_tone(thisChord, fig, s)
         chord_label = chord.Chord(chord_pitch)
         chord_name = is_legal_chord(chord_label)
         if chord_name:  # this slice contains a legal chord
-            thisChord.addLyric(mark + chord_name )
+            add_chord(thisChord, mark + chord_name)
         else:
-            if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice
-                next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', 'Y')  ## TODO: shouldn't we give the actual FB to this function?
-                ## TODO: should we also consider the mark for the next chord in some ways?
-                next_chord_label = chord.Chord(next_chord_pitch)
-                next_chord_name = is_legal_chord(next_chord_label)
-                if next_chord_name:
-                    thisChord.addLyric(mark + next_chord_name)  # use the chord name from the next slice
-                else:
-                    thisChord.addLyric('?')  # this means that there is FB but does not form a legal chord
+
+
+            if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice, but only consider it
+                # when it remains the same bass
+                pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
+                    sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
+                if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
+                    if pitch_four_voice[-1] == pitch_four_voice_next[-1]:  # if bass is the same
+                        next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
+                        ## TODO: should we also consider the mark for the next chord in some ways?
+                        next_chord_label = chord.Chord(next_chord_pitch)
+                        next_chord_name = is_legal_chord(next_chord_label)
+                        if next_chord_name:
+                            add_chord(thisChord, mark + next_chord_name)
+                        else:
+                            thisChord.addLyric('?')  # this means that there is FB but does not form a legal chord
+                    else:
+                        thisChord.addLyric(' ')
             else: # the last chord of the chorale, and it is not a legal chord
                 thisChord.addLyric('?')
 
@@ -337,7 +386,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord):
 def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'FB.musicxml' not in filename: continue
-        #if '017' not in filename: continue
+        # if '013' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
@@ -383,7 +432,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        # if '026' not in filename: continue
+        #if '021' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
@@ -400,12 +449,12 @@ def lyrics_to_chordify(want_IR):
                         # if fig == [{'number': ['6', '#']}]:
                         #     print('debug')
                         for j, one_FB in enumerate(fig):
-                            translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j], i + j, sChords)
+                            translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j], i + j, sChords, s)
                             for line in fig[j]['number']:
                                 sChords.recurse().getElementsByClass('Chord')[i + j].addLyric(line)
                     break
             if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
-                translate_FB_into_chords('', thisChord, i, sChords)
+                translate_FB_into_chords('', thisChord, i, sChords, s)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
             # octave apart will be collapsed!
 
