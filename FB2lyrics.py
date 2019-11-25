@@ -368,7 +368,8 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                 pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
                     sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
                 if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
-                    if pitch_four_voice[-1] == pitch_four_voice_next[-1]:  # if bass is the same
+                    if pitch_four_voice[-1] == pitch_four_voice_next[-1] or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
+                        # same bass or different basses but same beat (362 mm.2 last)
                         next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
                         ## TODO: should we also consider the mark for the next chord in some ways?
                         next_chord_label = chord.Chord(next_chord_pitch)
@@ -376,11 +377,26 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                         if next_chord_name:
                             add_chord(thisChord, mark + next_chord_name)
                         else:
-                            thisChord.addLyric('?')  # this means that there is FB but does not form a legal chord
+                            thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                    elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
+                        if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[0].type == 'stop':
+                            next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
+                                sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
+                                'Y')  ## TODO: shouldn't we give the actual FB to this function?
+                            ## TODO: should we also consider the mark for the next chord in some ways?
+                            next_chord_label = chord.Chord(next_chord_pitch)
+                            next_chord_name = is_legal_chord(next_chord_label)
+                            if next_chord_name:
+                                add_chord(thisChord, mark + next_chord_name)
+                            else:
+                                thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                        else:
+                            thisChord.addLyric(' ' + mark)
+
                     else:
-                        thisChord.addLyric(' ')
+                        thisChord.addLyric(' ' + mark)
             else: # the last chord of the chorale, and it is not a legal chord
-                thisChord.addLyric('?')
+                thisChord.addLyric('?' + mark)
 
 
 def extract_FB_as_lyrics():
@@ -432,7 +448,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        #if '021' not in filename: continue
+        #if '362' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
