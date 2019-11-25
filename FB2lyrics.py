@@ -452,7 +452,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        if '362' not in filename: continue
+        # if '172' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
@@ -468,10 +468,37 @@ def lyrics_to_chordify(want_IR):
                         print(fig)
                         # if fig == [{'number': ['6', '#']}]:
                         #     print('debug')
-                        for j, one_FB in enumerate(fig):
-                            translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j], i + j, sChords, s)
-                            for line in fig[j]['number']:
-                                sChords.recurse().getElementsByClass('Chord')[i + j].addLyric(line)
+                        displacement = 0
+                        denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
+                        for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
+                            slice_duration = sChords.recurse().getElementsByClass('Chord')[i + j + displacement].duration.quarterLength
+                            if 'duration' in fig[j]:
+                                if float(fig[j]['duration'])/ float(denominator_chorale) == slice_duration:  # this means
+                                    # the current FB should go to the current slice
+
+                                    translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], i + j + displacement, sChords, s)
+                                    for line in fig[j]['number']:
+                                        sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
+                                else:  # the duration does not add up, meaning it should look further ahead
+                                    translate_FB_into_chords(fig[j]['number'],
+                                                             sChords.recurse().getElementsByClass('Chord')[
+                                                                 i + j + displacement], i + j + displacement, sChords,
+                                                             s)
+                                    for line in fig[j]['number']:
+                                        sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(
+                                            line)
+                                    while slice_duration < float(fig[j]['duration'])/ float(denominator_chorale):
+                                        displacement += 1
+                                        slice_duration += sChords.recurse().getElementsByClass('Chord')[i + j + displacement].duration.quarterLength
+                                    if slice_duration != float(fig[j]['duration'])/ float(denominator_chorale):
+                                        input('duration of FB does not equal to the duration of many slices!')
+
+                            else:  # no duration, only one FB, just matching the current slice
+                                translate_FB_into_chords(fig[j]['number'],
+                                                         sChords.recurse().getElementsByClass('Chord')[
+                                                             i + j + displacement], i + j + displacement, sChords, s)
+                                for line in fig[j]['number']:
+                                    sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
                     break
             if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
                 translate_FB_into_chords('', thisChord, i, sChords, s)
