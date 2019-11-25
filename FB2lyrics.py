@@ -295,7 +295,11 @@ def get_chord_tone(thisChord, fig, s, condition='N'):
             # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
             if '3' in colllapsed_interval  or '5' in colllapsed_interval or '1' in colllapsed_interval:
                 chord_pitch.append(note)
-            elif any(colllapsed_interval in each for each in fig_collapsed):  # this won't match if 6 with #6
+            elif any(colllapsed_interval in each for each in fig_collapsed):
+                chord_pitch.append(note)
+            elif colllapsed_interval == '6' and (fig_collapsed == ['4', '3'] or fig_collapsed == ['4', '2'] or fig_collapsed == ['2']):  # TODO: check if there is 246 case happen
+                chord_pitch.append(note)
+            elif colllapsed_interval == '4' and fig_collapsed == ['2']:
                 chord_pitch.append(note)
             else: # sonority not in the FB
                 mark += '??'
@@ -448,7 +452,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        #if '362' not in filename: continue
+        if '362' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
