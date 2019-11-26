@@ -452,7 +452,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        # if '172' not in filename: continue
+        # if '043' not in filename and '050' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
@@ -473,6 +473,9 @@ def lyrics_to_chordify(want_IR):
                         for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
                             slice_duration = sChords.recurse().getElementsByClass('Chord')[i + j + displacement].duration.quarterLength
                             if 'duration' in fig[j]:
+                                if slice_duration * 2 == float(fig[j]['duration']) and denominator_chorale == 4:
+                                    fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
+                                    # don't know why some xml has half of its standard duration value
                                 if float(fig[j]['duration'])/ float(denominator_chorale) == slice_duration:  # this means
                                     # the current FB should go to the current slice
 
