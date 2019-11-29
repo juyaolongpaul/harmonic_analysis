@@ -114,8 +114,6 @@ def decode_FB_from_lyrics(lyrics):
         figure_duration = each_layer.text.split(',')
         #print (figure_duration)
         for j, each_figure_duration in enumerate(figure_duration):
-            if '4' in each_figure_duration:
-                print('debug')
             if i == 0:
                 each_figure_dic = {}
                 if '+' in each_figure_duration:
@@ -261,7 +259,7 @@ def get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, note='N')
         else:
             bass = pitch_four_voice[-1].pitch  # default
     else:  # if bass is rest, which is pretty rare, then get whatever it is in thisChord
-        bass = thisChord.bass()
+        bass = pitch_four_voice[-2]  # in this case, the bass is tenor
     return bass
 
 def get_chord_tone(thisChord, fig, s, condition='N'):
@@ -276,7 +274,8 @@ def get_chord_tone(thisChord, fig, s, condition='N'):
     # For now label (2) as ??, for (3), look at the next slice, and the FB should be there, if not, output ?!
     # So far, we collapse both figured bass and intervals, which means 9 and 2 are interchangable, etc.
     chord_pitch = []
-    if fig != '':
+    #print('current fig is', fig)
+    if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
     if condition == 'N': # this means we need to choose which ones are CT based on the FB
         mark = ''  # indicating weird slices
@@ -328,6 +327,40 @@ def add_chord(thisChord, chordname):
 
     thisChord.addLyric(chordname)
 
+
+def is_suspension(ptr, ptr2, s, sChord, voice_number):
+    """
+    For possible suspension figures (e.g., 7+6, 6+5, 4+3), test if contrapuntally speaking it is a suspension or not
+    :return:
+    """
+    thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
+    pitch_class_four_voice, pitch_four_voice = \
+        get_pitch_class_for_four_voice(thisChord, s)
+    ## find which voice does this note live
+    # for real_voice_number, each_note in enumerate(pitch_four_voice) :
+    #     if each_note == thisChord._notes[voice_number]:
+    #         if real_voice_number != voice_number:  # There can be two edge cases: (1) voice crossing and (2) two voices
+    #             #share the same note
+    #             input('how to deal with these two edge cases?')
+    # TODO: use this section of code above to find the edge cases
+
+    pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
+        sChord.recurse().getElementsByClass('Chord')[ptr +  ptr2], s)
+    if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
+        if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass:  # bass remains the same or same pitch class coz sometimes there can be a decoration in between (e.g., 050 last measure), (1)
+            for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
+                if each_note.beat == thisChord.beat: # found the potential suspension note
+                    if note_number == 0:  # this means the previous note is in last measure:
+                        previous_note = \
+                        s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
+                    else:
+                        previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[note_number - 1]
+                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass:  # the previous note and the current note should be the same, or in the same pitch class (2)
+                        return True
+    return False
+
+
+
 def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
     """
 
@@ -336,17 +369,50 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
     :return:
     """
     chord_pitch = []
-    if '5' in fig:
-        print('debug')
+    if fig != [' '] and fig != '':
+        fig_collapsed = colllapse_interval(fig)
     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice)
-    if fig == '':  # No figures, meaning it can have a root position triad
+    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+    if '7' in fig or '6' in fig or '4' in fig:  # In these cases, examine whether this note is a suspension or not
+        for voice_number, note in enumerate(thisChord._notes):
+            ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
+            # also the voice number is inverted compared to the part number in score object
+            if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+                bass_lower = bass.transpose(interval.Interval(-12))
+                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
+            else:
+                aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+            colllapsed_interval = colllapse_interval(aInterval.name[1:])
+            if any(colllapsed_interval in each for each in fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
+                # Now check whether the next figure is 6, 5, 3, resepctively
+                ptr2 = 1  # this is how many onset slices we need to look ahead to get a figure
+                while sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyric in [None, ' ']:  # if the there is no FB, keep searching
+                    if len(sChord.recurse().getElementsByClass('Chord')) - 1 > ptr + ptr2:
+                        ptr2 += 1
+                    else:  # already hit the last element
+                        break
+
+                if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
+                        thisChord.style.color = 'pink'
+                elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
+                        thisChord.style.color = 'pink'
+                elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
+                        thisChord.style.color = 'pink'
+                # possible_suspension = note
+                # thisChord.addLyric('SUS')
+
+        # if is_suspension():
+        #     # highlight the note
+    if fig == []:  # No figures, meaning it can have a root position triad
         for pitch in thisChord.pitchNames:
             chord_pitch.append(pitch)
         chord_label = chord.Chord(chord_pitch)
         allowed_chord_quality = [ 'major triad', 'minor triad']
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
-            if bass.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
+            if bass.pitch.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
                 if chord_label.pitchedCommonName.find('-major triad') != -1:
                     chord_name = chord_label.pitchedCommonName.replace('-major triad', '')
                 else:
@@ -447,64 +513,82 @@ def extract_FB_as_lyrics():
         tree.write(open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
 
 
+def align_FB_with_slice(bassline, sChords):
+    """
+    I decide to first translate all the FB as lyrics, and then translate them as lyrics, because the translation needs
+    global FB to be there first.
+    :param bassline:
+    :param sChords:
+    :return:
+    """
+    for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+        for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
+            if each_bass.beat == thisChord.beat:
+                bassnote = each_bass
+                if bassnote.lyrics != []:
+                    fig = decode_FB_from_lyrics(bassnote.lyrics)
+                    #print(fig)
+                    displacement = 0
+                    denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
+                    for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
+                        slice_duration = sChords.recurse().getElementsByClass('Chord')[
+                            i + j + displacement].duration.quarterLength
+                        if 'duration' in fig[j]:
+                            if slice_duration * 2 == float(fig[j]['duration']) and denominator_chorale == 4:
+                                fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
+                                # don't know why some xml has half of its standard duration value
+                            if float(fig[j]['duration']) / float(denominator_chorale) == slice_duration:  # this means
+                                # the current FB should go to the current slice
+                                for line in fig[j]['number']:
+                                    sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
+                            else:  # the duration does not add up, meaning it should look further ahead
+                                for line in fig[j]['number']:
+                                    sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(
+                                        line)
+                                while slice_duration < float(fig[j]['duration']) / float(denominator_chorale):
+                                    displacement += 1
+                                    slice_duration += sChords.recurse().getElementsByClass('Chord')[
+                                        i + j + displacement].duration.quarterLength
+                                if slice_duration != float(fig[j]['duration']) / float(denominator_chorale):
+                                    input('duration of FB does not equal to the duration of many slices!')
+
+                        else:  # no duration, only one FB, just matching the current slice
+                            for line in fig[j]['number']:
+                                sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
+                else:
+                    thisChord.addLyric(' ')
+                break
+
+
+def get_FB(sChords, ptr):
+    """
+    Get FB from lyrics with multiple lines (indicating multiple figures)
+    :return:
+    """
+    fig = []
+    for each_line in sChords.recurse().getElementsByClass('Chord')[ptr].lyrics:
+        fig.append(each_line.text)
+    if fig == [' ']:
+        fig = []
+    return fig
 
 def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        # if '043' not in filename and '050' not in filename: continue
+        # if '172' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
         sChords = s.chordify()
+        align_FB_with_slice(bassline, sChords)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-
-            each_measure = bassline.measure(thisChord.measureNumber)
-            for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
-                if each_bass.beat == thisChord.beat:
-                    bassnote = each_bass
-                    if bassnote.lyrics != []:
-                        fig = decode_FB_from_lyrics(bassnote.lyrics)
-                        print(fig)
-                        # if fig == [{'number': ['6', '#']}]:
-                        #     print('debug')
-                        displacement = 0
-                        denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
-                        for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
-                            slice_duration = sChords.recurse().getElementsByClass('Chord')[i + j + displacement].duration.quarterLength
-                            if 'duration' in fig[j]:
-                                if slice_duration * 2 == float(fig[j]['duration']) and denominator_chorale == 4:
-                                    fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
-                                    # don't know why some xml has half of its standard duration value
-                                if float(fig[j]['duration'])/ float(denominator_chorale) == slice_duration:  # this means
-                                    # the current FB should go to the current slice
-
-                                    translate_FB_into_chords(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], i + j + displacement, sChords, s)
-                                    for line in fig[j]['number']:
-                                        sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
-                                else:  # the duration does not add up, meaning it should look further ahead
-                                    translate_FB_into_chords(fig[j]['number'],
-                                                             sChords.recurse().getElementsByClass('Chord')[
-                                                                 i + j + displacement], i + j + displacement, sChords,
-                                                             s)
-                                    for line in fig[j]['number']:
-                                        sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(
-                                            line)
-                                    while slice_duration < float(fig[j]['duration'])/ float(denominator_chorale):
-                                        displacement += 1
-                                        slice_duration += sChords.recurse().getElementsByClass('Chord')[i + j + displacement].duration.quarterLength
-                                    if slice_duration != float(fig[j]['duration'])/ float(denominator_chorale):
-                                        input('duration of FB does not equal to the duration of many slices!')
-
-                            else:  # no duration, only one FB, just matching the current slice
-                                translate_FB_into_chords(fig[j]['number'],
-                                                         sChords.recurse().getElementsByClass('Chord')[
-                                                             i + j + displacement], i + j + displacement, sChords, s)
-                                for line in fig[j]['number']:
-                                    sChords.recurse().getElementsByClass('Chord')[i + j + displacement].addLyric(line)
-                    break
-            if bassnote.lyrics == []:  # slices without FB, it still needs a chord label
-                translate_FB_into_chords('', thisChord, i, sChords, s)
+            fig = get_FB(sChords, i)
+            if fig != []:
+                print(fig)
+            if fig == ['7', '5']:
+                print('debug')
+            translate_FB_into_chords(fig, thisChord, i, sChords, s)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
             # octave apart will be collapsed!
 
