@@ -357,6 +357,8 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number):
                         previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[note_number - 1]
                     if previous_note.pitch.pitchClass == each_note.pitch.pitchClass:  # the previous note and the current note should be the same, or in the same pitch class (2)
                         return True
+                elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
+                    return True
     return False
 
 
@@ -373,7 +375,10 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
         fig_collapsed = colllapse_interval(fig)
     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+
     if '7' in fig or '6' in fig or '4' in fig:  # In these cases, examine whether this note is a suspension or not
+        # if thisChord.measureNumber == 12:
+        #     print('debug')
         for voice_number, note in enumerate(thisChord._notes):
             ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
             # also the voice number is inverted compared to the part number in score object
@@ -576,7 +581,7 @@ def lyrics_to_chordify(want_IR):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'lyric' not in filename: continue
         elif 'chordify' in filename: continue
-        # if '172' not in filename: continue
+        if '172' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         bassline = s.parts[-1]
@@ -595,9 +600,11 @@ def lyrics_to_chordify(want_IR):
         s.insert(0, sChords)
         if want_IR:
             IR = s.chordify()
-            for c in IR.recurse().getElementsByClass('Chord'):
+            for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
                 c.closedPosition(forceOctave=4, inPlace=True)
                 c.annotateIntervals()
+                fig = get_FB(IR, j)
+                translate_FB_into_chords(fig, c, j, IR, s)
             s.insert(0, IR)
 
         s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-4] + '_' + 'chordify' + '.xml'))
