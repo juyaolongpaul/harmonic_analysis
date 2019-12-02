@@ -591,22 +591,33 @@ def lyrics_to_chordify(want_IR):
             fig = get_FB(sChords, i)
             if fig != []:
                 print(fig)
-            if fig == ['7', '5']:
-                print('debug')
+            # if fig == ['7', '5']:
+            #     print('debug')
             translate_FB_into_chords(fig, thisChord, i, sChords, s)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
             # octave apart will be collapsed!
-
-        s.insert(0, sChords)
         if want_IR:
             IR = s.chordify()
             for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
                 c.closedPosition(forceOctave=4, inPlace=True)
                 c.annotateIntervals()
-                fig = get_FB(IR, j)
-                translate_FB_into_chords(fig, c, j, IR, s)
-            s.insert(0, IR)
-
+            IR2 = s.chordify()  # this is used because annotateIntervals only works properly if I collapse octaves, but for suspension, I need the uncollapsed version,
+            # so I need to create a new chordify voice
+            for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):
+                for each_line in IR.recurse().getElementsByClass('Chord')[j].lyrics:
+                    c.addLyric(each_line.text)  # copy lyrics to this voice
+            for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):  # identifying suspension needs full figures
+                fig = get_FB(IR2, j)
+                if fig != []:
+                    print(fig)
+                if fig == ['5', '4']:
+                    print('debug')
+                translate_FB_into_chords(fig, c, j, IR2, s)
+                c.closedPosition(forceOctave=4, inPlace=True)
+            s.insert(0, sChords)
+            s.insert(0, IR2)
+        else:
+            s.insert(0, sChords)
         s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-4] + '_' + 'chordify' + '.xml'))
 
 
