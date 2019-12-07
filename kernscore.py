@@ -129,8 +129,8 @@ class KernScore(object):
             if len(item['chord'])>1:
                 print(item['chord'], file=f)
                 chord.append(item['chord'])
-            else:
-                print(item['chord'])
+            # else:
+            #     print(item['chord'])
         kernfile.close()
         return chord
     def export_midi(self, file_path):
@@ -243,15 +243,15 @@ def extract_chord_labels(file_path, filetype):
     x = KernScore()
     for file_name in os.listdir(file_path):
         if file_name[-4:] == filetype:
-            print(file_name)
+            #print(file_name)
             x.import_kernfile(os.path.join(file_path, file_name))
             p = re.compile(r'\d{3}')
             id = p.findall(file_name)
             chord = x.import_kernfile(os.path.join(file_path, file_name))
             for file_name_read_GT in os.listdir(os.path.join(file_path, 'Real_GT')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
                 if id[0] in file_name_read_GT:
-                    if id[0] == '259':
-                        print('debug')
+                    # if id[0] == '259':
+                    #     print('debug')
                     if os.path.isfile(os.path.join(file_path,file_name)[:-3] + 'txt'): # Save Nat's data in a difference name
                         f_nat = open(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt', 'w')
                     f = open(os.path.join(file_path,file_name)[:-3] + 'txt', 'w')
@@ -278,12 +278,12 @@ def extract_chord_labels(file_path, filetype):
                         if id_id != []:  # has flat or sharp
                             root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
                             transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
-                            print(transposed_result)
+                            #print(transposed_result)
                             print(transposed_result, file=f)
                             # print('original: ', line, 'transposed: ', transposed_result)
                         else:  # no flat or sharp, which means only the first element is the root
                             transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
-                            print(transposed_result)
+                            #print(transposed_result)
                             print(transposed_result, file=f)
                             # print('original: ', line, 'transposed: ', transposed_result)
                     f.close()
@@ -297,8 +297,8 @@ def extract_chord_labels(file_path, filetype):
                 p = re.compile(r'[#-]+')
                 for file_name_read_spot_checking in os.listdir(os.path.join(file_path, 'Spot_Checking')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
                     if id[0] in file_name_read_spot_checking:
-                        if id[0] == '283':
-                            print('debug')
+                        # if id[0] == '283':
+                        #     print('debug')
                         s = converter.parse(os.path.join(file_path, 'Spot_Checking', file_name_read_spot_checking))
                         s_key = converter.parse(
                             os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[

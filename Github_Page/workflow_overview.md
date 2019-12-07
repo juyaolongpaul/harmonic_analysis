@@ -1,0 +1,16 @@
+---
+layout: default
+title: Workflow Overview
+
+---
+
+## Workflow Overview
+
+In `main.py`, there are many parameters to customize regarding the analytical styles, types of machine learning models, model architectures, and hyper-parameters. I will provide a chart introducing all the available combinations of these parameters in the section of "Parameter Adjustment". 
+
+For now, the project can accept Bach chorales, and the corresponding annotations from [here](https://natsguitar.github.io/FlexibleChoraleHarmonicAnalysisGUI/) based on my co-authored paper with Nathaniel Condit-Schultz called ["A Flexible Approach to Automated Harmonic Analysis: Multiple Annotations of Chorales by Bach and Praetorius"](http://ismir2018.ircam.fr/doc/pdfs/283_Paper.pdf), where the music and annotations are encoded in `.krn` files. Afterward, a series of functions are applied to pre-process the data to feed the machine learning models as inputs and outputs for training, and then the model will predict non-chord tones and the corresponding chord labels on the test set, presented as musicXML files for users to see the end results. Specifically, in the script of `main.py`:
+* `extract_chord_labels` function is used to extract the chord labels from the `.krn` files and save them as `.txt` files. For example, for the annotations of the maximally harmonic style our ISMIR paper used, they can be found in the repository as `.krn` files located under `./genos-corpus/answer-sheets/bach-chorales/New_annotation/ISMIR2019/`. They are in the format of `Chorales_Bach_XXX.krn`, and the function `extract_chord_labels` generates `.txt` files (for chord labels) in the same directory with the same name.
+* `annotation_translation` function is used to translate the chord syntax of the annotations into the ones recognized by `music21`, a package which this project will rely on to do various kinds of music processing. The resuting files are named as `translated_Chorales_Bach_[CHORALE_ID]ISMIR2019.txt`.
+* `provide_path_12keys` will transpose the chord annotations into 12 possible keys, so we can use either the annotations in the key of C major or A minor (without data augmentation), or use the annotations in all keys (with data augmentation) to train the model. Correspondingly, `transpose_polyphony` is used to translate the music into 12 keys. These files will all be saved in the directory of `./genos-corpus/answer-sheets/bach-chorales/New_annotation/ISMIR2019/`. The resulting files are named as `transposed_KB[KEY]KEtranslated_Chorales_Bach_[CHORALE_ID]ISMIR2019.txt`.
+* Once we have the music and the chord labels ready, `generate_data_windowing_non_chord_tone_new_annotation_12keys` will translate all of them into an encoding (one-hot) format which can be directly used by the machine learning models. These files will be saved in the directory of `./data_for_ML`.
+* Last, `train_and_predict_non_chord_tone` will train the machine learning model, save all the models, output all the performance information into the text file (they are saved in the directory of `./ML_result/`), and visualize all the predicted non-chord-tones as well as the chord labels through the generated musicXML files (saved in the directory of `./predicted_result`).   
