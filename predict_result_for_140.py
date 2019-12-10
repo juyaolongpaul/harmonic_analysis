@@ -302,7 +302,7 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                              'major triad',
                              'minor triad',
                              'diminished triad']
-    if chord_tone != [0] * len(chord_tone):  # there must be a slice having at least one chord tone
+    if chord_tone != [0] * len(chord_tone) and chord_label.pitchClasses != []:  # there must be a slice having at least one chord tone
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
             # This is the chord we can output directly
             # https://python-forum.io/Thread-Ho-to-check-if-string-contains-substring-from-list

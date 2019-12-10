@@ -606,11 +606,11 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '089' not in filename: continue
+        # if '089' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for n in s.parts[-1].recurse().notes:
-            n.transpose(-12, inPlace=True)
+            n.transpose(interval.Interval('P-8'), inPlace=True)  # don't use -12, since the spelling is messed up!
         # transpose bass down an octave to avoid voice crossings
         bassline = s.parts[-1]
         sChords = s.chordify()
