@@ -5,7 +5,7 @@ import re
 from get_input_and_output import get_pitch_class_for_four_voice
 
 
-def translate_FB_as_lyrics(number, suffix, prefix):
+def translate_FB_as_lyrics(number, suffix, prefix, extension):
     """
     Translate FB in lists into string added to lyrics
     :param number:
@@ -13,6 +13,7 @@ def translate_FB_as_lyrics(number, suffix, prefix):
     :param duration:
     :return:
     """
+
     if prefix == 'sharp':
         prefix_sign = '#'
     elif prefix == 'flat':
@@ -41,7 +42,10 @@ def translate_FB_as_lyrics(number, suffix, prefix):
             input('this is the suffix you have not considered yet!')
         else:
             suffix_sign = suffix
-    return prefix_sign+suffix_sign+number
+    if extension == '': # no extension sign
+        return prefix_sign+suffix_sign+number
+    else:
+        return prefix_sign + suffix_sign + number + '_'  # plus the continuation line is found
 
 
 def add_FB_content(j, each_fb, i, text):
@@ -56,14 +60,14 @@ def add_FB_content(j, each_fb, i, text):
     if i < len(each_fb['number']):
         if 'duration' in each_fb:
             if text.text is None:
-                text.text = translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i]) + '+' + each_fb['duration']
+                text.text = translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i], each_fb['extension'][i]) + '+' + each_fb['duration']
             else:
-                text.text += translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i]) + '+' + each_fb['duration']
+                text.text += translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i], each_fb['extension'][i]) + '+' + each_fb['duration']
         else:
             if text.text is None:
-                text.text = translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i])
+                text.text = translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i], each_fb['extension'][i])
             else:
-                text.text += translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i])
+                text.text += translate_FB_as_lyrics(each_fb['number'][i], each_fb['suffix'][i], each_fb['prefix'][i], each_fb['extension'][i])
         return text
     else:
         if j == 0: # this is when a figured bass does not have as much layers as the following ones
@@ -82,7 +86,7 @@ def add_FB_to_lyrics(note, fig):
         if number_of_layers < len(each_fb['number']):
             number_of_layers = len(each_fb['number'])
     for i in range(number_of_layers):  # i means the current number of layer, horizontally
-        print('numer of layers', i)
+        #print('numer of layers', i)
         lyric = ET.SubElement(note, 'lyric', {'number':str(i + 1)})  # create lyric sub element
         text = ET.SubElement(lyric, 'text')
         for j, each_fb in enumerate(fig):  # j means the ID of figures for the bass in the current layer
@@ -96,7 +100,10 @@ def add_FB_to_lyrics(note, fig):
 def adding_XXXfix(each_FB_digit, name, single_XXXfix):
     XXXfix = each_FB_digit.find(name)
     if XXXfix is not None:
-        single_XXXfix.append(each_FB_digit.find(name).text)
+        if name == 'extend':
+            single_XXXfix.append(each_FB_digit.find(name).attrib)
+        else:
+            single_XXXfix.append(each_FB_digit.find(name).text)
     else:
         single_XXXfix.append('')
     return single_XXXfix
@@ -486,7 +493,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
 def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'FB.musicxml' not in filename: continue
-        # if '013' not in filename: continue
+        if '013' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
@@ -503,18 +510,22 @@ def extract_FB_as_lyrics():
                         single_digit = []  # list for all the digits
                         single_suffix = []  # list for all the suffix
                         single_prefix = []
+                        extension = []
                         for each_FB_digit in ele.iter():
                             if each_FB_digit.tag == 'figure':
                                 single_digit = adding_XXXfix(each_FB_digit, 'figure-number', single_digit)
                                 single_suffix = adding_XXXfix(each_FB_digit, 'suffix', single_suffix)
                                 single_prefix = adding_XXXfix(each_FB_digit, 'prefix', single_prefix)
+                                # if each_FB_digit.find('extend') is not None:
+                                #     print('debug')
+                                extension = adding_XXXfix(each_FB_digit, 'extend', extension)
+                                print('extension is', extension)
                                 FB_digit['number'] = single_digit
                                 FB_digit['suffix'] = single_suffix
                                 FB_digit['prefix'] = single_prefix
+                                FB_digit['extension'] = extension
                             if each_FB_digit.tag == 'duration':
                                 FB_digit['duration'] = each_FB_digit.text
-
-
                         fig.append(FB_digit)
                         print(fig)
                     if ele.tag == 'note':
@@ -651,7 +662,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    #extract_FB_as_lyrics()
+    extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify(want_IR)
+    #lyrics_to_chordify(want_IR)
 
