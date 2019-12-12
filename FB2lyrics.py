@@ -341,7 +341,7 @@ def add_chord(thisChord, chordname):
     thisChord.addLyric(chordname)
 
 
-def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord):
+def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr):
     """
     Modular function to label suspension
     :param ptr:
@@ -354,6 +354,8 @@ def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord):
     """
     if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
         thisChord.style.color = 'pink'
+        suspension_ptr.append(ptr + ptr2)
+    return suspension_ptr
 
 
 def is_suspension(ptr, ptr2, s, sChord, voice_number):
@@ -394,7 +396,7 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number):
 
 
 
-def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
+def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     """
 
     :param fig:
@@ -430,11 +432,12 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                             break
 
                     if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
                     elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
                     elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
                     # possible_suspension = note
                     # thisChord.addLyric('SUS')
 
@@ -472,7 +475,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                     pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
                         sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
                     if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
-                        if pitch_four_voice[-1] == pitch_four_voice_next[-1] or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
+                        if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
                             # same bass or different basses but same beat (362 mm.2 last)
                             next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
                             ## TODO: should we also consider the mark for the next chord in some ways?
@@ -506,6 +509,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                 and 'b' not in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text:
             # making sure it is chord label not FB, but edge case does exist (b7 maybe?)
             thisChord.addLyric(sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text)
+    return suspension_ptr
 
 
 def extract_FB_as_lyrics():
@@ -635,8 +639,10 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '013' not in filename: continue
+        # if '248' not in filename: continue
         print(filename)
+        suspension_ptr = []  # list that records all the suspensions
+        ptr = 0  # record how many suspensions we have within this chorale
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for n in s.parts[-1].recurse().notes:
             n.transpose(interval.Interval('P-8'), inPlace=True)  # don't use -12, since the spelling is messed up!
@@ -650,9 +656,24 @@ def lyrics_to_chordify(want_IR):
                 print(fig)
             if fig == ['6', '3']:
                 print('debug')
-            translate_FB_into_chords(fig, thisChord, i, sChords, s)
+            suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
             # octave apart will be collapsed!
+        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+        # replace the suspension slices with the chord labels where it is resolved
+            if thisChord.style.color == 'pink':  # the suspensions
+                for j in range(i, suspension_ptr[ptr]):
+                    if any(char.isalpha() for char in
+                        sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text) \
+                    and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text:
+                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text\
+                            = sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text
+                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
+                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('?', '')
+                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
+                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('!', '')
+                ptr += 1
+
         if want_IR:
             IR = s.chordify()
             for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
