@@ -316,7 +316,7 @@ def get_chord_tone(thisChord, fig, s, condition='N'):
             else: # sonority not in the FB
                 mark += '??'
         for each_figure in fig_collapsed:
-            if each_figure == '':
+            if each_figure == '' or '_' in each_figure:
                 continue
             if each_figure[-1] not in intervals:  # FB not in sonorities
                 if each_figure in ['n', '#', 'b'] and '3' in intervals: # this is an exception
@@ -339,6 +339,21 @@ def add_chord(thisChord, chordname):
     """
 
     thisChord.addLyric(chordname)
+
+
+def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord):
+    """
+    Modular function to label suspension
+    :param ptr:
+    :param ptr2:
+    :param s:
+    :param sChord:
+    :param voice_number:
+    :param thisChord:
+    :return:
+    """
+    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
+        thisChord.style.color = 'pink'
 
 
 def is_suspension(ptr, ptr2, s, sChord, voice_number):
@@ -389,91 +404,77 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
     chord_pitch = []
     if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
-    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+    if fig != ['_']:  # no underline for this slice
+        pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+        bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
 
-    if '7' in fig or '6' in fig or '4' in fig:  # In these cases, examine whether this note is a suspension or not
-        # if thisChord.measureNumber == 12:
-        #     print('debug')
-        for voice_number, note in enumerate(thisChord._notes):
-            ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
-            # also the voice number is inverted compared to the part number in score object
-            if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
-                bass_lower = bass.transpose(interval.Interval(-12))
-                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
-            else:
-                aInterval = interval.Interval(noteStart=bass, noteEnd=note)
-            colllapsed_interval = colllapse_interval(aInterval.name[1:])
-            if any(colllapsed_interval in each for each in fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
-                # Now check whether the next figure is 6, 5, 3, resepctively
-                ptr2 = 1  # this is how many onset slices we need to look ahead to get a figure
-                while sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyric in [None, ' ']:  # if the there is no FB, keep searching
-                    if len(sChord.recurse().getElementsByClass('Chord')) - 1 > ptr + ptr2:
-                        ptr2 += 1
-                    else:  # already hit the last element
-                        break
-
-                if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
-                        thisChord.style.color = 'pink'
-                elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
-                        thisChord.style.color = 'pink'
-                elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
-                        thisChord.style.color = 'pink'
-                # possible_suspension = note
-                # thisChord.addLyric('SUS')
-
-        # if is_suspension():
-        #     # highlight the note
-    if fig == []:  # No figures, meaning it can have a root position triad
-        for pitch in thisChord.pitchNames:
-            chord_pitch.append(pitch)
-        chord_label = chord.Chord(chord_pitch)
-        allowed_chord_quality = [ 'major triad', 'minor triad']
-        if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
-            if bass.pitch.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
-                if chord_label.pitchedCommonName.find('-major triad') != -1:
-                    chord_name = chord_label.pitchedCommonName.replace('-major triad', '')
+        if '7' in fig or '6' in fig or '4' in fig:  # In these cases, examine whether this note is a suspension or not
+            # if thisChord.measureNumber == 12:
+            #     print('debug')
+            for voice_number, note in enumerate(thisChord._notes):
+                ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
+                # also the voice number is inverted compared to the part number in score object
+                if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+                    bass_lower = bass.transpose(interval.Interval(-12))
+                    aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
                 else:
-                    chord_name = chord_label.pitchedCommonName.replace('-minor triad', 'm')
-                add_chord(thisChord, chord_name)
+                    aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+                colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                if any(colllapsed_interval in each for each in fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
+                    # Now check whether the next figure is 6, 5, 3, resepctively
+                    ptr2 = 1  # this is how many onset slices we need to look ahead to get a figure
+                    while sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyric in [None, ' ']:  # if the there is no FB, keep searching
+                        if len(sChord.recurse().getElementsByClass('Chord')) - 1 > ptr + ptr2:
+                            ptr2 += 1
+                        else:  # already hit the last element
+                            break
+
+                    if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+                    elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+                    elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                        label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord)
+                    # possible_suspension = note
+                    # thisChord.addLyric('SUS')
+
+            # if is_suspension():
+            #     # highlight the note
+        if fig == []:  # No figures, meaning it can have a root position triad
+            for pitch in thisChord.pitchNames:
+                chord_pitch.append(pitch)
+            chord_label = chord.Chord(chord_pitch)
+            allowed_chord_quality = ['major triad', 'minor triad']
+            if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
+                if bass.pitch.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
+                    if chord_label.pitchedCommonName.find('-major triad') != -1:
+                        chord_name = chord_label.pitchedCommonName.replace('-major triad', '')
+                    else:
+                        chord_name = chord_label.pitchedCommonName.replace('-minor triad', 'm')
+                    add_chord(thisChord, chord_name)
+                else:
+                    thisChord.addLyric(' ')
             else:
                 thisChord.addLyric(' ')
-        else:
-            thisChord.addLyric(' ')
-    else:  # there is FB
-        # look at the figure bass and see which notes are included
-        chord_pitch, mark = get_chord_tone(thisChord, fig, s)
-        chord_label = chord.Chord(chord_pitch)
-        chord_name = is_legal_chord(chord_label)
-        if chord_name:  # this slice contains a legal chord
-            add_chord(thisChord, mark + chord_name)
-        else:
+        else:  # there is FB
+            # look at the figure bass and see which notes are included
+            chord_pitch, mark = get_chord_tone(thisChord, fig, s)
+            chord_label = chord.Chord(chord_pitch)
+            chord_name = is_legal_chord(chord_label)
+            if chord_name:  # this slice contains a legal chord
+                add_chord(thisChord, mark + chord_name)
+            else:
 
 
-            if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice, but only consider it
-                # when it remains the same bass
-                pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-                pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
-                    sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
-                if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
-                    if pitch_four_voice[-1] == pitch_four_voice_next[-1] or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
-                        # same bass or different basses but same beat (362 mm.2 last)
-                        next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
-                        ## TODO: should we also consider the mark for the next chord in some ways?
-                        next_chord_label = chord.Chord(next_chord_pitch)
-                        next_chord_name = is_legal_chord(next_chord_label)
-                        if next_chord_name:
-                            add_chord(thisChord, mark + next_chord_name)
-                        else:
-                            thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
-                    elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
-                        if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[0].type == 'stop':
-                            next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
-                                sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
-                                'Y')  ## TODO: shouldn't we give the actual FB to this function?
+                if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice, but only consider it
+                    # when it remains the same bass
+                    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                    pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
+                        sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
+                    if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
+                        if pitch_four_voice[-1] == pitch_four_voice_next[-1] or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
+                            # same bass or different basses but same beat (362 mm.2 last)
+                            next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
                             ## TODO: should we also consider the mark for the next chord in some ways?
                             next_chord_label = chord.Chord(next_chord_pitch)
                             next_chord_name = is_legal_chord(next_chord_label)
@@ -481,19 +482,36 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s):
                                 add_chord(thisChord, mark + next_chord_name)
                             else:
                                 thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                        elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
+                            if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[0].type == 'stop':
+                                next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
+                                    sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
+                                    'Y')  ## TODO: shouldn't we give the actual FB to this function?
+                                ## TODO: should we also consider the mark for the next chord in some ways?
+                                next_chord_label = chord.Chord(next_chord_pitch)
+                                next_chord_name = is_legal_chord(next_chord_label)
+                                if next_chord_name:
+                                    add_chord(thisChord, mark + next_chord_name)
+                                else:
+                                    thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                            else:
+                                thisChord.addLyric(' ' + mark)
+
                         else:
                             thisChord.addLyric(' ' + mark)
-
-                    else:
-                        thisChord.addLyric(' ' + mark)
-            else: # the last chord of the chorale, and it is not a legal chord
-                thisChord.addLyric('?' + mark)
+                else: # the last chord of the chorale, and it is not a legal chord
+                    thisChord.addLyric('?' + mark)
+    else:  # this slice is only the continuation line, should adopt the chord from the last slice
+        if any(char.isalpha() for char in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text) \
+                and 'b' not in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text:
+            # making sure it is chord label not FB, but edge case does exist (b7 maybe?)
+            thisChord.addLyric(sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text)
 
 
 def extract_FB_as_lyrics():
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
         if 'FB.musicxml' not in filename: continue
-        if '013' not in filename: continue
+        # if '013' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
@@ -617,7 +635,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        # if '089' not in filename: continue
+        if '013' not in filename: continue
         print(filename)
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
         for n in s.parts[-1].recurse().notes:
@@ -662,7 +680,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    extract_FB_as_lyrics()
+    # extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    #lyrics_to_chordify(want_IR)
+    lyrics_to_chordify(want_IR)
 
