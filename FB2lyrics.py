@@ -337,8 +337,11 @@ def add_chord(thisChord, chordname):
     :param chordname:
     :return:
     """
-
-    thisChord.addLyric(chordname)
+    if chordname[-1] == '-':  # This is the bug music21 has: for chords with flats, it will fail to add as lyrics
+        thisChord.addLyric(chordname + '*')  # adding a casual sign (then remove it) to avoid this bug
+        thisChord.lyrics[-1].text = thisChord.lyrics[-1].text.replace('*', '')
+    else:
+        thisChord.addLyric(chordname)
 
 
 def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr):
@@ -484,7 +487,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
                             if next_chord_name:
                                 add_chord(thisChord, mark + next_chord_name)
                             else:
-                                thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                                add_chord(thisChord, '?' + mark)  # this means that there is FB but does not form a legal chord
                         elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
                             if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[0].type == 'stop':
                                 next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
@@ -496,19 +499,19 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
                                 if next_chord_name:
                                     add_chord(thisChord, mark + next_chord_name)
                                 else:
-                                    thisChord.addLyric('?' + mark)  # this means that there is FB but does not form a legal chord
+                                    add_chord(thisChord, '?' + mark)  # this means that there is FB but does not form a legal chord
                             else:
-                                thisChord.addLyric(' ' + mark)
+                                add_chord(thisChord, ' ' + mark)
 
                         else:
-                            thisChord.addLyric(' ' + mark)
+                            add_chord(thisChord, ' ' + mark)
                 else: # the last chord of the chorale, and it is not a legal chord
-                    thisChord.addLyric('?' + mark)
+                    add_chord(thisChord, '?' + mark)
     else:  # this slice is only the continuation line, should adopt the chord from the last slice
         if any(char.isalpha() for char in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text) \
                 and 'b' not in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text:
             # making sure it is chord label not FB, but edge case does exist (b7 maybe?)
-            thisChord.addLyric(sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text)
+            add_chord(thisChord, sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text)
     return suspension_ptr
 
 
@@ -639,7 +642,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        # if '248' not in filename: continue
+        if '061' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
@@ -683,7 +686,7 @@ def lyrics_to_chordify(want_IR):
             # so I need to create a new chordify voice
             for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):
                 for each_line in IR.recurse().getElementsByClass('Chord')[j].lyrics:
-                    c.addLyric(each_line.text)  # copy lyrics to this voice
+                    add_chord(c, each_line.text)  # copy lyrics to this voice
             for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):  # identifying suspension needs full figures
                 fig = get_FB(IR2, j)
                 if fig != []:
