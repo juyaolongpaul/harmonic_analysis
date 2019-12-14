@@ -344,7 +344,7 @@ def add_chord(thisChord, chordname):
         thisChord.addLyric(chordname)
 
 
-def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr):
+def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, sus_type):
     """
     Modular function to label suspension
     :param ptr:
@@ -355,13 +355,47 @@ def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_p
     :param thisChord:
     :return:
     """
-    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number):
+    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number, sus_type):
         thisChord.style.color = 'pink'
         suspension_ptr.append(ptr + ptr2)
     return suspension_ptr
 
 
-def is_suspension(ptr, ptr2, s, sChord, voice_number):
+def get_previous_note(note_number, thisChord, s, voice_number):
+    """
+    Modular function to get the previous note for suspension
+    :return:
+    """
+    if note_number == 0:  # this means the previous note is in last measure:
+        if thisChord.measureNumber > 1:  # Edge cases: IR can have this edge case
+            previous_note = \
+                s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
+        else:
+            return False  # this edge case where there is not even a previous note, let alone will be susupension
+    else:
+        previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
+            note_number - 1]
+    return previous_note
+
+
+def get_next_note(note_number, thisChord, s, voice_number):
+    """
+    Modular function to get the next note for suspension
+    :return:
+    """
+    if note_number == len(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)) - 1:  # this means the next note is in next measure:
+        if s.parts[voice_number].measure(thisChord.measureNumber + 1) is not None:  # It has the next measure
+            next_note = \
+                s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)[0]
+        else:
+            return False  # this edge case where there is not even a previous note, let alone will be susupension
+    else:
+        next_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
+            note_number + 1]
+    return next_note
+
+
+def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     """
     For possible suspension figures (e.g., 7+6, 6+5, 4+3), test if contrapuntally speaking it is a suspension or not
     :return:
@@ -383,18 +417,21 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number):
         if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass:  # bass remains the same or same pitch class coz sometimes there can be a decoration in between (e.g., 050 last measure), (1)
             for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
                 if each_note.beat == thisChord.beat: # found the potential suspension note
-                    if note_number == 0:  # this means the previous note is in last measure:
-                        if thisChord.measureNumber > 1:  # Edge cases: IR can have this edge case
-                            previous_note = \
-                            s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
-                        else:
-                            return False  # this edge case where there is not even a previous note, let alone will be susupension
-                    else:
-                        previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[note_number - 1]
-                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass:  # the previous note and the current note should be the same, or in the same pitch class (2)
+                    previous_note = get_previous_note(note_number, thisChord, s, voice_number)
+                    if previous_note == False:
+                        return False
+                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                    if next_note == False:
+                        return False
+                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6'):  # the previous note and the current note should be the same, or in the same pitch class (2)
+                        # and also the note should resolve downstep (3), or it is a 6-5 suspension
                         return True
                 elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
-                    return True
+                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                    if next_note == False:
+                        return False
+                    if 1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2:
+                        return True
     return False
 
 
@@ -436,11 +473,11 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
 
                     if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
 
-                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, '7')
                     elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, '6')
                     elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
-                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr)
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, '4')
                     # possible_suspension = note
                     # thisChord.addLyric('SUS')
 
@@ -704,7 +741,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    extract_FB_as_lyrics()
+    # extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     lyrics_to_chordify(want_IR)
 
