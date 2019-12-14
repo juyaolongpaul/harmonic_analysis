@@ -305,7 +305,7 @@ def get_chord_tone(thisChord, fig, s, condition='N'):
             colllapsed_interval = colllapse_interval(aInterval.name[1:])
             intervals.append(colllapsed_interval)
             # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
-            if '3' in colllapsed_interval  or '5' in colllapsed_interval or '1' in colllapsed_interval:
+            if ('3' in colllapsed_interval and '4' not in fig_collapsed and '2' not in fig_collapsed) or ('5' in colllapsed_interval and '6' not in fig_collapsed) or '1' in colllapsed_interval:
                 chord_pitch.append(note)
             elif any(colllapsed_interval in each for each in fig_collapsed):
                 chord_pitch.append(note)
@@ -642,7 +642,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '061' not in filename: continue
+        if '071b' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
@@ -704,7 +704,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    # extract_FB_as_lyrics()
+    extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     lyrics_to_chordify(want_IR)
 
