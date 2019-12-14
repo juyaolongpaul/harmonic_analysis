@@ -435,6 +435,41 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     return False
 
 
+def replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr, mark, s):
+    if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass or int(
+            thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
+        # same bass or different basses but same beat (362 mm.2 last)
+        next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
+                                                     'Y')  ## TODO: shouldn't we give the actual FB to this function?
+        ## TODO: should we also consider the mark for the next chord in some ways?
+        next_chord_label = chord.Chord(next_chord_pitch)
+        next_chord_name = is_legal_chord(next_chord_label)
+        if next_chord_name:
+            add_chord(thisChord, mark + next_chord_name)
+        else:
+            replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr + 1, mark, s)
+            # recursively looking for the next chord
+    elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
+        if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[
+            0].type == 'stop':
+            next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
+                sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
+                'Y')  ## TODO: shouldn't we give the actual FB to this function?
+            ## TODO: should we also consider the mark for the next chord in some ways?
+            next_chord_label = chord.Chord(next_chord_pitch)
+            next_chord_name = is_legal_chord(next_chord_label)
+            if next_chord_name:
+                add_chord(thisChord, mark + next_chord_name)
+            else:
+                replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr + 1, mark, s)
+                # recursively looking for the next chord
+        else:
+            add_chord(thisChord, ' ' + mark)
+
+    else:
+        add_chord(thisChord, ' ' + mark)
+
+
 
 def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     """
@@ -515,33 +550,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
                     pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
                         sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
                     if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
-                        if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass or int(thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
-                            # same bass or different basses but same beat (362 mm.2 last)
-                            next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, 'Y')  ## TODO: shouldn't we give the actual FB to this function?
-                            ## TODO: should we also consider the mark for the next chord in some ways?
-                            next_chord_label = chord.Chord(next_chord_pitch)
-                            next_chord_name = is_legal_chord(next_chord_label)
-                            if next_chord_name:
-                                add_chord(thisChord, mark + next_chord_name)
-                            else:
-                                add_chord(thisChord, '?' + mark)  # this means that there is FB but does not form a legal chord
-                        elif len(pitch_four_voice[-1].beams.beamsList) > 0 and len(pitch_four_voice_next[-1].beams.beamsList) > 0:
-                            if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[0].type == 'stop':
-                                next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
-                                    sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s,
-                                    'Y')  ## TODO: shouldn't we give the actual FB to this function?
-                                ## TODO: should we also consider the mark for the next chord in some ways?
-                                next_chord_label = chord.Chord(next_chord_pitch)
-                                next_chord_name = is_legal_chord(next_chord_label)
-                                if next_chord_name:
-                                    add_chord(thisChord, mark + next_chord_name)
-                                else:
-                                    add_chord(thisChord, '?' + mark)  # this means that there is FB but does not form a legal chord
-                            else:
-                                add_chord(thisChord, ' ' + mark)
-
-                        else:
-                            add_chord(thisChord, ' ' + mark)
+                        replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr, mark, s)
                 else: # the last chord of the chorale, and it is not a legal chord
                     add_chord(thisChord, '?' + mark)
     else:  # this slice is only the continuation line, should adopt the chord from the last slice
@@ -679,7 +688,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '071b' not in filename: continue
+        if '043' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
