@@ -293,26 +293,26 @@ def get_chord_tone(thisChord, fig, s, condition='N'):
         intervals = []
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-        for i, note in enumerate(thisChord._notes):
+        for i, sonority in enumerate(thisChord._notes):
             # print(note)
             # print('bass', bass)
-            if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+            if sonority.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
                 mark += '@'
                 bass_lower = bass.transpose(interval.Interval(-12))
-                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
+                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=sonority)
             else:
-                aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+                aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
             colllapsed_interval = colllapse_interval(aInterval.name[1:])
             intervals.append(colllapsed_interval)
             # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
             if ('3' in colllapsed_interval and '4' not in fig_collapsed and ('2' not in fig_collapsed or '9' in fig)) or ('5' in colllapsed_interval and '6' not in fig_collapsed) or '1' in colllapsed_interval:
-                chord_pitch.append(note)
+                chord_pitch.append(sonority)
             elif any(colllapsed_interval in each for each in fig_collapsed):
-                chord_pitch.append(note)
+                chord_pitch.append(sonority)
             elif colllapsed_interval == '6' and (fig_collapsed == ['4', '3'] or fig_collapsed == ['4', '2'] or fig_collapsed == ['2']):  # TODO: check if there is 246 case happen
-                chord_pitch.append(note)
+                chord_pitch.append(sonority)
             elif colllapsed_interval == '4' and fig_collapsed == ['2']:
-                chord_pitch.append(note)
+                chord_pitch.append(sonority)
             else: # sonority not in the FB
                 mark += '??'
         for each_figure in fig_collapsed:
@@ -488,14 +488,14 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
         if '7' in fig or '6' in fig or '4' in fig:  # In these cases, examine whether this note is a suspension or not
             # if thisChord.measureNumber == 12:
             #     print('debug')
-            for voice_number, note in enumerate(thisChord._notes):
+            for voice_number, sonority in enumerate(thisChord._notes):
                 ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
                 # also the voice number is inverted compared to the part number in score object
-                if note.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+                if sonority.pitch.midi < bass.pitch.midi: # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
                     bass_lower = bass.transpose(interval.Interval(-12))
-                    aInterval = interval.Interval(noteStart=bass_lower, noteEnd=note)
+                    aInterval = interval.Interval(noteStart=bass_lower, noteEnd=sonority)
                 else:
-                    aInterval = interval.Interval(noteStart=bass, noteEnd=note)
+                    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
                 colllapsed_interval = colllapse_interval(aInterval.name[1:])
                 if any(colllapsed_interval in each for each in fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
                     # Now check whether the next figure is 6, 5, 3, resepctively
@@ -515,9 +515,18 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
                         suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, '4')
                     # possible_suspension = note
                     # thisChord.addLyric('SUS')
-
-            # if is_suspension():
-            #     # highlight the note
+        # see if there is bass suspension
+        for note_number, each_note in enumerate(
+                s.parts[-1].measure(thisChord.measureNumber).getElementsByClass(note.Note)):  # go through bass voice
+            if each_note.beat == thisChord.beat:  # found the potential bass suspension note
+                previous_note = get_previous_note(note_number, thisChord, s, -1)
+                next_note = get_next_note(note_number, thisChord, s, -1)
+                if previous_note != False and next_note != False and previous_note.pitch.pitchClass == each_note.pitch.pitchClass \
+                    and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2) \
+                        and sChord.recurse().getElementsByClass('Chord')[ptr + 1].orderedPitchClasses in thisChord.orderedPitchClasses:
+                            thisChord.style.color = 'red'  # bass suspension is labelled as red
+                            suspension_ptr.append(ptr + 1)  # TODO: cannot address bass suspension with decoration
+                # determine bass suspension
         if fig == []:  # No figures, meaning it can have a root position triad
             for pitch in thisChord.pitchNames:
                 chord_pitch.append(pitch)
@@ -688,7 +697,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '172' not in filename: continue
+        if '017' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
@@ -703,7 +712,7 @@ def lyrics_to_chordify(want_IR):
             fig = get_FB(sChords, i)
             if fig != []:
                 print(fig)
-            if fig == ['6', '3']:
+            if fig == ['4', '2']:
                 print('debug')
             suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
