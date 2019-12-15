@@ -367,7 +367,8 @@ def get_previous_note(note_number, thisChord, s, voice_number):
     :return:
     """
     if note_number == 0:  # this means the previous note is in last measure:
-        if thisChord.measureNumber > 1:  # Edge cases: IR can have this edge case
+        if thisChord.measureNumber > 1 \
+                and len(s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)) > 0:
             previous_note = \
                 s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
         else:
@@ -384,14 +385,17 @@ def get_next_note(note_number, thisChord, s, voice_number):
     :return:
     """
     if note_number == len(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)) - 1:  # this means the next note is in next measure:
-        if s.parts[voice_number].measure(thisChord.measureNumber + 1) is not None:  # It has the next measure
+        if s.parts[voice_number].measure(thisChord.measureNumber + 1) is not None \
+                and len(s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)) > 0:
+            # It has the next measure
+                # This next measure cannot have just a rest like 086!
             next_note = \
                 s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)[0]
         else:
             return False  # this edge case where there is not even a previous note, let alone will be susupension
     else:
         next_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
-            note_number + 1]
+            note_number + 1]  # TODO: getting previous and next note can lead to edge cases
     return next_note
 
 
@@ -526,6 +530,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
                         and sChord.recurse().getElementsByClass('Chord')[ptr + 1].orderedPitchClasses in thisChord.orderedPitchClasses:
                             thisChord.style.color = 'red'  # bass suspension is labelled as red
                             suspension_ptr.append(ptr + 1)  # TODO: cannot address bass suspension with decoration
+                            input('bass suspension?')
                 # determine bass suspension
         if fig == []:  # No figures, meaning it can have a root position triad
             for pitch in thisChord.pitchNames:
@@ -697,7 +702,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '017' not in filename: continue
+        # if '086' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
