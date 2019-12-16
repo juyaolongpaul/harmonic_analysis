@@ -2,6 +2,7 @@ import xml.etree.cElementTree as ET
 import os
 from music21 import *
 import re
+import codecs
 from get_input_and_output import get_pitch_class_for_four_voice
 
 
@@ -576,11 +577,11 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
 
 
 def extract_FB_as_lyrics():
-    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
+    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'FB.musicxml' not in filename: continue
         # if '013' not in filename: continue
         print(filename, '---------------------')
-        tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
+        tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
         for elem in tree.iter(tag='part'):  # get the bass voice
             if elem.attrib['id'] == 'P4':
                 child = elem
@@ -620,7 +621,7 @@ def extract_FB_as_lyrics():
                             #     print('debug')
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
-        tree.write(open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-9] + '_' + 'lyric' + '.xml'), 'w'), encoding='unicode')
+        tree.write(codecs.open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
 
 
 def add_FB_align(fig, thisChord):
@@ -697,16 +698,16 @@ def get_FB(sChords, ptr):
     return fig
 
 def lyrics_to_chordify(want_IR):
-    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
+    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'lyric' not in filename: continue
-        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source')):
+        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         # if '086' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
-        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename))
+        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
         for n in s.parts[-1].recurse().notes:
             n.transpose(interval.Interval('P-8'), inPlace=True)  # don't use -12, since the spelling is messed up!
         # transpose bass down an octave to avoid voice crossings
@@ -759,12 +760,12 @@ def lyrics_to_chordify(want_IR):
             s.insert(0, IR2)
         else:
             s.insert(0, sChords)
-        s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', filename[:-4] + '_' + 'chordify' + '.xml'))
+        s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-4] + '_' + 'chordify' + '.xml'))
 
 
 if __name__ == '__main__':
     want_IR = True
-    # extract_FB_as_lyrics()
+    extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     lyrics_to_chordify(want_IR)
 
