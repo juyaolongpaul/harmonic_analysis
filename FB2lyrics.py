@@ -577,6 +577,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
 
 
 def extract_FB_as_lyrics():
+    f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'FB.musicxml' not in filename: continue
         # if '013' not in filename: continue
@@ -605,7 +606,9 @@ def extract_FB_as_lyrics():
                                 # if each_FB_digit.find('extend') is not None:
                                 #     print('debug')
                                 extension = adding_XXXfix(each_FB_digit, 'extend', extension)
-                                print('extension is', extension)
+                                if each_FB_digit.find('extend') is not None:
+                                    print(filename, file=f_continuation)
+                                # print('extension is', extension)
                                 FB_digit['number'] = single_digit
                                 FB_digit['suffix'] = single_suffix
                                 FB_digit['prefix'] = single_prefix
@@ -613,16 +616,16 @@ def extract_FB_as_lyrics():
                             if each_FB_digit.tag == 'duration':
                                 FB_digit['duration'] = each_FB_digit.text
                         fig.append(FB_digit)
-                        print(fig)
+                        #print(fig)
                     if ele.tag == 'note':
                         if fig != [] and fig != [{}] and 'number':
-                            print("add the FB to lyrics")
+                            #print("add the FB to lyrics")
                             # if fig[0]['number'] == ['8', '4']:
                             #     print('debug')
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
         tree.write(codecs.open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
-
+    f_continuation.close()
 
 def add_FB_align(fig, thisChord):
     """
@@ -765,7 +768,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    extract_FB_as_lyrics()
+    #extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     lyrics_to_chordify(want_IR)
 
