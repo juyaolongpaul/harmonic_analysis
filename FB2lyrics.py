@@ -553,6 +553,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
             # look at the figure bass and see which notes are included
             chord_pitch, mark = get_chord_tone(thisChord, fig, s)
             chord_label = chord.Chord(chord_pitch)
+            # if chord_label.pitchClasses != []:  # making sure there is no empty chord
             chord_name = is_legal_chord(chord_label)
             if chord_name:  # this slice contains a legal chord
                 add_chord(thisChord, mark + chord_name)
@@ -708,7 +709,7 @@ def lyrics_to_chordify(want_IR):
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        # if '086' not in filename: continue
+        # if '252' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
@@ -757,7 +758,7 @@ def lyrics_to_chordify(want_IR):
                 fig = get_FB(IR2, j)
                 if fig != []:
                     print(fig)
-                if fig == ['6', '3']:
+                if fig == ['6', '5', '4']:
                     print('debug')
                 translate_FB_into_chords(fig, c, j, IR2, s)
                 c.closedPosition(forceOctave=4, inPlace=True)
@@ -770,7 +771,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    extract_FB_as_lyrics()
+    #extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    #lyrics_to_chordify(want_IR)
+    lyrics_to_chordify(want_IR)
 

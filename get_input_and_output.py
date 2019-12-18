@@ -187,6 +187,7 @@ def get_pitch_class_for_four_voice(thisChord, s):
     # This is wrong since thisChord is not organized by voice!
     # else:
         #print('still less than 4 pitches in chordify???')
+    # TODO: modify this function to deal with more than 4 pitch classes
         pitch_class_four_voice = []
         pitch_four_voice = []
         for j, part in enumerate(s.parts):  # all parts, starting with soprano
@@ -241,6 +242,11 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 else:
                     pitch_four_voice = [-1, -1, -1, -1]
                     pitch_class_four_voice = [-1, -1, -1, -1]
+        for sonority in thisChord._notes:
+            if sonority.pitch.pitchClass not in pitch_class_four_voice:  # this means this function has bugs like BWV 117 mm.6
+                #if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes, sometimes there can be more than 4 voices in Bach chorales!
+                print('pitch four voice does not work!')  # this happens whenever there is an pick-up measure in between the music
+                return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
         return pitch_class_four_voice, pitch_four_voice
 
 
