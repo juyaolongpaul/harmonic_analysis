@@ -625,6 +625,8 @@ def extract_FB_as_lyrics():
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
         tree.write(codecs.open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
+        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'))
+        s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', filename + '.mid'))
     f_continuation.close()
 
 def add_FB_align(fig, thisChord):
@@ -721,7 +723,7 @@ def lyrics_to_chordify(want_IR):
             fig = get_FB(sChords, i)
             if fig != []:
                 print(fig)
-            if fig == ['4', '2']:
+            if fig == ['7', '5', '3']:
                 print('debug')
             suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
             thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
@@ -768,7 +770,7 @@ def lyrics_to_chordify(want_IR):
 
 if __name__ == '__main__':
     want_IR = True
-    #extract_FB_as_lyrics()
+    extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify(want_IR)
+    #lyrics_to_chordify(want_IR)
 
