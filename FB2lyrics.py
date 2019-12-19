@@ -4,6 +4,7 @@ from music21 import *
 import re
 import codecs
 from get_input_and_output import get_pitch_class_for_four_voice
+from mido import MetaMessage, MidiFile
 
 
 def translate_FB_as_lyrics(number, suffix, prefix, extension):
@@ -630,14 +631,25 @@ def extract_FB_as_lyrics():
         s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics', filename + '.mid'))
     f_continuation.close()
 
-def add_FB_align(fig, thisChord):
+def add_FB_align(fig, thisChord, MIDI, ptr):
     """
     Modular function to add FB in a way that the future chord labels can be aligned in one line as well
     :param fig:
     :param thisChord:
-    :param ptr:
+    :param MIDI: mido MIDI object to add FB as lyrics
     :return:
     """
+    midi_i = -1
+    midi_ptr = 0
+    for j, each_message in enumerate(MIDI.tracks[-1]):
+        if each_message.time != 0:
+            midi_i += 1
+        if midi_i == ptr:
+            midi_ptr = j
+            break
+    FB_lyrics = " ".join(fig)
+    MIDI.tracks[-1].insert(midi_ptr, MetaMessage('lyrics', text=FB_lyrics))
+
     for i, line in enumerate(fig):
         thisChord.addLyric(line)
     # put space for future chord labels to align
@@ -648,12 +660,13 @@ def add_FB_align(fig, thisChord):
     #     thisChord.addLyric(' ')
 
 
-def align_FB_with_slice(bassline, sChords):
+def align_FB_with_slice(bassline, sChords, MIDI):
     """
     I decide to first translate all the FB as lyrics, and then translate them as lyrics, because the translation needs
     global FB to be there first.
     :param bassline:
     :param sChords:
+    :param MIDI: mido MIDI object to add FB as lyrics
     :return:
     """
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -674,9 +687,9 @@ def align_FB_with_slice(bassline, sChords):
                                 # don't know why some xml has half of its standard duration value
                             if float(fig[j]['duration']) / float(denominator_chorale) == slice_duration:  # this means
                                 # the current FB should go to the current slice
-                                add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement])
+                                add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
                             else:  # the duration does not add up, meaning it should look further ahead
-                                add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement])
+                                add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
                                 while slice_duration < float(fig[j]['duration']) / float(denominator_chorale):
                                     displacement += 1
                                     slice_duration += sChords.recurse().getElementsByClass('Chord')[
@@ -685,7 +698,7 @@ def align_FB_with_slice(bassline, sChords):
                                     print('duration of FB does not equal to the duration of many slices!')
 
                         else:  # no duration, only one FB, just matching the current slice
-                            add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement])
+                            add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
                 else:
                     thisChord.addLyric(' ')
                 break
@@ -713,13 +726,22 @@ def lyrics_to_chordify(want_IR):
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
+        s_MIDI = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master',
+                                              filename))  # output a MIDI file with onset slices to add FB as lyric meta messages
+        s_MIDI_Chords = s_MIDI.chordify()
+        s_MIDI.insert(0, s_MIDI_Chords)
+        s_MIDI.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
+                                          filename + '.mid'))
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
+        # TODO: figure out why the MIDI version still transpose bass an octave lower
+        MIDI = MidiFile(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
+                                     filename + '.mid'))
         for n in s.parts[-1].recurse().notes:
             n.transpose(interval.Interval('P-8'), inPlace=True)  # don't use -12, since the spelling is messed up!
         # transpose bass down an octave to avoid voice crossings
         bassline = s.parts[-1]
         sChords = s.chordify()
-        align_FB_with_slice(bassline, sChords)
+        align_FB_with_slice(bassline, sChords, MIDI)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
             fig = get_FB(sChords, i)
             if fig != []:
@@ -766,8 +788,6 @@ def lyrics_to_chordify(want_IR):
             s.insert(0, IR2)
         else:
             s.insert(0, sChords)
-        s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
-                                     filename + '.mid'))
         s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-4] + '_' + 'chordify' + '.xml'))
 
 
