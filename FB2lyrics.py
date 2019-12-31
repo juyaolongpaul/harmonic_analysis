@@ -582,12 +582,13 @@ def extract_FB_as_lyrics():
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'FB.musicxml' not in filename: continue
-        # if '013' not in filename: continue
+        # if '194' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
+        parts = []
         for elem in tree.iter(tag='part'):  # get the bass voice
-            if elem.attrib['id'] == 'P4':
-                child = elem
+            parts.append(elem)
+        child = parts[-1]  # no matter how many voices, the last one will have FB
         for measure in child.iter(tag='measure'):  # get all the measures within the bass voice
             print(measure.attrib)
             fig = []  # empty FB dictionary for each bass note
@@ -720,9 +721,10 @@ def lyrics_to_chordify(want_IR, translate_chord='Y'):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'lyric' not in filename: continue
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
-            if filename[:-4] + 'FB_align' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
+            if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
                 continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
+        if 'FB_align' in filename: continue
         # if '252' not in filename: continue
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
