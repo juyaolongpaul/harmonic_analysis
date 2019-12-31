@@ -716,11 +716,12 @@ def get_FB(sChords, ptr):
         fig = []
     return fig
 
-def lyrics_to_chordify(want_IR):
+def lyrics_to_chordify(want_IR, translate_chord='Y'):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'lyric' not in filename: continue
         if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
-            continue  # don't need to translate the chord labels if already there
+            if filename[:-4] + 'FB_align' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
+                continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         # if '252' not in filename: continue
         print(filename)
@@ -742,31 +743,35 @@ def lyrics_to_chordify(want_IR):
         bassline = s.parts[-1]
         sChords = s.chordify()
         align_FB_with_slice(bassline, sChords, MIDI)
-        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            fig = get_FB(sChords, i)
-            if fig != []:
-                print(fig)
-            if fig == ['7', '5', '3']:
-                print('debug')
-            suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
-            thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
-            # octave apart will be collapsed!
-        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-        # replace the suspension slices with the chord labels where it is resolved
-            if thisChord.style.color == 'pink':  # the suspensions
-                for j in range(i, suspension_ptr[ptr]):
-                    if any(char.isalpha() for char in
-                        sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text) \
-                    and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text:
-                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text\
-                            = sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text
-                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
-                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('?', '')
-                        sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
-                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('!', '')
-                ptr += 1
+        if translate_chord == 'Y':
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                fig = get_FB(sChords, i)
+                if fig != []:
+                    print(fig)
+                if fig == ['7', '5', '3']:
+                    print('debug')
+                suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
+                thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
+                # octave apart will be collapsed!
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+            # replace the suspension slices with the chord labels where it is resolved
+                if thisChord.style.color == 'pink':  # the suspensions
+                    for j in range(i, suspension_ptr[ptr]):
+                        if any(char.isalpha() for char in
+                            sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text) \
+                        and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text:
+                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text\
+                                = sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text
+                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
+                                sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('?', '')
+                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
+                                sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('!', '')
+                    ptr += 1
+        else:
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                thisChord.closedPosition(forceOctave=4, inPlace=True)
 
-        if want_IR:
+        if want_IR and translate_chord == "Y":
             IR = s.chordify()
             for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
                 c.closedPosition(forceOctave=4, inPlace=True)
@@ -788,12 +793,17 @@ def lyrics_to_chordify(want_IR):
             s.insert(0, IR2)
         else:
             s.insert(0, sChords)
-        s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-4] + '_' + 'chordify' + '.xml'))
+        if translate_chord == 'Y':
+            s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-4] + '_' + 'chordify' + '.xml'))
+        else:
+            s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master',
+                                             filename[:-4] + '_' + 'FB_align' + '.xml'))
 
 
 if __name__ == '__main__':
     want_IR = True
     # extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify(want_IR)
+    lyrics_to_chordify(want_IR, 'N') # generate only FB as lyrics without translating as chords
+    #lyrics_to_chordify(want_IR)
 
