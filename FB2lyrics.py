@@ -579,6 +579,8 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
 
 
 def extract_FB_as_lyrics():
+    if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi')):
+        os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi'))
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
         if 'FB.musicxml' not in filename: continue
@@ -629,6 +631,8 @@ def extract_FB_as_lyrics():
                             fig = []  # reset the FB for the next note with FB
         tree.write(codecs.open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'))
+        if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics')):
+            os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics'))
         s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics', filename + '.mid'))
     f_continuation.close()
 
@@ -733,6 +737,8 @@ def lyrics_to_chordify(want_IR, translate_chord='Y'):
                                               filename))  # output a MIDI file with onset slices to add FB as lyric meta messages
         s_MIDI_Chords = s_MIDI.chordify()
         s_MIDI.insert(0, s_MIDI_Chords)
+        if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics')):
+            os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics'))
         s_MIDI.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
                                           filename + '.mid'))
         s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
