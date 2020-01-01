@@ -2,7 +2,7 @@ from music21 import *
 import os
 import re
 c2=['c','d-','d','e-','e','f','f#','g','a-','a','b-','b']
-
+c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
 
 def get_displacement(k):
     """
@@ -20,6 +20,11 @@ def get_displacement(k):
             displacement = c2.index(key_tonic)
         else:
             displacement = (c2.index(key_tonic) + 3) % len(c2)
+    elif key_tonic in c1:
+        if (k.mode == 'major'):
+            displacement = c1.index(key_tonic)
+        else:
+            displacement = (c1.index(key_tonic) + 3) % len(c1)
     else:
         print('pitch class can not be found!')
         input('what do you think about it')
