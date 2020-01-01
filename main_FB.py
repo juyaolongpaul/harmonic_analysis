@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys
+from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys_FB
 from kernscore import extract_chord_labels
 from predict_result_for_140 import train_and_predict_non_chord_tone
 from translate_output import annotation_translation
@@ -69,30 +69,29 @@ def main():
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
                         type=str, default='Y')
     args = parser.parse_args()
-    output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
     f1 = '.xml'
     f2 = '.txt'
     input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
-    # counter1 = 0  # record the number of salami slices of poly
-    # counter2 = 0  # record the number of salami slices of chords
-    # counter = 0
-    # counterMin = 60
-    # # Get input features
-    # sign = '0'  # input("do you want inversions or not? 1: yes, 0: no")
-    # output_dim = '12'  # input('how many kinds of chords do you want to calculate?')
-    # window_size = '0'  # int(input('how big window?'))
-    # output_dim = int(output_dim)
-    # input_dim = 12
-    # x = []
-    # y = []
-    # generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
-    #                                                              counter, counterMin, input, f1, output, f2,
-    #                                                              args.source,
-    #                                                              args.augmentation, args.pitch, args.ratio,
-    #                                                              args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+    counter1 = 0  # record the number of salami slices of poly
+    counter2 = 0  # record the number of salami slices of chords
+    counter = 0
+    counterMin = 60
+    # Get input features
+    sign = '0'  # input("do you want inversions or not? 1: yes, 0: no")
+    output_dim = '12'  # input('how many kinds of chords do you want to calculate?')
+    window_size = '0'  # int(input('how big window?'))
+    output_dim = int(output_dim)
+    input_dim = 12
+    x = []
+    y = []
+    generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim, args.window,
+                                                                 counter, counterMin, input, f1, input, f2,
+                                                                 args.source,
+                                                                 args.augmentation, args.pitch, args.ratio,
+                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
     #   # only execute this when the CV matrices are complete
     #
     # # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,

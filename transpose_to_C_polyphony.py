@@ -98,10 +98,10 @@ def transpose_polyphony_FB(source, input):
         print(os.path.join(input, 'transposed_') + id_id[0] + format)
         if fn[-3:] == 'krn' or fn[-3:] == 'mid' or fn[-3:] == 'xml':  # we want to transpose krn file into musicxml file
             transpose_into_12_keys(fn, id_id[0], source, input, format)
-    for fn in os.listdir(input):
-        if 'transposed' not in fn:
-            continue
-        os.rename(os.path.join(input, fn), os.path.join(input, 'transpose', fn))
+    # for fn in os.listdir(input):
+    #     if 'transposed' not in fn:
+    #         continue
+    #     os.rename(os.path.join(input, fn), os.path.join(input, 'transpose', fn))
 
 if __name__ == "__main__":
     transpose_polyphony()

@@ -942,6 +942,28 @@ def determine_middle_name2(augmentation, source, pitch):
     return keys, keys1, music21
 
 
+def find_id_FB(input, exclude=[]):
+    """
+    Finding BWV number for the FB files
+    :param input:
+    :param exclude:
+    :return:
+    """
+    id_sum = []
+    for fn in os.listdir(input):
+        if fn.find('transposed') == -1:  # only look for non-"chor" like annotation files
+            continue
+        ptr = fn.find('_FB_lyric')
+        ptr2 = fn.find('BWV_')
+        id = fn[ptr2 + 4:ptr]  # finding the BWV number
+        if id not in exclude:
+            id_sum.append(id)
+    id_sum_strip = []
+    [id_sum_strip.append(i) for i in id_sum if not i in id_sum_strip]
+    id_sum_strip.sort()  # different file systems have different orderings. Need this line of code to unify them
+    return id_sum_strip
+
+
 def find_id(input, version, exclude=[]):
     """
 
@@ -980,6 +1002,56 @@ def find_id(input, version, exclude=[]):
     id_sum_strip.sort()  # different file systems have different orderings. Need this line of code to unify them
     return id_sum_strip
 
+
+def add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_total_all, p, sign=''):
+    """
+    Modular function that adds files depending on data augmentation or not
+    :return:
+    """
+
+    if fn.find('KB') != -1 and fn[-4:] == '.xml':
+        id_id = p.findall(fn)
+        if sign == 'FB' and len(id_id) == 2:
+            id_id[0] = id_id[0] + '.' + id_id[1]
+        if id_id[0] in data_id:  # if the digit found in the list, add this file
+            if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                if pitch.find('oriKey') == -1:  # we want transposed key
+                    if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find(
+                            'a_oriKE') != -1:  # only wants key c
+                        fn_total.append(fn)
+                else:
+                    if fn.find('_ori') != -1:  # no transposition
+                        fn_total.append(fn)
+            elif augmentation == 'Y':
+                fn_total.append(fn)  # we want 12 keys on all sets
+        if id_id[0] in data_id_total:
+            # This section of code aims to add all the file IDs across training validation and test set
+            if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
+                if pitch.find('oriKey') == -1:  # we want transposed key
+                    if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find(
+                            'a_oriKE') != -1:  # only wants key c
+                        fn_total_all.append(fn)
+                else:
+                    if fn.find('_ori') != -1:  # no transposition
+                        fn_total_all.append(fn)
+            elif augmentation == 'Y':
+                fn_total_all.append(fn)  # we want 12 keys on all sets
+    return fn_total, fn_total_all
+
+
+def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output,
+                  f2, sign, augmentation, pitch, data_id, portion, outputtype, data_id_total,
+                  inputtype):
+    fn_total_all = []  # this save all file ID, including training, validation and test data
+    fn_total = []  # this only includes one of the following three: training, validation and test data
+    file_counter = 0
+    slice_counter = 0
+    keys, music21 = determine_middle_name(augmentation, sign, portion, pitch)
+    p = re.compile(r'\d{1,3}[ab]*')  # find BWV part
+    for id, fn in enumerate(os.listdir(
+            input1)):  # this part should be executed no matter what since we want a updated version of chord list
+        fn_total, fn_total_all = add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_total_all, p, 'FB')
+    print(fn_total, fn_total_all)
 
 def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output,
                   f2, sign, augmentation, pitch, data_id, portion, outputtype, data_id_total,
@@ -1022,34 +1094,10 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
         label = 'Chorales_Bach_'
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
+    p = re.compile(r'\d{3}')  # find 3 digit in the file name
     for id, fn in enumerate(os.listdir(
             input1)):  # this part should be executed no matter what since we want a updated version of chord list
-        if fn.find('KB') != -1 and fn[-4:] == f1:
-            p = re.compile(r'\d{3}')  # find 3 digit in the file name
-            id_id = p.findall(fn)
-            if id_id[0] in data_id:  # if the digit found in the list, add this file
-                if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                    if pitch.find('oriKey') == -1:  # we want transposed key
-                        if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find(
-                                'a_oriKE') != -1:  # only wants key c
-                            fn_total.append(fn)
-                    else:
-                        if fn.find('_ori') != -1:  # no transposition
-                            fn_total.append(fn)
-                elif augmentation == 'Y':
-                    fn_total.append(fn)  # we want 12 keys on all sets
-            if id_id[0] in data_id_total:
-                # This section of code aims to add all the file IDs across training validation and test set
-                if (augmentation != 'Y'):  # Don't want data augmentation in 12 keys
-                    if pitch.find('oriKey') == -1:  # we want transposed key
-                        if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find(
-                                'a_oriKE') != -1:  # only wants key c
-                            fn_total_all.append(fn)
-                    else:
-                        if fn.find('_ori') != -1:  # no transposition
-                            fn_total_all.append(fn)
-                elif augmentation == 'Y':
-                    fn_total_all.append(fn)  # we want 12 keys on all sets
+        fn_total, fn_total_all = add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_total_all, p)
 
     # if (predict == 'N'):
     #     shuffle(fn_total)  # shuffle (by chorale) on the training and validation set
@@ -1300,6 +1348,16 @@ def get_id(id_sum, num_of_chorale, times):
             train_id.append(item)
     return train_id, valid_id, test_id
 
+
+def generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, inputdim, outputdim,
+                                                                 windowsize, counter, countermin, input, f1, output, f2,
+                                                                 sign, augmentation, pitch, ratio, cv, version,
+                                                                 outputtype, inputtype):
+    print('Step 4: Translate all the data into machine-learning-friendly encodings')
+    id_sum = find_id_FB(output)
+    generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
+                  output, f2, sign, augmentation, pitch, id_sum, 'train', outputtype, id_sum,
+                  inputtype)
 
 def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,
