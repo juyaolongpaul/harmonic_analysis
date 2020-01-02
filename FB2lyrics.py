@@ -3,7 +3,7 @@ import os
 from music21 import *
 import re
 import codecs
-from get_input_and_output import get_pitch_class_for_four_voice
+from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
 from mido import MetaMessage, MidiFile
 
 
@@ -255,25 +255,7 @@ def colllapse_interval(string):
         return string_2
 
 
-def get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, note='N'):
-    """
-    Little function deciding whether the bass note should be from the former or the latter
-    :param thisChord:
-    :param pitch_four_voice:
-    :return:
-    """
-    if pitch_class_four_voice[-1] != -1:  # if bass is not rest:
-        if note == 'Y':
-            bass = pitch_four_voice[-1]  # I want a note object, since the interval.interval function requires a note
-        else:
-            bass = pitch_four_voice[-1].pitch  # default
-    elif pitch_class_four_voice[-2] != -1:  # if bass is rest, which is pretty rare, then get whatever it is in thisChord
-        bass = pitch_four_voice[-2]  # in this case, the bass is tenor
-    elif pitch_class_four_voice[-3] != -1:
-        bass = pitch_four_voice[-3]  # in this case, the bass is alto
-    else:
-        bass = pitch_four_voice[-4]  # in this case, the bass is soprano
-    return bass
+
 
 def get_chord_tone(thisChord, fig, s, condition='N'):
     """

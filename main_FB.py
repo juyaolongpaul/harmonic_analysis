@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source',
                         help='which FB source you wanna use (default: %(default))',
-                        type=str, default='Bach_o')
+                        type=str, default='Bach_o_FB')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -35,7 +35,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class')
+                        type=str, default='pitch_class_with_bass')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
