@@ -1148,6 +1148,9 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                 yy = np.concatenate((yy, FB_sonority))
             else:
                 yy = np.vstack((yy, FB_sonority))
+        print('slices of output: ', slice_counter, "slices of input", slice_input)
+        if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
+            input('fix this or delete this')
         file_name_y = os.path.join('.', 'data_for_ML', sign,
                                    sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                    fn[:-4] + '.txt')

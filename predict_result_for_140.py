@@ -38,7 +38,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
 #from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
-from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
+from get_input_and_output import determine_middle_name, find_id, find_id_FB, get_id, determine_middle_name2
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from test_musicxml_gt import translate_chord_name_into_music21
@@ -108,6 +108,11 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
             if bach == 'Y':
                 p = re.compile(r'\d{3}')  # find 3 digit in the file name
                 id_id = p.findall(fn)
+            elif bach == 'FB':
+                p = re.compile(r'\d{1,3}[ab]*')
+                id_id = p.findall(fn)
+                if len(id_id) == 2:
+                    id_id[0] = id_id[0] + '.' + id_id[1]
             else:
                 id_id = []
                 id_id.append(os.path.splitext(fn)[0])
@@ -533,10 +538,10 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     #encoding_all = []
     fn_all = [] # Unify the order
     for fn in os.listdir(path):
-        if sign == 'N': # eliminate pitch class only encoding
+        if 'N' in sign: # eliminate pitch class only encoding
             if fn.find('_pitch_class') != -1 or fn.find('_chord_tone') != -1:
                 continue
-        elif sign == 'Y': # only want pitch class only encoding
+        elif 'Y' in sign : # only want pitch class only encoding
             if fn.find('_pitch_class') == -1:
                 continue
         elif sign == 'C': # only want chord tone as input to train the chord inferral algorithm
@@ -548,8 +553,13 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
             if fn.find('_ori') == -1:
                 continue
-        p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        if 'FB' not in sign:
+            p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        else:
+            p = re.compile(r'\d{1,3}[ab]*')
         id_id = p.findall(fn)
+        if 'FB' in sign and len(id_id) == 2:
+            id_id[0] = id_id[0] + '.' + id_id[1]
         if id_id[0] == '137':
             print('debug')
         if id_id[0] in id:
@@ -693,7 +703,227 @@ def unify_GTChord_and_inferred_chord(name):
     return name[0] + name[1:]
 
 
-def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+                                     cv, pitch_class, ratio, input, output, balanced, outputtype,
+                                     inputtype, predict, exclude=[]):
+    print('Training and testing the machine learning models')
+    id_sum = find_id_FB(input, exclude)
+    num_of_chorale = len(id_sum)
+    train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
+    pre = []
+    pre_test = []
+    rec = []
+    rec_test = []
+    f1 = []
+    f1_test = []
+    acc = []
+    acc_test = []
+    cvscores = []
+    cvscores_test = []
+    tp = []
+    tn = []
+    fp = []
+    fn = []
+    frame_acc = []
+    frame_acc_2 = []
+    cvscores_percentage_of_NCT_per_slice = []
+    batch_size = 256
+    epochs = 500
+    if modelID == 'DNN':
+        patience = 50
+    else:
+        patience = 20
+    print('Loading data...')
+    extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+        train_num)
+    timestep = ts
+    HIDDEN_NODE = nodes
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                 + str(timestep) + extension
+    print('Loading data...')
+    print('Build model...')
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
+        os.mkdir(os.path.join('.', 'ML_result', sign))
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
+        os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
+                           append=True, separator=';')
+    for times in range(cv):
+        if times != 0:
+            continue
+        MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                     + str(timestep) + extension  + '_cv_' + str(times + 1)
+        FOLDER_NAME = 'MODEL'
+        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        # if exclude != []:
+        #     train_id.extend(test_id)
+        #     test_id = exclude # Swap the test id into the 39 ones
+        valid_yy = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+        valid_xx = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
+            train_xx = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+            train_yy = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+            train_xx = train_xx[
+                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+            train_yy = train_yy[:int(portion * train_yy.shape[0])]
+            print('training and predicting...')
+            model = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+                                   FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy,
+                                   valid_xx,
+                                   valid_yy)  # train the machine learning model
+        test_xx = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        test_xx_only_pitch = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                                os.path.join('.', 'data_for_ML', sign,
+                                                             sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                'FB_Y')
+        test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+        model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+        predict_y = model.predict(test_xx)  # Predict the probability for each bit of FB sonority
+        for i in predict_y:  # regulate the prediction
+            for j, item in enumerate(i):
+                if (item > 0.5):
+                    i[j] = 1
+                else:
+                    i[j] = 0
+        correct_num2 = 0
+        for i, item in enumerate(predict_y):
+            if np.array_equal(item, test_yy[
+                i]):  # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
+                correct_num2 += 1
+        frame_acc_2.append(((correct_num2 / predict_y.shape[0]) * 100))
+        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+            model, valid_xx, valid_yy, modelID)
+        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                        test_xx,
+                                                                                                        test_yy,
+                                                                                                        modelID)
+        num_of_NCT_slices = 0
+        for i, item in enumerate(test_yy):
+            if 1 in item:
+                num_of_NCT_slices += 1
+        cvscores_percentage_of_NCT_per_slice.append((num_of_NCT_slices / test_yy.shape[0]) * 100)
+        pre.append(precision * 100)
+        pre_test.append(precision_test * 100)
+        rec.append(recall * 100)
+        rec_test.append(recall_test * 100)
+        f1.append(f1score * 100)
+        f1_test.append(f1score_test * 100)
+        acc.append(accuracy * 100)
+        acc_test.append(accuracy_test * 100)
+        tp.append(true_positive)
+        fp.append(false_positive)
+        fn.append(false_negative)
+        tn.append(true_negative)
+        if predict == 'Y':
+            # prediction put into files
+            fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
+            sum = 0
+            for i in range(len(numSalamiSlices)):
+                sum += numSalamiSlices[i]
+            # input(sum)
+            # input(predict_y.shape[0])
+
+            length = len(fileName)
+            a_counter = 0
+            a_counter_correct = 0
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1)))
+            f_all = open(os.path.join('.', 'predicted_result', sign,
+                                      outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                          windowsize + 1), 'ALTOGETHER') + '.txt',
+                         'w')  # create this file to track every type of mistakes
+            for i in range(length):
+                print(fileName[i][:-4], file=f_all)
+                print(fileName[i])
+                num_salami_slice = numSalamiSlices[i]
+                correct_num = 0
+                s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                sChords = s.chordify()
+                s.insert(0, sChords)
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    gt = test_yy[a_counter]
+                    prediction = predict_y[a_counter]
+                    correct_bit = 0
+                    for ii in range(len(gt)):
+                        if (gt[ii] == prediction[ii]):  # the label is correct
+                            correct_bit += 1
+                    dimension = test_xx_only_pitch.shape[1]
+
+                    realdimension = int(dimension / (2 * windowsize + 1))
+                    if modelID != 'SVM' and modelID != 'DNN':
+                        x = test_xx_only_pitch[a_counter][-1]  # no window if the matrix is 3D
+                    else:
+                        if windowsize < 0:
+                            x = test_xx_only_pitch[a_counter]
+                        else:
+                            x = test_xx_only_pitch[a_counter][
+                                realdimension * windowsize:realdimension * (windowsize + 1)]
+                    chord_tone_gt = output_NCT_to_XML(x, gt, thisChord, outputtype)
+                    chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
+                    if (correct_bit == len(gt)):
+                        correct_num += 1
+                    a_counter += 1
+                a_counter_correct += correct_num
+                print(end='\n', file=f_all)
+                print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
+                print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(
+                    num_salami_slice),
+                      file=f_all)
+                print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
+                s.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign,
+                                        outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                            windowsize + 1), fileName[i][
+                                                             :-4]) + '.xml')
+            frame_acc.append((a_counter_correct / a_counter) * 100)
+            f_all.close()
+            print(np.mean(cvscores), np.std(cvscores))
+            print(MODEL_NAME, file=cv_log)
+            print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+            print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
+            print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
+            print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
+            print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
+            print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
+            print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
+            print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
+            print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+            for i in range(len(cvscores_test)):
+                print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
+            print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+            print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
+            print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', )
+            print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
+                  np.std(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+            print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
+                  np.std(cvscores_percentage_of_NCT_per_slice), '%')
+            print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
+            print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
+            print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
+
+
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
     print('Step 5: Training and testing the machine learning models')
