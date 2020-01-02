@@ -3,7 +3,7 @@ import os
 from music21 import *
 import re
 import codecs
-from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
+from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note, get_FB, colllapse_interval
 from mido import MetaMessage, MidiFile
 
 
@@ -234,25 +234,7 @@ def is_legal_chord(chord_label):
         return None
 
 
-def colllapse_interval(string):
-    """
 
-    :param str:
-    :return:
-    """
-    if type(string) == str:
-        if int(string) % 7 == 0:
-            return '7'
-        else:
-            return str(int(string) % 7)  # collapse all the intervals within an octave
-    elif type(string) == list:
-        string_2 = list(string)  # preserve the original FB
-        for i, each_figure in enumerate(string_2):
-            if each_figure.find('9') != -1:
-                string_2[i] = '2'  #  9 as 2,
-            if each_figure.find('8') != -1:
-                string_2[i] = '1'  #  8 as 2,
-        return string_2
 
 
 
@@ -691,17 +673,7 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 break
 
 
-def get_FB(sChords, ptr):
-    """
-    Get FB from lyrics with multiple lines (indicating multiple figures)
-    :return:
-    """
-    fig = []
-    for each_line in sChords.recurse().getElementsByClass('Chord')[ptr].lyrics:
-        fig.append(each_line.text)
-    if fig == [' ']:
-        fig = []
-    return fig
+
 
 def lyrics_to_chordify(want_IR, translate_chord='Y'):
     for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
@@ -794,6 +766,6 @@ if __name__ == '__main__':
     want_IR = True
     # extract_FB_as_lyrics()
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify(want_IR, 'N') # generate only FB as lyrics without translating as chords
-    #lyrics_to_chordify(want_IR)
+    # lyrics_to_chordify(want_IR, 'N') # generate only FB as lyrics without translating as chords
+    lyrics_to_chordify(want_IR)
 

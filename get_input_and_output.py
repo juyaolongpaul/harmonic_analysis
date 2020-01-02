@@ -8,12 +8,44 @@ dic = {}
 from music21 import *
 from adding_window_one_hot import adding_window_one_hot
 from test_musicxml_gt import get_chord_tone
-
 format = ['mid']
 cwd = '.\\bach_chorales_scores\\transposed_MIDI\\'
 x = []
 y = []
 xx = []
+
+def get_FB(sChords, ptr):
+    """
+    Get FB from lyrics with multiple lines (indicating multiple figures)
+    :return:
+    """
+    fig = []
+    for each_line in sChords.recurse().getElementsByClass('Chord')[ptr].lyrics:
+        fig.append(each_line.text)
+    if fig == [' ']:
+        fig = []
+    return fig
+
+
+def colllapse_interval(string):
+    """
+
+    :param str:
+    :return:
+    """
+    if type(string) == str:
+        if int(string) % 7 == 0:
+            return '7'
+        else:
+            return str(int(string) % 7)  # collapse all the intervals within an octave
+    elif type(string) == list:
+        string_2 = list(string)  # preserve the original FB
+        for i, each_figure in enumerate(string_2):
+            if each_figure.find('9') != -1:
+                string_2[i] = '2'  #  9 as 2,
+            if each_figure.find('8') != -1:
+                string_2[i] = '1'  #  8 as 2,
+        return string_2
 
 
 def get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, note='N'):
@@ -1074,8 +1106,44 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                                       chorale_x, chorale_x_12, chorale_x_only_pitch_class,
                                                       chorale_x_only_meter,
                                                       chorale_x_only_newOnset, keys, music21, counter, countermin, sign)
-        
-
+        # generate encoding for output
+        slice_counter = 0
+        yy = []  # output encoding for the whole piece
+        sChords = s.parts[-1]  # get the existing chordify voice with FB
+        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+            fig_collapsed = []
+            FB_sonority = [0] * inputdim
+            fig = get_FB(sChords, i)
+            if fig != [' '] and fig != '' and fig != []:
+                fig_collapsed = colllapse_interval(fig)
+            intervals = []
+            pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+            bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+            for i, sonority in enumerate(thisChord._notes):
+                aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                intervals.append(colllapsed_interval)
+                if any(colllapsed_interval in each for each in fig_collapsed) or ('3' in colllapsed_interval and
+                                                any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
+            # explicitly labeled in FB
+                    FB_sonority[sonority.pitch.pitchClass] = 1
+            # for each_figure in fig_collapsed:
+            #     if each_figure == '' or '_' in each_figure:
+            #         continue
+            #     if each_figure[-1] not in intervals:  # FB not in sonorities
+            #         if each_figure in ['n', '#', 'b'] and '3' in intervals == False:  # also need to consider
+            #             # FB not in the sonorities
+            #             imaginary_note = '????'  # how identify the quality of the interval?????
+            # Not considering this right now
+            slice_counter += 1
+            if (slice_counter == 1):
+                yy = np.concatenate((yy, FB_sonority))
+            else:
+                yy = np.vstack((yy, FB_sonority))
+        file_name_y = os.path.join('.', 'data_for_ML', sign,
+                                   sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                   fn[:-4] + '.txt')
+        np.savetxt(file_name_y, yy, fmt='%.1e')
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
