@@ -1087,7 +1087,15 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
         os.mkdir(os.path.join('.', 'data_for_ML', sign,
                               sign) + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21)
     for id, fn in enumerate(fn_total):
+        if os.path.exists(os.path.join('.', 'data_for_ML', sign,
+                               sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                               fn[:-4] + '.txt')) and os.path.exists(os.path.join('.', 'data_for_ML', sign,
+                                   sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                   fn[:-4] + '.txt')):
+            continue  # skip the files that already have encodings
         print(fn)
+        # if '161.06b' not in fn:
+        #     continue
         chorale_x = []
         chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
         # pitch class is used. This one is used to indicate which one is NCT.
@@ -1169,7 +1177,8 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                 pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                 bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
                 bass_one_hot = [0] * inputdim
-                bass_one_hot[bass.pitch.pitchClass] = 1
+                if bass.name != 'rest':
+                    bass_one_hot[bass.pitch.pitchClass] = 1
                 pitchClass = bass_one_hot + pitchClass
             elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                 pitchClass, = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
