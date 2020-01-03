@@ -46,6 +46,7 @@ from keras_self_attention import SeqSelfAttention
 from get_input_and_output import adding_window_one_hot
 from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
+from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
 
 
 def find_tranposed_interval(fn):
@@ -213,6 +214,52 @@ def bootstrap_data(x, y, times):
         yy = np.vstack((yy, y))
     return xx, yy
 
+
+def output_FB_to_XML(x, y, thisChord, outputtype, s):
+    """
+
+    :param x:
+    :param y:
+    :param thisChord:
+    :param outputtype:
+    :param s:
+    :return:
+    """
+    pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+    chord_tone = list(x)
+    chord_tone = [int(round(x)) for x in chord_tone]
+    if list(y) == [0] * 12:
+        thisChord.addLyric(' ')
+        thisChord.addLyric(' ')  # to align
+        return chord_tone
+    FB = []
+    FB_index = []
+    if outputtype.find('_pitch_class') != -1:
+        for i, item in enumerate(y):
+            if int(item) == 1:
+                FB.append(pitchclass[i])
+                FB_index.append(i)
+                chord_tone[i] = 0
+        if FB != []:
+            thisChord.addLyric(FB)
+        else:
+            thisChord.addLyric(' ')
+        # Output FB to the file too
+        pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+        bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+        for i, sonority in enumerate(thisChord._notes):
+            if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
+                aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                if int(aInterval.name[1:]) % 7 == 0:
+                    FB_desired = '7'
+                elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
+                    FB_desired = aInterval.name[1:]
+                else:
+                    FB_desired = str(int(aInterval.name[1:]) % 7)
+                if FB_desired == '1':
+                    FB_desired = '8'
+                thisChord.addLyric(aInterval.name[0]+FB_desired)
+        return chord_tone
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
     """
@@ -752,8 +799,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 0:
-            continue
+        # if times != 0:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -859,6 +906,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 sChords = s.chordify()
                 s.insert(0, sChords)
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    # if j == 14:
+                    #     print('debug')
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
@@ -877,8 +926,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    chord_tone_gt = output_NCT_to_XML(x, gt, thisChord, outputtype)
-                    chord_tone = output_NCT_to_XML(x, prediction, thisChord, outputtype)
+                    chord_tone_gt = output_FB_to_XML(x, gt, thisChord, outputtype, s)
+                    chord_tone = output_FB_to_XML(x, prediction, thisChord, outputtype, s)
                     if (correct_bit == len(gt)):
                         correct_num += 1
                     a_counter += 1
