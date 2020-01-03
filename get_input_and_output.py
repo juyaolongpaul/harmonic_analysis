@@ -450,15 +450,22 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
         # Onset = [0] * 4
         for i, item in enumerate(this_pitch_list):
             # pitchclass = fill_in_4_voices(pitchclass, item)
-            if hasattr(this_pitch_list[i], 'tie'):
-                if this_pitch_list[i].tie is not None:
-                    if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
-                        # fake attacks
-                        # print('fake attacks')
-                        if hasattr(this_pitch_list[i], 'pitch'):
-                            pitchclass[this_pitch_list[i].pitch.pitchClass] = 0  # set the pitch class of the fake attack as 0
-                        else:
-                            continue
+            for j, item2 in enumerate(thisChord._notes):
+                if item.name != 'rest' and item2.name != 'rest':
+                    if item.pitch.midi == item2.pitch.midi:  # found the same note
+                        # print('note in the voice', item.nameWithOctave, 'bt strength', item.beat)
+                        # print('note in the chordify', item2.nameWithOctave, 'bt strength', thisChord.beat)
+                        if item.beat != thisChord.beat:
+                            pitchclass[this_pitch_list[i].pitch.pitchClass] = 0
+            # if hasattr(this_pitch_list[i], 'tie'):
+            #     if this_pitch_list[i].tie is not None:
+            #         if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
+            #             # fake attacks
+            #             # print('fake attacks')
+            #             if hasattr(this_pitch_list[i], 'pitch'):
+            #                 pitchclass[this_pitch_list[i].pitch.pitchClass] = 0  # set the pitch class of the fake attack as 0
+            #             else:
+            #                 continue
         NewOnset_sign = pitchclass[:]
         pitchclass = ori_pitchclass + pitchclass  # We need the order of pitch class, onset sign to be uniformed
     if inputtype.find('NCT') != -1:
@@ -1149,8 +1156,8 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
             else:
                 yy = np.vstack((yy, FB_sonority))
         print('slices of output: ', slice_counter, "slices of input", slice_input)
-        if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
-            input('fix this or delete this')
+        # if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
+        #     input('fix this or delete this')
         file_name_y = os.path.join('.', 'data_for_ML', sign,
                                    sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                    fn[:-4] + '.txt')
