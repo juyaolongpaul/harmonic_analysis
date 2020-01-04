@@ -215,7 +215,7 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def output_FB_to_XML(x, y, thisChord, outputtype, s):
+def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
     """
 
     :param x:
@@ -258,7 +258,16 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s):
                     FB_desired = str(int(aInterval.name[1:]) % 7)
                 if FB_desired == '1':
                     FB_desired = '8'
-                thisChord.addLyric(aInterval.name[0]+FB_desired)
+                if sonority.pitch.accidental is not None:
+                    if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
+                        if FB_desired == '3':
+                            thisChord.addLyric(sonority.pitch.accidental.unicode)
+                        else:
+                            thisChord.addLyric(sonority.pitch.accidental.unicode + FB_desired)
+                    else:
+                        thisChord.addLyric(FB_desired)
+                else:
+                    thisChord.addLyric(FB_desired)
         return chord_tone
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
@@ -905,6 +914,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 s.insert(0, sChords)
+                k = s.analyze('AardenEssen')
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     # if j == 14:
                     #     print('debug')
@@ -926,8 +936,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    chord_tone_gt = output_FB_to_XML(x, gt, thisChord, outputtype, s)
-                    chord_tone = output_FB_to_XML(x, prediction, thisChord, outputtype, s)
+                    chord_tone_gt = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
+                    chord_tone = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
                     if (correct_bit == len(gt)):
                         correct_num += 1
                     a_counter += 1
