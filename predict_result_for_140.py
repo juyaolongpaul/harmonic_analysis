@@ -902,10 +902,16 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
                 os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1)))
-            f_all = open(os.path.join('.', 'predicted_result', sign,
-                                      outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                          windowsize + 1), 'ALTOGETHER') + '.txt',
-                         'w')  # create this file to track every type of mistakes
+            if times == 0:
+                f_all = open(os.path.join('.', 'predicted_result', sign,
+                                          outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                              windowsize + 1), 'ALTOGETHER') + '.txt',
+                             'w')  # create this file to track every type of mistakes
+            else:
+                f_all = open(os.path.join('.', 'predicted_result', sign,
+                                          outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                              windowsize + 1), 'ALTOGETHER') + '.txt',
+                             'a')  # create this file to track every type of mistakes
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])

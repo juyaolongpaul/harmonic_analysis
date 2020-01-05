@@ -542,15 +542,15 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     return suspension_ptr
 
 
-def extract_FB_as_lyrics():
+def extract_FB_as_lyrics(path):
     if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi')):
         os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi'))
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
-    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
+    for filename in os.listdir(path):
         if 'FB.musicxml' not in filename: continue
         # if '194' not in filename: continue
         print(filename, '---------------------')
-        tree = ET.ElementTree(file=os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
+        tree = ET.ElementTree(file=os.path.join(path, filename))
         parts = []
         for elem in tree.iter(tag='part'):  # get the bass voice
             parts.append(elem)
@@ -593,8 +593,8 @@ def extract_FB_as_lyrics():
                             #     print('debug')
                             add_FB_to_lyrics(ele, fig)
                             fig = []  # reset the FB for the next note with FB
-        tree.write(codecs.open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
-        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-9] + '_' + 'lyric' + '.xml'))
+        tree.write(codecs.open(os.path.join(path, filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
+        s = converter.parse(os.path.join(path, filename[:-9] + '_' + 'lyric' + '.xml'))
         if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics')):
             os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics'))
         s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics', filename + '.mid'))
@@ -675,11 +675,11 @@ def align_FB_with_slice(bassline, sChords, MIDI):
 
 
 
-def lyrics_to_chordify(want_IR, translate_chord='Y'):
-    for filename in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
+def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
+    for filename in os.listdir(path):
         if 'lyric' not in filename: continue
-        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
-            if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')):
+        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path):
+            if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path):
                 continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
@@ -687,7 +687,7 @@ def lyrics_to_chordify(want_IR, translate_chord='Y'):
         print(filename)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
-        s_MIDI = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master',
+        s_MIDI = converter.parse(os.path.join(path,
                                               filename))  # output a MIDI file with onset slices to add FB as lyric meta messages
         s_MIDI_Chords = s_MIDI.chordify()
         s_MIDI.insert(0, s_MIDI_Chords)
@@ -695,7 +695,7 @@ def lyrics_to_chordify(want_IR, translate_chord='Y'):
             os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics'))
         s_MIDI.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
                                           filename + '.mid'))
-        s = converter.parse(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename))
+        s = converter.parse(os.path.join(path, filename))
         # TODO: figure out why the MIDI version still transpose bass an octave lower
         MIDI = MidiFile(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'with_FB_as_lyrics',
                                      filename + '.mid'))
@@ -756,16 +756,17 @@ def lyrics_to_chordify(want_IR, translate_chord='Y'):
         else:
             s.insert(0, sChords)
         if translate_chord == 'Y':
-            s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', filename[:-4] + '_' + 'chordify' + '.xml'))
+            s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify' + '.xml'))
         else:
-            s.write('musicxml', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master',
+            s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
 
 
 if __name__ == '__main__':
     want_IR = True
-    # extract_FB_as_lyrics()
+    path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
+    extract_FB_as_lyrics(path)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    # lyrics_to_chordify(want_IR, 'N') # generate only FB as lyrics without translating as chords
-    lyrics_to_chordify(want_IR)
+    lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
+    #lyrics_to_chordify(want_IR, path)
 

@@ -21,7 +21,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -35,7 +35,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_with_bass')
+                        type=str, default='pitch_class_with_bass_scale')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -45,7 +45,7 @@ def main():
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=10)
     parser.add_argument('-r', '--ratio',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
@@ -61,7 +61,7 @@ def main():
                         type=str, default='NCT_pitch_class')
     parser.add_argument('-i', '--input',
                         help='specify what input features, besides pitch, you are using (default: %(default))',
-                        type=str, default='3meter')
+                        type=str, default='3meter_NewOnset')
     parser.add_argument('-time', '--timestep',
                         help='specify how many time steps (default: %(default))',
                         type=int, default=0)
@@ -71,8 +71,11 @@ def main():
     args = parser.parse_args()
     f1 = '.xml'
     f2 = '.txt'
-    input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
-    # transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
+    if args.source == 'Bach_o_FB':
+        input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
+    elif args.source == 'Bach_e_FB':
+        input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
+    transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
@@ -87,11 +90,11 @@ def main():
     input_dim = 12
     x = []
     y = []
-    # generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim, args.window,
-    #                                                              counter, counterMin, input, f1, input, f2,
-    #                                                              args.source,
-    #                                                              args.augmentation, args.pitch, args.ratio,
-    #                                                              args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+    generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim, args.window,
+                                                                 counter, counterMin, input, f1, input, f2,
+                                                                 args.source,
+                                                                 args.augmentation, args.pitch, args.ratio,
+                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
     #   # only execute this when the CV matrices are complete
     #
     # # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
@@ -100,7 +103,7 @@ def main():
     train_and_predict_FB(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
-                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b']) # Evaluate on the reserved chorales
+                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297']) # Evaluate on the reserved chorales
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()
