@@ -1165,6 +1165,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
+    key = s.analyze('AardenEssen')
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         slice_input += 1
         counter1 += 1
@@ -1180,7 +1181,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                                                                              thisChord, inputtype, s, sChords,
                                                                              i)
                 # only_pitch_class = list(pitchClass)
-            elif pitch == 'pitch_class_with_bass':
+            elif 'pitch_class_with_bass' in pitch:
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
                                                                              thisChord, inputtype, s, sChords,
                                                                              i)
@@ -1190,6 +1191,11 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                 if bass.name != 'rest':
                     bass_one_hot[bass.pitch.pitchClass] = 1
                 pitchClass = bass_one_hot + pitchClass
+                if 'scale' in pitch:  # currently make it local to only FB features for simplicity
+                    key_scale = [0] * 12
+                    for pitches in key.pitches:
+                        key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
+                    pitchClass = key_scale + pitchClass
             elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                 pitchClass, = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                            s,
