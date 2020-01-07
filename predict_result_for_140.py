@@ -228,12 +228,14 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
     chord_tone = [int(round(x)) for x in chord_tone]
+    actual_FB = []
     if list(y) == [0] * 12:
         thisChord.addLyric(' ')
         thisChord.addLyric(' ')  # to align
-        return chord_tone
+        return actual_FB
     FB = []
     FB_index = []
+
     if outputtype.find('_pitch_class') != -1:
         for i, item in enumerate(y):
             if int(item) == 1:
@@ -262,13 +264,17 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
                     if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
                         if FB_desired == '3':
                             thisChord.addLyric(sonority.pitch.accidental.unicode)
+                            actual_FB.append(sonority.pitch.accidental.unicode)
                         else:
                             thisChord.addLyric(sonority.pitch.accidental.unicode + FB_desired)
+                            actual_FB.append(sonority.pitch.accidental.unicode + FB_desired)
                     else:
                         thisChord.addLyric(FB_desired)
+                        actual_FB.append(FB_desired)
                 else:
                     thisChord.addLyric(FB_desired)
-        return chord_tone
+                    actual_FB.append(FB_desired)
+        return actual_FB
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
     """
@@ -759,6 +765,35 @@ def unify_GTChord_and_inferred_chord(name):
     return name[0] + name[1:]
 
 
+def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass):
+    if fig_a not in FB:
+        if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
+            if fig_b in FB:
+                FB.remove(fig_b)
+        elif previous_bass.name != 'rest' and bass.name != 'rest':
+            if previous_bass.pitch.pitchClass != bass.pitch.pitchClass:
+                if fig_b in FB:
+                    FB.remove(fig_b)
+    return FB
+
+
+def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass):
+    gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass)
+    predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass)
+    gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass)
+    predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass)
+    # gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass)
+    # predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB, previous_bass, bass)
+    # Stop using because of the 8-7 problem
+    if '4' in gt_FB and ('2' in gt_FB or '3' in gt_FB) and '7' not in previous_gt_FB:
+        if '6' in gt_FB and len(gt_FB) == 3:
+            gt_FB.remove('6')
+    if '4' in predict_FB and ('2' in predict_FB or '3' in predict_FB) and '7' not in previous_predict_FB:
+        if '6' in predict_FB and len(predict_FB) == 3:
+            predict_FB.remove('6')
+    return gt_FB, predict_FB
+
+
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
@@ -782,6 +817,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     fp = []
     fn = []
     frame_acc = []
+    frame_acc_implied = []
     frame_acc_2 = []
     cvscores_percentage_of_NCT_per_slice = []
     batch_size = 256
@@ -898,6 +934,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             length = len(fileName)
             a_counter = 0
             a_counter_correct = 0
+            a_counter_correct_implied = 0
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
@@ -917,13 +954,19 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 print(fileName[i])
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
+                correct_num_implied = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 s.insert(0, sChords)
                 k = s.analyze('AardenEssen')
+                previous_gt_FB = []
+                previous_predict_FB = []
+                previous_bass = -1
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     # if j == 14:
                     #     print('debug')
+                    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
@@ -942,24 +985,40 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    chord_tone_gt = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
-                    chord_tone = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
+                    gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
+                    predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
+                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass)
+                    previous_gt_FB = gt_FB
+                    previous_predict_FB = predict_FB
+                    previous_bass = bass
                     if (correct_bit == len(gt)):
                         correct_num += 1
+                        correct_num_implied += 1
+                        thisChord.addLyric('✓')
+                    elif gt_FB == predict_FB:
+                        correct_num_implied += 1
+                        thisChord.addLyric('✓_')
                     a_counter += 1
                 a_counter_correct += correct_num
+                a_counter_correct_implied += correct_num_implied
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
                 print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(
                     num_salami_slice),
                       file=f_all)
+                print('frame accucary implied: ' + str(correct_num_implied / num_salami_slice), end='\n', file=f_all)
+                print('num of correct frame answers implied: ' + str(correct_num_implied) + ' number of salami slices: ' + str(
+                    num_salami_slice),
+                      file=f_all)
                 print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary implied: ' + str(a_counter_correct_implied / a_counter), end='\n', file=f_all)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign,
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                             windowsize + 1), fileName[i][
                                                              :-4]) + '.xml')
             frame_acc.append((a_counter_correct / a_counter) * 100)
+            frame_acc_implied.append((a_counter_correct_implied / a_counter) * 100)
             f_all.close()
             print(np.mean(cvscores), np.std(cvscores))
             print(MODEL_NAME, file=cv_log)
@@ -973,7 +1032,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
             print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
             for i in range(len(cvscores_test)):
-                print('Test f1:', i, f1_test[i], '%',  'Frame acc 2:', frame_acc_2[i], '%', file=cv_log)
+                print('Test f1:', i, f1_test[i], '%',  'Frame acc:', frame_acc[i], 'Frame acc implied:', frame_acc_implied[i], '%', file=cv_log)
             print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
             print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
             print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
@@ -984,8 +1043,10 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
                   np.std(cvscores_percentage_of_NCT_per_slice), '%')
             print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-            print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
-            print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%', file=cv_log)
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%')
 
 
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
