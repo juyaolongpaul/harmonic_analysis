@@ -47,6 +47,7 @@ from get_input_and_output import adding_window_one_hot
 from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
+from FB2lyrics import is_suspension, colllapse_interval
 
 
 def find_tranposed_interval(fn):
@@ -765,25 +766,37 @@ def unify_GTChord_and_inferred_chord(name):
     return name[0] + name[1:]
 
 
-def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass):
+def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, ptr, s, sChord):
     if fig_a not in FB:
         if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
             if fig_b in FB:
                 FB.remove(fig_b)
         elif previous_bass.name != 'rest' and bass.name != 'rest':
-            if previous_bass.pitch.pitchClass != bass.pitch.pitchClass:
-                if fig_b in FB:
-                    FB.remove(fig_b)
+            for voice_number, sonority in enumerate(sChord.recurse().getElementsByClass('Chord')[ptr - 1]._notes):
+                aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
+                colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
+                    if is_suspension(ptr - 1, 1, s, sChord, 3 - voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
+                        if fig_b in FB:
+                            FB.remove(fig_b)
+                    else:
+                        sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+                        # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
     return FB
 
 
-def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass):
-    gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass)
-    predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass)
-    gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass)
-    predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass)
-    # gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass)
-    # predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB, previous_bass, bass)
+def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord):
+    gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    if '2' not in previous_gt_FB:
+        gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+        predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    elif '9' not in previous_gt_FB:
+        gt_FB = determine_potential_sus('2', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+        predict_FB = determine_potential_sus('2', '8', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    # TODO: resolve this 9 vs 2 issue!
     # Stop using because of the 8-7 problem
     if '4' in gt_FB and ('2' in gt_FB or '3' in gt_FB) and '7' not in previous_gt_FB:
         if '6' in gt_FB and len(gt_FB) == 3:
@@ -844,8 +857,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        # if times != 0:
-        #     continue
+        if times != 6:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -952,6 +965,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
+                if '30.06' not in fileName[i]:
+                    continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -967,7 +982,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     #     print('debug')
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-                    thisChord.closedPosition(forceOctave=4, inPlace=True)
+
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
                     correct_bit = 0
@@ -987,7 +1002,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
                     gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
                     predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
-                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass)
+                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s, sChords)  # here, suspension is not considered
+
+
                     previous_gt_FB = gt_FB
                     previous_predict_FB = predict_FB
                     previous_bass = bass
@@ -999,6 +1016,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         correct_num_implied += 1
                         thisChord.addLyric('✓_')
                     a_counter += 1
+                    thisChord.closedPosition(forceOctave=4, inPlace=True)
                 a_counter_correct += correct_num
                 a_counter_correct_implied += correct_num_implied
                 print(end='\n', file=f_all)

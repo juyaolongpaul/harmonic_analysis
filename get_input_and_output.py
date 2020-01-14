@@ -219,6 +219,8 @@ def get_pitch_class_for_four_voice(thisChord, s):
         pitch_class_four_voice = []
         pitch_four_voice = []
         for j, part in enumerate(s.parts):  # all parts, starting with soprano
+            if isinstance(part.measure(thisChord.measureNumber).notesAndRests[0], chord.Chord): # judge if there is a chordify voice or not
+                break
             all_beat = []  # record all the beat position in this part
             if len(part.measure(
                     thisChord.measureNumber).notes) == 0:  # No note at this measure, it must be a whole rest
