@@ -250,32 +250,51 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
         # Output FB to the file too
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-        for i, sonority in enumerate(thisChord._notes):
-            if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
-                aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-                if int(aInterval.name[1:]) % 7 == 0:
-                    FB_desired = '7'
-                elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-                    FB_desired = aInterval.name[1:]
-                else:
-                    FB_desired = str(int(aInterval.name[1:]) % 7)
-                if FB_desired == '1':
-                    FB_desired = '8'
-                if sonority.pitch.accidental is not None:
-                    if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
-                        if FB_desired == '3':
-                            thisChord.addLyric(sonority.pitch.accidental.unicode)
-                            actual_FB.append(sonority.pitch.accidental.unicode)
-                        else:
-                            thisChord.addLyric(sonority.pitch.accidental.unicode + FB_desired)
-                            actual_FB.append(sonority.pitch.accidental.unicode + FB_desired)
+        for i, sonority in enumerate(pitch_four_voice):
+            if hasattr(sonority, 'pitch'):
+                if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
+                    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                    if int(aInterval.name[1:]) % 7 == 0:
+                        FB_desired = '7'
+                    elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
+                        FB_desired = aInterval.name[1:]
                     else:
-                        thisChord.addLyric(FB_desired)
-                        actual_FB.append(FB_desired)
-                else:
-                    thisChord.addLyric(FB_desired)
-                    actual_FB.append(FB_desired)
+                        FB_desired = str(int(aInterval.name[1:]) % 7)
+                    if FB_desired == '1':
+                        FB_desired = '8'
+                    # Sometimes it can share the same pitch class, and in this case,
+                    # it will give two identical FB, in this case, we only need one
+
+                    if sonority.pitch.accidental is not None:
+                        if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
+                            if FB_desired == '3':
+                                thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                                                     sonority.pitch.accidental.unicode)
+                            else:
+                                thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                                                     sonority.pitch.accidental.unicode + FB_desired)
+                        else:
+                            thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                                                 FB_desired)
+                    else:
+                        thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                                             FB_desired)
         return actual_FB
+
+
+def add_FB_result(thisChord, actual_FB, result):
+    """
+    Modular function to add the FB annotation. If already exist, skip this part which will add a duplicated one, since
+    there can be situations where multiple voices share the same pitch class
+    :param thisChord:
+    :param actual_FB:
+    :return:
+    """
+    if result not in actual_FB:
+        thisChord.addLyric(result)
+        actual_FB.append(result)
+    return thisChord, actual_FB
+
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
     """
@@ -772,15 +791,19 @@ def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, 
             if fig_b in FB:
                 FB.remove(fig_b)
         elif previous_bass.name != 'rest' and bass.name != 'rest':
-            for voice_number, sonority in enumerate(sChord.recurse().getElementsByClass('Chord')[ptr - 1]._notes):
-                aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
-                colllapsed_interval = colllapse_interval(aInterval.name[1:])
-                if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
-                    if is_suspension(ptr - 1, 1, s, sChord, 3 - voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
-                        if fig_b in FB:
-                            FB.remove(fig_b)
-                    else:
-                        sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+            pitch_class_four_voice, pitch_four_voice = \
+                get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
+            for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
+                # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
+                if pitch_class_four_voice[voice_number] != -1:
+                    aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
+                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                    if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
+                        if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
+                            if fig_b in FB:
+                                FB.remove(fig_b)
+                        else:
+                            sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
                         # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
     return FB
 
@@ -857,7 +880,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 6:
+        if times != 2:
             continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
@@ -965,14 +988,15 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                if '30.06' not in fileName[i]:
-                    continue
+                if '19.07' in fileName[i]:
+                    print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
-                sChords = s.chordify()
-                s.insert(0, sChords)
+                s_no_chordify = converter.parse(os.path.join(input, fileName[i]))  # remove the last voice which will always be the chorify voice
+                s_no_chordify.remove(s_no_chordify.parts[-1]) # remove the last voice which will always be the chorify voice
+                sChords = s_no_chordify.chordify()
                 k = s.analyze('AardenEssen')
                 previous_gt_FB = []
                 previous_predict_FB = []
@@ -1002,7 +1026,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
                     gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
                     predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
-                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s, sChords)  # here, suspension is not considered
+
+                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, suspension is not considered
 
 
                     previous_gt_FB = gt_FB
@@ -1015,8 +1040,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     elif gt_FB == predict_FB:
                         correct_num_implied += 1
                         thisChord.addLyric('✓_')
-                    a_counter += 1
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    a_counter += 1
+                s.insert(0, sChords)
                 a_counter_correct += correct_num
                 a_counter_correct_implied += correct_num_implied
                 print(end='\n', file=f_all)
