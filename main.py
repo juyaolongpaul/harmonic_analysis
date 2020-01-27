@@ -22,7 +22,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -36,10 +36,10 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class')
+                        type=str, default='pitch_class_with_bass')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=2)
     parser.add_argument('-pp', '--percentage',
                         help='the portion of the training data you want to use (a float number between 0-1'
                              ', not a percentage) (default: %(default))',
@@ -78,8 +78,8 @@ def main():
         f1 = '.krn'  # the version of chorales used
     output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
     f2 = '.txt'
-    if args.source.find('rule_MaxMel') == -1:
-        extract_chord_labels(output, f1)
+    # if args.source.find('rule_MaxMel') == -1:
+    #     extract_chord_labels(output, f1)
     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys

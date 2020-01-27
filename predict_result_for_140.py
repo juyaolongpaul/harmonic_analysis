@@ -1339,9 +1339,15 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
             for i, item in enumerate(test_xx_only_pitch_no_window):
                  if inputtype.find('NewOnset') != -1:
                      if modelID != 'SVM' and modelID != 'DNN':
-                        NewOnset = list(test_xx_no_window[i][-1][12:24])
+                        if 'with_bass' not in pitch_class:
+                            NewOnset = list(test_xx_no_window[i][-1][12:24])
+                        else:
+                            NewOnset = list(test_xx_no_window[i][-1][24:36])
                      else:
-                        NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
+                         if 'with_bass' not in pitch_class:
+                            NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
+                         else:
+                             NewOnset = list(test_xx_no_window[i][24:36])
                  for j, item2 in enumerate(item):
                      if int(predict_y[i][j]) == 1: # predict_y predicts NCT label for each slice
                         if int(item2) == 1: # if the there is a current pitch class and it is predicted as a NCT

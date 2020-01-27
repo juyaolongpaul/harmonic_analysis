@@ -1341,109 +1341,115 @@ def generate_data(counter1, counter2, x, y, inputdim, outputdim, windowsize, cou
                               sign) + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21)
         os.mkdir(os.path.join('.', 'data_for_ML', sign,
                               sign) + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21)
-        for id, fn in enumerate(fn_total):
-            print(fn)
-            # if fn != 'transposed_KBcKE358.xml':
-            #     continue
-            ptr = p.search(fn).span()[0]  # return the starting place of "001"
-            ptr2 = p.search(fn).span()[1]
-            chorale_x = []
-            chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
-            # pitch class is used. This one is used to indicate which one is NCT.
-            chorale_x_only_pitch_class = []
-            chorale_x_only_meter = []  # we want to save the meter info for the gt chord label as input feature to do chord inferral
-            chorale_x_only_newOnset = []
-            if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
-                f = open(
-                    os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
-                    'r')
-                f_non = open(os.path.join(output, fn[:ptr]) + label + 'non_chord_tone_' + music21 + '_' + sign + pitch
-                             + fn[ptr:ptr2] + f2, 'w')
-            else:
-                continue  # skip the file which does not have chord labels
-            s = converter.parse(os.path.join(input1, fn))
-            sChords = s.chordify(removeRedundantPitches=False)
-            slice_input = 0
-            slice_input, counter1, chorale_x_only_pitch_class, chorale_x_only_meter, chorale_x_only_newOnset, \
-            counter, countermin = generate_encoding_input(sChords, slice_input, counter1, inputdim,
-                                                          inputtype, s, outputtype, fn, pitch,
-                            chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
-                            chorale_x_only_newOnset, keys, music21, counter, countermin, sign)
-            slice_counter = 0  # remember what slice in order to get the pitch class info
-            yy = []  # save output by each chorale
-            yy_pitch_class = []
-            xx_chord_tone = []  # this is the input feature vector for chord inferral
-            for line in f.readlines():
-                line = get_chord_line(line, sign)
-                for chord in line.split():
-                    if (chord.find('g]') != -1):
-                        print(fn)
-                        input1('wtf is that?')
-                    counter2 += 1
-                    # chord_class = [0] * outputdim
-                    # chord_class = y_non_chord_tone(chord, chord_class, list_of_chords)
-                    # chord_class = get_non_chord_tone(chorale_x[slice_counter],)
-                    if outputtype.find('NCT') != -1:
-                        chord_class = get_chord_tone(chord, outputdim)
-                        if outputtype.find("_pitch_class") != -1:
-                            if pitch.find('_4_voices') != -1:
-                                input('Do not use 12-d output when the pitch class is used for each of 4 voices!')
-                            chord_class_pitch_class = chord_class[:-1]
-                            NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter])  # we want NCT pitch class
-                            CT_pitch_class = list(chorale_x_only_pitch_class[slice_counter])
-                            for iii, itemm in enumerate(NCT_pitch_class):
-                                if itemm == 1:
-                                    if int(chord_class_pitch_class[
-                                               iii]) == 1:  # If NCT pitch class is chord tone, set it to 0
-                                        NCT_pitch_class[iii] = 0
-                            for iii, itemm in enumerate(NCT_pitch_class):  # Save only CT
-                                if int(itemm) == 1:  # it is a NCT
-                                    if int(CT_pitch_class[iii]) == 1:  # If NCT pitch class is chord tone, set it to 0
-                                        CT_pitch_class[iii] = 0
-                                        chorale_x_only_newOnset[slice_counter][iii] = 0
-                            if inputtype.find('NewOnset') != -1:
-                                CT_pitch_class.extend(list(chorale_x_only_newOnset[slice_counter]))
-                            CT_pitch_class.extend(list(
-                                chorale_x_only_meter[slice_counter]))  # Add meter as input features for chord inferral
-                        if pitch != 'pitch_class_binary':
-                            chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
-                                                               outputdim,
-                                                               f_non)  # Here we assume NCT result is the same
-                            # no matter whether 12 pitch class or 7 is used
-                        else:
-                            chord_class = get_non_chord_tone_4_binary(chorale_x_only_pitch_class[slice_counter],
-                                                                      chord_class, outputdim, f_non)
-                    elif outputtype == 'CL':
-                        chord_class = [0] * len(list_of_chords)
-                        chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                    slice_counter += 1
-                    if (slice_counter == 1):
-                        yy = np.concatenate((yy, chord_class))
-                        if outputtype.find("_pitch_class") != -1:
-                            yy_pitch_class = np.concatenate((yy_pitch_class, NCT_pitch_class))
-                            xx_chord_tone = np.concatenate((xx_chord_tone, CT_pitch_class))
+    for id, fn in enumerate(fn_total):
+        if os.path.exists(os.path.join('.', 'data_for_ML', sign,
+                               sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                               fn[:-4] + '.txt')) and os.path.exists(os.path.join('.', 'data_for_ML', sign,
+                                   sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                   fn[:-4] + '.txt')):
+            continue  # skip the files that already have encodings
+        print(fn)
+        # if fn != 'transposed_KBcKE358.xml':
+        #     continue
+        ptr = p.search(fn).span()[0]  # return the starting place of "001"
+        ptr2 = p.search(fn).span()[1]
+        chorale_x = []
+        chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
+        # pitch class is used. This one is used to indicate which one is NCT.
+        chorale_x_only_pitch_class = []
+        chorale_x_only_meter = []  # we want to save the meter info for the gt chord label as input feature to do chord inferral
+        chorale_x_only_newOnset = []
+        if (os.path.isfile(os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2)):
+            f = open(
+                os.path.join(output, fn[:ptr]) + 'translated_' + label + fn[ptr:ptr2] + sign + f2,
+                'r')
+            f_non = open(os.path.join(output, fn[:ptr]) + label + 'non_chord_tone_' + music21 + '_' + sign + pitch
+                         + fn[ptr:ptr2] + f2, 'w')
+        else:
+            continue  # skip the file which does not have chord labels
+        s = converter.parse(os.path.join(input1, fn))
+        sChords = s.chordify(removeRedundantPitches=False)
+        slice_input = 0
+        slice_input, counter1, chorale_x_only_pitch_class, chorale_x_only_meter, chorale_x_only_newOnset, \
+        counter, countermin = generate_encoding_input(sChords, slice_input, counter1, inputdim,
+                                                      inputtype, s, outputtype, fn, pitch,
+                        chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
+                        chorale_x_only_newOnset, keys, music21, counter, countermin, sign)
+        slice_counter = 0  # remember what slice in order to get the pitch class info
+        yy = []  # save output by each chorale
+        yy_pitch_class = []
+        xx_chord_tone = []  # this is the input feature vector for chord inferral
+        for line in f.readlines():
+            line = get_chord_line(line, sign)
+            for chord in line.split():
+                if (chord.find('g]') != -1):
+                    print(fn)
+                    input1('wtf is that?')
+                counter2 += 1
+                # chord_class = [0] * outputdim
+                # chord_class = y_non_chord_tone(chord, chord_class, list_of_chords)
+                # chord_class = get_non_chord_tone(chorale_x[slice_counter],)
+                if outputtype.find('NCT') != -1:
+                    chord_class = get_chord_tone(chord, outputdim)
+                    if outputtype.find("_pitch_class") != -1:
+                        if pitch.find('_4_voices') != -1:
+                            input('Do not use 12-d output when the pitch class is used for each of 4 voices!')
+                        chord_class_pitch_class = chord_class[:-1]
+                        NCT_pitch_class = list(chorale_x_only_pitch_class[slice_counter])  # we want NCT pitch class
+                        CT_pitch_class = list(chorale_x_only_pitch_class[slice_counter])
+                        for iii, itemm in enumerate(NCT_pitch_class):
+                            if itemm == 1:
+                                if int(chord_class_pitch_class[
+                                           iii]) == 1:  # If NCT pitch class is chord tone, set it to 0
+                                    NCT_pitch_class[iii] = 0
+                        for iii, itemm in enumerate(NCT_pitch_class):  # Save only CT
+                            if int(itemm) == 1:  # it is a NCT
+                                if int(CT_pitch_class[iii]) == 1:  # If NCT pitch class is chord tone, set it to 0
+                                    CT_pitch_class[iii] = 0
+                                    chorale_x_only_newOnset[slice_counter][iii] = 0
+                        if inputtype.find('NewOnset') != -1:
+                            CT_pitch_class.extend(list(chorale_x_only_newOnset[slice_counter]))
+                        CT_pitch_class.extend(list(
+                            chorale_x_only_meter[slice_counter]))  # Add meter as input features for chord inferral
+                    if pitch != 'pitch_class_binary':
+                        chord_class = get_non_chord_tone_4(chorale_x_only_pitch_class[slice_counter], chord_class,
+                                                           outputdim,
+                                                           f_non)  # Here we assume NCT result is the same
+                        # no matter whether 12 pitch class or 7 is used
                     else:
-                        yy = np.vstack((yy, chord_class))
-                        if outputtype.find("_pitch_class") != -1:
-                            yy_pitch_class = np.vstack((yy_pitch_class, NCT_pitch_class))
-                            xx_chord_tone = np.vstack((xx_chord_tone, CT_pitch_class))
-            print('slices of output: ', slice_counter, "slices of input", slice_input)
-            file_name_y = os.path.join('.', 'data_for_ML', sign,
-                                       sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
-                                       fn[:-4] + '.txt')
-            np.savetxt(file_name_y, yy, fmt='%.1e')
-            if outputtype.find("_pitch_class") != -1:
-                file_name_y_pitch_class = os.path.join('.', 'data_for_ML', sign,
-                                                       sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
-                                                       fn[:-4] + '_pitch_class.txt')
-                np.savetxt(file_name_y_pitch_class, yy_pitch_class, fmt='%.1e')
-                file_name_x_chord_tone = os.path.join('.', 'data_for_ML', sign,
-                                                      sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
-                                                      fn[:-4] + '_chord_tone.txt')
-                # xx_chord_tone_window = adding_window_one_hot(xx_chord_tone, windowsize + 1)
-                np.savetxt(file_name_x_chord_tone, xx_chord_tone, fmt='%.1e')
-            if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
-                input('fix this or delete this')
+                        chord_class = get_non_chord_tone_4_binary(chorale_x_only_pitch_class[slice_counter],
+                                                                  chord_class, outputdim, f_non)
+                elif outputtype == 'CL':
+                    chord_class = [0] * len(list_of_chords)
+                    chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                slice_counter += 1
+                if (slice_counter == 1):
+                    yy = np.concatenate((yy, chord_class))
+                    if outputtype.find("_pitch_class") != -1:
+                        yy_pitch_class = np.concatenate((yy_pitch_class, NCT_pitch_class))
+                        xx_chord_tone = np.concatenate((xx_chord_tone, CT_pitch_class))
+                else:
+                    yy = np.vstack((yy, chord_class))
+                    if outputtype.find("_pitch_class") != -1:
+                        yy_pitch_class = np.vstack((yy_pitch_class, NCT_pitch_class))
+                        xx_chord_tone = np.vstack((xx_chord_tone, CT_pitch_class))
+        print('slices of output: ', slice_counter, "slices of input", slice_input)
+        file_name_y = os.path.join('.', 'data_for_ML', sign,
+                                   sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                   fn[:-4] + '.txt')
+        np.savetxt(file_name_y, yy, fmt='%.1e')
+        if outputtype.find("_pitch_class") != -1:
+            file_name_y_pitch_class = os.path.join('.', 'data_for_ML', sign,
+                                                   sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                   fn[:-4] + '_pitch_class.txt')
+            np.savetxt(file_name_y_pitch_class, yy_pitch_class, fmt='%.1e')
+            file_name_x_chord_tone = os.path.join('.', 'data_for_ML', sign,
+                                                  sign + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                  fn[:-4] + '_chord_tone.txt')
+            # xx_chord_tone_window = adding_window_one_hot(xx_chord_tone, windowsize + 1)
+            np.savetxt(file_name_x_chord_tone, xx_chord_tone, fmt='%.1e')
+        if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
+            input('fix this or delete this')
 
 
 def get_id(id_sum, num_of_chorale, times):
