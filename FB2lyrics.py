@@ -565,7 +565,7 @@ def extract_FB_as_lyrics(path):
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(path):
         if 'FB.musicxml' not in filename: continue
-        # if '194' not in filename: continue
+        # if '168.06' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join(path, filename))
         parts = []
@@ -661,6 +661,9 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 bassnote = each_bass
                 if bassnote.lyrics != []:
                     fig = decode_FB_from_lyrics(bassnote.lyrics)
+                    print('fig from lyrics', fig)
+                    if fig[0]['number'] == ['#']:
+                        print('debug')
                     #print(fig)
                     displacement = 0
                     denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
@@ -694,9 +697,9 @@ def align_FB_with_slice(bassline, sChords, MIDI):
 
 def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
     for filename in os.listdir(path):
-        # if '30.06' not in filename: continue
+        if '168.06' not in filename: continue
         if 'lyric' not in filename: continue
-        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path):
+        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
             continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
@@ -786,6 +789,6 @@ if __name__ == '__main__':
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     # extract_FB_as_lyrics(path)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    # lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
-    lyrics_to_chordify(want_IR, path)
+    lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
+    # lyrics_to_chordify(want_IR, path)
 

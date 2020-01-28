@@ -12,8 +12,11 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
+import graphviz
 np.random.seed(1337)  # for reproducibility
 from keras import optimizers
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree as TREE
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 # from keras.utils.visualize_util import plot # draw fig
@@ -48,6 +51,8 @@ from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
 from FB2lyrics import is_suspension, colllapse_interval
+
+c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
 
 
 def find_tranposed_interval(fn):
@@ -652,7 +657,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
         if path.find('_x_') != -1:  # we need to add windows
-            if model.find('SVM') != -1 or model.find('DNN') != -1:
+            if model.find('SVM') != -1 or model.find('DNN') != -1 or model.find('DT') != -1:
                 encoding_window = adding_window_one_hot(encoding, windowsize)
             elif ts != 0:
                 encoding_window = create_3D_data(encoding, ts)
@@ -681,7 +686,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
     print('train_yy shape:', train_yy.shape)
     print('valid_xx shape:', valid_xx.shape)
     print('valid_yy shape:', valid_yy.shape)
-    if modelID.find('SVM') == -1:
+    if modelID.find('SVM') == -1 and modelID.find('DT') == -1:
         model = Sequential()
         # model.add(Embedding(36, 256, input_length=batch))
         if modelID.find('DNN') != -1:
@@ -776,6 +781,20 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             print('new training set', train_xx_SVM.shape, train_yy_SVM.shape)
             model.fit(train_xx_SVM, train_yy_SVM)
             return model
+    elif modelID == 'DT':  # we want to learn the rules and visualize the rules
+        if outputtype.find("NCT") != -1:
+            model = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+            train_xx_DT = np.vstack((train_xx, valid_xx))
+            train_yy_DT = np.concatenate((train_yy, valid_yy))
+            print('new training set', train_xx_DT.shape, train_yy_DT.shape)
+            model.fit(train_xx_DT, train_yy_DT)
+            tree_FB = TREE.export_graphviz(model, feature_names= ["bass_" + pc for pc in c2] + c2 + ['downbeat', 'onbeat', 'offbeat'], out_file=None)
+            graph = graphviz.Source(tree_FB, format="pdf")
+            graph.render("ds_{}".format(3), view=True)
+            return model
+        elif outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
+            input('DT for chord labeling has not been developed!')
+
 
 def unify_GTChord_and_inferred_chord(name):
     if name.find('M')!= -1 and name.find('M7') == -1:
@@ -911,6 +930,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                    FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy,
                                    valid_xx,
                                    valid_yy)  # train the machine learning model
+        else:
+            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
         test_xx = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
                                      os.path.join('.', 'data_for_ML', sign,
                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
@@ -921,7 +942,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
         test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
                                      os.path.join('.', 'data_for_ML', sign,
                                                   sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
-        model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+
         predict_y = model.predict(test_xx)  # Predict the probability for each bit of FB sonority
         for i in predict_y:  # regulate the prediction
             for j, item in enumerate(i):
@@ -1016,7 +1037,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     dimension = test_xx_only_pitch.shape[1]
 
                     realdimension = int(dimension / (2 * windowsize + 1))
-                    if modelID != 'SVM' and modelID != 'DNN':
+                    if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                         x = test_xx_only_pitch[a_counter][-1]  # no window if the matrix is 3D
                     else:
                         if windowsize < 0:
@@ -1024,6 +1045,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
+                    if j == 73:
+                        print('debug')
                     gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
                     predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
 
@@ -1338,7 +1361,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
 
             for i, item in enumerate(test_xx_only_pitch_no_window):
                  if inputtype.find('NewOnset') != -1:
-                     if modelID != 'SVM' and modelID != 'DNN':
+                     if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                         if 'with_bass' not in pitch_class:
                             NewOnset = list(test_xx_no_window[i][-1][12:24])
                         else:
@@ -1360,19 +1383,19 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                      predict_xx_chord_tone[i] = np.concatenate(
                          (predict_xx_chord_tone[i], NewOnset))
                  if inputtype.find('3meter') != -1:
-                     if modelID != 'SVM' and modelID != 'DNN':
+                     if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                          predict_xx_chord_tone[i] = np.concatenate(
                              (predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-1][-3:]))
                      else:
                          predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
-            if modelID.find('SVM') != -1 or modelID.find('DNN') != -1:
+            if modelID.find('SVM') != -1 or modelID.find('DNN') != -1 or modelID.find('DT') != -1:
                 predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
 
             else:
                 predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts)
             #predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
-            if modelID == 'SVM':
+            if modelID == 'SVM' or modelID == 'DT':
                 predict_y_chord_tone = model_chord_tone.predict(predict_xx_chord_tone_window) # TODO: we need to make this part modular so it can deal with all possible specs
                 gt_y_chord_tone = model_chord_tone.predict(test_xx_chord_tone)
             else:
@@ -1397,7 +1420,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 scores_test_chord_tone = model_chord_tone.evaluate(test_xx_chord_tone, test_yy_chord_label, verbose=0)
                 cvscores_chord_tone.append(scores_chord_tone[1] * 100)
                 cvscores_test_chord_tone.append(scores_test_chord_tone[1] * 100)
-        elif modelID == "SVM":
+        elif modelID == "SVM" or modelID == 'DT':
             cvscores.append(test_acc * 100)
             cvscores_test.append(test_acc * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
@@ -1670,7 +1693,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                         dimension = test_xx_only_pitch.shape[1]
 
                         realdimension = int(dimension / (2 * windowsize + 1))
-                        if modelID != 'SVM' and modelID != 'DNN':
+                        if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                             x = test_xx_only_pitch[a_counter][-1] # no window if the matrix is 3D
                         else:
                             if windowsize < 0:
@@ -1861,7 +1884,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         f_all.close()
     print(np.mean(cvscores), np.std(cvscores))
     print(MODEL_NAME, file=cv_log)
-    if modelID != 'SVM':
+    if modelID != 'SVM' and modelID != 'DT':
         model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
     print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
