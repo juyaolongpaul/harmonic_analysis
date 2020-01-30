@@ -7,6 +7,8 @@ from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note, 
 from mido import MetaMessage, MidiFile
 
 
+f_sus = open('suspension.txt', 'w')
+
 def translate_FB_as_lyrics(number, suffix, prefix, extension):
     """
     Translate FB in lists into string added to lyrics
@@ -321,8 +323,9 @@ def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_p
     :param thisChord:
     :return:
     """
-    if is_suspension(ptr, ptr2, s, sChord, 3 - voice_number, sus_type):
+    if is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
         thisChord.style.color = 'pink'
+        print(str(ptr), file=f_sus)
         suspension_ptr.append(ptr + ptr2)
     return suspension_ptr
 
@@ -444,46 +447,49 @@ def suspension_processing(fig, thisChord, bass, sChord, fig_collapsed, ptr, s, s
     if '7' in fig or '6' in fig or '4' in fig or '2' in fig or '9' in fig:  # In these cases, examine whether this note is a suspension or not
         # if thisChord.measureNumber == 12:
         #     print('debug')
-        for voice_number, sonority in enumerate(thisChord._notes):
+        pitch_class_four_voice, pitch_four_voice = \
+            get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr], s)
+        for voice_number, sonority in enumerate(pitch_four_voice):
+            if sonority.isRest == False:
             ## TODO: voice number will be wrong is there is a voice crossing. This will matter when if a suspension happens here as well
             # also the voice number is inverted compared to the part number in score object
-            if sonority.pitch.midi < bass.pitch.midi:  # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
-                bass_lower = bass.transpose(interval.Interval(-12))
-                aInterval = interval.Interval(noteStart=bass_lower, noteEnd=sonority)
-            else:
+            # if sonority.pitch.midi < bass.pitch.midi:  # there is voice crossing, so we need to transpose the bass an octave lower, marked as '@'
+            #     bass_lower = bass.transpose(interval.Interval(-12))
+            #     aInterval = interval.Interval(noteStart=bass_lower, noteEnd=sonority)
+            # else:
                 aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-            colllapsed_interval = colllapse_interval(aInterval.name[1:])
-            if any(colllapsed_interval in each for each in
-                   fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
-                # Now check whether the next figure is 6, 5, 3, resepctively
-                ptr2 = 1  # this is how many onset slices we need to look ahead to get a figure
-                while sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyric in [None,
-                                                                                         ' ']:  # if the there is no FB, keep searching
-                    if len(sChord.recurse().getElementsByClass('Chord')) - 1 > ptr + ptr2:
-                        ptr2 += 1
-                    else:  # already hit the last element
-                        break
+                colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                if any(colllapsed_interval in each for each in
+                       fig_collapsed):  # Step 1: 7, 6, 4 can be suspensions (9 is already dealt with)
+                    # Now check whether the next figure is 6, 5, 3, resepctively
+                    ptr2 = 1  # this is how many onset slices we need to look ahead to get a figure
+                    while sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyric in [None,
+                                                                                             ' ']:  # if the there is no FB, keep searching
+                        if len(sChord.recurse().getElementsByClass('Chord')) - 1 > ptr + ptr2:
+                            ptr2 += 1
+                        else:  # already hit the last element
+                            break
 
-                if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in
-                                                      sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
+                    if '7' == colllapsed_interval and any('6' in each_figure.text for each_figure in
+                                                          sChord.recurse().getElementsByClass('Chord')[ptr + ptr2].lyrics):
 
-                    suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
-                                                      '7')
-                elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in
-                                                        sChord.recurse().getElementsByClass('Chord')[
-                                                            ptr + ptr2].lyrics):
-                    suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
-                                                      '6')
-                elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in
-                                                        sChord.recurse().getElementsByClass('Chord')[
-                                                            ptr + ptr2].lyrics):
-                    suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
-                                                      '4')
-                elif '2' ==  colllapsed_interval and any('8' in each_figure.text for each_figure in
-                                                        sChord.recurse().getElementsByClass('Chord')[
-                                                            ptr + ptr2].lyrics):
-                    suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
-                                                      '2')
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
+                                                          '7')
+                    elif '6' == colllapsed_interval and any('5' in each_figure.text for each_figure in
+                                                            sChord.recurse().getElementsByClass('Chord')[
+                                                                ptr + ptr2].lyrics):
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
+                                                          '6')
+                    elif '4' == colllapsed_interval and any(each_figure.text in ['3', '#', 'b', 'n'] for each_figure in
+                                                            sChord.recurse().getElementsByClass('Chord')[
+                                                                ptr + ptr2].lyrics):
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
+                                                          '4')
+                    elif '2' ==  colllapsed_interval and any('8' in each_figure.text for each_figure in
+                                                            sChord.recurse().getElementsByClass('Chord')[
+                                                                ptr + ptr2].lyrics):
+                        suspension_ptr = label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr,
+                                                          '2')
 
 
 
@@ -697,16 +703,17 @@ def align_FB_with_slice(bassline, sChords, MIDI):
 
 def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
     for filename in os.listdir(path):
-        if '168.06' not in filename: continue
+        # if '14.05' not in filename: continue
         if 'lyric' not in filename: continue
-        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
-            continue  # don't need to translate the chord labels if already there
+        # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
+        #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
         if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
             continue
 
         print(filename)
+        print(filename, file=f_sus)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
         s_MIDI = converter.parse(os.path.join(path,
@@ -789,6 +796,6 @@ if __name__ == '__main__':
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     # extract_FB_as_lyrics(path)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
-    # lyrics_to_chordify(want_IR, path)
+    # lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
+    lyrics_to_chordify(want_IR, path)
 

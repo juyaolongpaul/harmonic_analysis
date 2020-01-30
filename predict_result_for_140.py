@@ -788,9 +788,9 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             train_yy_DT = np.concatenate((train_yy, valid_yy))
             print('new training set', train_xx_DT.shape, train_yy_DT.shape)
             model.fit(train_xx_DT, train_yy_DT)
-            tree_FB = TREE.export_graphviz(model, feature_names= ["bass_" + pc for pc in c2] + c2 + ['downbeat', 'onbeat', 'offbeat'], out_file=None)
-            graph = graphviz.Source(tree_FB, format="pdf")
-            graph.render("ds_{}".format(3), view=True)
+            # tree_FB = TREE.export_graphviz(model, feature_names= ["bass_" + pc for pc in c2] + c2 + ["real_attack_" + pc for pc in c2] + ['downbeat', 'onbeat', 'offbeat'], filled=True, rounded=True, leaves_parallel=True, out_file=None)
+            # graph = graphviz.Source(tree_FB, format="pdf")
+            # graph.render(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME), view=True)
             return model
         elif outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
             input('DT for chord labeling has not been developed!')
@@ -899,8 +899,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 2:
-            continue
+        # if times != 2:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
