@@ -571,7 +571,8 @@ def extract_FB_as_lyrics(path):
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(path):
         if 'FB.musicxml' not in filename: continue
-        # if '168.06' not in filename: continue
+        # if '244.46' not in filename: continue
+        if '8.06' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join(path, filename))
         parts = []
@@ -661,6 +662,10 @@ def align_FB_with_slice(bassline, sChords, MIDI):
     :param MIDI: mido MIDI object to add FB as lyrics
     :return:
     """
+    flag = 0 # indicating whether the whole chorale needs to double the number since some are just half of it
+    denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
+    if denominator_chorale != 4:
+        print('demoniator is', denominator_chorale, file=f_sus)
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
             if each_bass.beat == thisChord.beat:
@@ -668,16 +673,27 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 if bassnote.lyrics != []:
                     fig = decode_FB_from_lyrics(bassnote.lyrics)
                     print('fig from lyrics', fig)
-                    if fig[0]['number'] == ['#']:
+                    if fig[0]['number'] == ['5', '4']:
                         print('debug')
                     #print(fig)
                     displacement = 0
-                    denominator_chorale = sChords.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
+
+                    if flag == 0:
+                        total_bass_duration = 0
+                        for j, one_FB in enumerate(fig):
+                            if 'duration' in fig[j]:
+                                total_bass_duration += float(fig[j]['duration'])
+
+                        if denominator_chorale * bassnote.duration.quarterLength * 2 / 4 == total_bass_duration and denominator_chorale == 4:
+                            # we need to double the duration in
+                            # this piece as a whole
+                            flag = 1
+
                     for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
                         slice_duration = sChords.recurse().getElementsByClass('Chord')[
-                            i + j + displacement].duration.quarterLength
+                            i + j + displacement].duration.quarterLength * denominator_chorale / 4
                         if 'duration' in fig[j]:
-                            if slice_duration * 2 == float(fig[j]['duration']) and denominator_chorale == 4:
+                            if flag == 1:
                                 fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
                                 # don't know why some xml has half of its standard duration value
                             if float(fig[j]['duration']) / float(denominator_chorale) == slice_duration:  # this means
@@ -688,9 +704,10 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                                 while slice_duration < float(fig[j]['duration']) / float(denominator_chorale):
                                     displacement += 1
                                     slice_duration += sChords.recurse().getElementsByClass('Chord')[
-                                        i + j + displacement].duration.quarterLength
+                                        i + j + displacement].duration.quarterLength * denominator_chorale / 4
                                 if slice_duration != float(fig[j]['duration']) / float(denominator_chorale):
                                     print('duration of FB does not equal to the duration of many slices!')
+                                    break
 
                         else:  # no duration, only one FB, just matching the current slice
                             add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
@@ -699,18 +716,17 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 break
 
 
-
-
 def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
     for filename in os.listdir(path):
-        # if '14.05' not in filename: continue
+        # if '244.46' not in filename: continue
+        # if '140.07' not in filename: continue
         if 'lyric' not in filename: continue
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
-        if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
-            continue
+        # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
+        #     continue
 
         print(filename)
         print(filename, file=f_sus)
