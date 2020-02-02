@@ -849,6 +849,33 @@ def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, pr
     return gt_FB, predict_FB
 
 
+def count_correct_slices(correct_bit, gt, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord):
+    """
+    The modular function that counts the correct slides of (implied) FB
+    :param correct_bit:
+    :param gt:
+    :param correct_num:
+    :param correct_num_implied:
+    :param thisChord:
+    :return:
+    """
+    if (correct_bit == len(gt)):
+        correct_num += 1
+        correct_num_implied += 1
+        thisChord.addLyric('✓')
+    elif gt_FB == predict_FB:
+        correct_num_implied += 1
+        thisChord.addLyric('✓_')
+    return correct_num, correct_num_implied
+
+
+def one_hot_PC_filler(list_number):
+    pitchclass = [0] * 12
+    for i in list_number:
+        pitchclass[i] = 1
+    return pitchclass
+
+
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
@@ -873,6 +900,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     fn = []
     frame_acc = []
     frame_acc_implied = []
+    frame_acc_RB = []
+    frame_acc_RB_implied = []
     frame_acc_2 = []
     cvscores_percentage_of_NCT_per_slice = []
     batch_size = 256
@@ -992,6 +1021,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_counter = 0
             a_counter_correct = 0
             a_counter_correct_implied = 0
+            a_counter_correct_RB = 0
+            a_counter_correct_RB_implied = 0
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
@@ -1014,13 +1045,17 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
+                correct_num_RB = 0
+                correct_num_implied_RB = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 s_no_chordify = converter.parse(os.path.join(input, fileName[i]))  # remove the last voice which will always be the chorify voice
                 s_no_chordify.remove(s_no_chordify.parts[-1]) # remove the last voice which will always be the chorify voice
                 sChords = s_no_chordify.chordify()
+                sChords_RB = s_no_chordify.chordify()
                 k = s.analyze('AardenEssen')
                 previous_gt_FB = []
                 previous_predict_FB = []
+                previous_predict_FB_RB = []
                 previous_bass = -1
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     # if j == 14:
@@ -1031,9 +1066,12 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
                     correct_bit = 0
+                    correct_bit_RB = 0
                     for ii in range(len(gt)):
                         if (gt[ii] == prediction[ii]):  # the label is correct
                             correct_bit += 1
+                        if gt[ii] == one_hot_PC_filler(pitch_class_four_voice)[ii]:
+                            correct_bit_RB += 1
                     dimension = test_xx_only_pitch.shape[1]
 
                     realdimension = int(dimension / (2 * windowsize + 1))
@@ -1049,25 +1087,33 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
                     predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
-
+                    predict_FB_RB = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB.recurse().getElementsByClass('Chord')[j], outputtype, s, k)
                     gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, suspension is not considered
-
+                    fake_gt_FB, predict_FB_RB = remove_implied_FB(gt_FB, predict_FB_RB, previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
 
                     previous_gt_FB = gt_FB
                     previous_predict_FB = predict_FB
+                    previous_predict_FB_RB = predict_FB_RB
                     previous_bass = bass
-                    if (correct_bit == len(gt)):
-                        correct_num += 1
-                        correct_num_implied += 1
-                        thisChord.addLyric('✓')
-                    elif gt_FB == predict_FB:
-                        correct_num_implied += 1
-                        thisChord.addLyric('✓_')
+                    correct_num, correct_num_implied = count_correct_slices(correct_bit, gt, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord)
+                    correct_num_RB, correct_num_implied_RB = count_correct_slices(correct_bit_RB, gt, gt_FB, predict_FB_RB,
+                                                                            correct_num_RB, correct_num_implied_RB, sChords_RB.recurse().getElementsByClass('Chord')[j])
+                    # if (correct_bit == len(gt)):
+                    #     correct_num += 1
+                    #     correct_num_implied += 1
+                    #     thisChord.addLyric('✓')
+                    # elif gt_FB == predict_FB:
+                    #     correct_num_implied += 1
+                    #     thisChord.addLyric('✓_')
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    sChords_RB.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     a_counter += 1
                 s.insert(0, sChords)
+                s.insert(0, sChords_RB)
                 a_counter_correct += correct_num
                 a_counter_correct_implied += correct_num_implied
+                a_counter_correct_RB += correct_num_RB
+                a_counter_correct_RB_implied += correct_num_implied_RB
                 print(end='\n', file=f_all)
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
                 print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(
@@ -1079,6 +1125,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                       file=f_all)
                 print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
                 print('accumulative frame accucary implied: ' + str(a_counter_correct_implied / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary RB: ' + str(a_counter_correct_RB / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary implied RB: ' + str(a_counter_correct_RB_implied / a_counter), end='\n',
+                      file=f_all)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign,
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
@@ -1086,6 +1135,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                                              :-4]) + '.xml')
             frame_acc.append((a_counter_correct / a_counter) * 100)
             frame_acc_implied.append((a_counter_correct_implied / a_counter) * 100)
+            frame_acc_RB.append((a_counter_correct_RB / a_counter) * 100)
+            frame_acc_RB_implied.append((a_counter_correct_RB_implied / a_counter) * 100)
             f_all.close()
             print(np.mean(cvscores), np.std(cvscores))
             print(MODEL_NAME, file=cv_log)
@@ -1100,6 +1151,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc:', frame_acc[i], 'Frame acc implied:', frame_acc_implied[i], '%', file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc RB:', frame_acc_RB[i], 'Frame acc RB implied:',
+                      frame_acc_RB_implied[i], '%', file=cv_log)
             print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
             print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
             print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
@@ -1114,6 +1167,12 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
             print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%', file=cv_log)
             print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%')
+
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', np.std(frame_acc_RB), '%', file=cv_log)
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', np.std(frame_acc_RB), '%')
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%',
+                  file=cv_log)
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%')
 
 
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,

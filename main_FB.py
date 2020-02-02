@@ -45,7 +45,7 @@ def main():
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
-                        type=int, default=10)
+                        type=int, default=1)
     parser.add_argument('-r', '--ratio',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
@@ -75,7 +75,7 @@ def main():
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     elif args.source == 'Bach_e_FB':
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
-    transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
+    # transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
