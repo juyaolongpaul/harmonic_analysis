@@ -66,6 +66,9 @@ def get_input_encoding(inputpath, encoding_path):
             fn_total.append(fn)
 
     for id, fn in enumerate(fn_total):
+        if os.path.exists(os.path.join(encoding_path,
+                                   fn[:-4] + '.txt')):
+            continue
         chorale_x = []
         # pitch class is used. This one is used to indicate which one is NCT.
         chorale_x_only_pitch_class = []
@@ -86,7 +89,8 @@ def get_input_encoding(inputpath, encoding_path):
             s = converter.parse(os.path.join(inputpath, fn))
             sChords = s.chordify(removeRedundantPitches=False)
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            # print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
+            print('measure number', thisChord.measureNumber)
+            print('slice ID:', i, 'and pitch classes are:', thisChord.pitchClasses)
             pitchClass = [0] * 12
             if inputpath.find('Schutz') != -1:  # New onset does not work in Schutz
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
@@ -192,8 +196,16 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
             id = []
             id.append(os.path.splitext(fileName[i])[0])
         for fn in os.listdir(inputpath):
-            if id[0] in fn:  # get the key info
-                transposed_interval, key_info = find_tranposed_interval(fn)
+            if 'transposed' in fn: continue
+            if id[0] in fn or bach == 'N':  # get the key info
+                s = converter.parse(os.path.join(inputpath, fn))
+                k = s.analyze('AardenEssen')
+                if k.mode == 'minor':
+                    key_info = k.tonic.name.lower()
+                    transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
+                else:
+                    key_info = k.tonic.name.upper()
+                    transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
                 if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info)):
                     os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info))
                 sNew = s_ori.transpose(transposed_interval)

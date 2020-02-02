@@ -457,8 +457,15 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
                     if item.pitch.midi == item2.pitch.midi:  # found the same note
                         # print('note in the voice', item.nameWithOctave, 'bt strength', item.beat)
                         # print('note in the chordify', item2.nameWithOctave, 'bt strength', thisChord.beat)
-                        if item.beat != thisChord.beat:
-                            pitchclass[this_pitch_list[i].pitch.pitchClass] = 0
+                            try:
+                                item.beat != thisChord.beat
+                            except:
+                                print('weird music21 problem, does not support multiple voices with a voice')
+                                continue
+                            else:
+                                if item.beat != thisChord.beat:
+                                    pitchclass[this_pitch_list[i].pitch.pitchClass] = 0
+
             # if hasattr(this_pitch_list[i], 'tie'):
             #     if this_pitch_list[i].tie is not None:
             #         if this_pitch_list[i].tie.type == 'continue' or this_pitch_list[i].tie.type == 'stop':
@@ -1169,6 +1176,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
     key = s.analyze('AardenEssen')
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+        # print('measure number: ', thisChord.measureNumber)
         slice_input += 1
         counter1 += 1
         if pitch != 'pitch_class_binary':

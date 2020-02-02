@@ -54,6 +54,8 @@ def transpose_polyphony(source, input, bach='Y'):
     else:
         format = '.mid'
     for fn in os.listdir(input):
+        if os.path.isdir(os.path.join(input, fn)):
+            continue
         if bach == 'Y':
             p = re.compile(r'\d{3}')  # find 3 digit in the file name
             id_id = p.findall(fn)
