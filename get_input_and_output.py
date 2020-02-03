@@ -219,8 +219,8 @@ def get_pitch_class_for_four_voice(thisChord, s):
         pitch_class_four_voice = []
         pitch_four_voice = []
         for j, part in enumerate(s.parts):  # all parts, starting with soprano
-            if isinstance(part.measure(thisChord.measureNumber).notesAndRests[0], chord.Chord): # judge if there is a chordify voice or not
-                break
+            # if isinstance(part.measure(thisChord.measureNumber).notesAndRests[0], chord.Chord): # judge if there is a chordify voice or not
+            #     break
             all_beat = []  # record all the beat position in this part
             if len(part.measure(
                     thisChord.measureNumber).notes) == 0:  # No note at this measure, it must be a whole rest
@@ -453,18 +453,20 @@ def fill_in_pitch_class(pitchclass, list, thisChord, inputtype, s, sChords, ii):
         for i, item in enumerate(this_pitch_list):
             # pitchclass = fill_in_4_voices(pitchclass, item)
             for j, item2 in enumerate(thisChord._notes):
-                if item.name != 'rest' and item2.name != 'rest':
-                    if item.pitch.midi == item2.pitch.midi:  # found the same note
-                        # print('note in the voice', item.nameWithOctave, 'bt strength', item.beat)
-                        # print('note in the chordify', item2.nameWithOctave, 'bt strength', thisChord.beat)
-                            try:
-                                item.beat != thisChord.beat
-                            except:
-                                print('weird music21 problem, does not support multiple voices with a voice')
-                                continue
-                            else:
-                                if item.beat != thisChord.beat:
-                                    pitchclass[this_pitch_list[i].pitch.pitchClass] = 0
+                if isinstance(item, int) is False and isinstance(item2, int) is False:
+                    if item.isChord is False and item2.isChord is False:  # Chord has no attribute 'name'
+                        if item.name != 'rest' and item2.name != 'rest':
+                            if item.pitch.midi == item2.pitch.midi:  # found the same note
+                                # print('note in the voice', item.nameWithOctave, 'bt strength', item.beat)
+                                # print('note in the chordify', item2.nameWithOctave, 'bt strength', thisChord.beat)
+                                    try:
+                                        item.beat != thisChord.beat
+                                    except:
+                                        print('weird music21 problem, does not support multiple voices with a voice')
+                                        continue
+                                    else:
+                                        if item.beat != thisChord.beat:
+                                            pitchclass[this_pitch_list[i].pitch.pitchClass] = 0
 
             # if hasattr(this_pitch_list[i], 'tie'):
             #     if this_pitch_list[i].tie is not None:
