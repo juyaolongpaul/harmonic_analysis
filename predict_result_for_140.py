@@ -221,9 +221,9 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
+def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, type=''):
     """
-
+    'Type' specifies if I want to strip away figures using RB approach
     :param x:
     :param y:
     :param thisChord:
@@ -231,6 +231,9 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
     :param s:
     :return:
     """
+    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    if type == 'RB':
+        this_pitch_class_list_only_CT = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list)
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
     chord_tone = [int(round(x)) for x in chord_tone]
@@ -245,9 +248,18 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
     if outputtype.find('_pitch_class') != -1:
         for i, item in enumerate(y):
             if int(item) == 1:
-                FB.append(pitchclass[i])
-                FB_index.append(i)
-                chord_tone[i] = 0
+                if type == '':  # only CT will be left if RB
+                    FB.append(pitchclass[i])
+                    FB_index.append(i)
+                    chord_tone[i] = 0
+                elif type == 'RB':
+                    if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
+                        break
+                    if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
+                        FB.append(pitchclass[i])
+                        FB_index.append(i)
+                        chord_tone[i] = 0
+
         if FB != []:
             thisChord.addLyric(FB)
         else:
@@ -266,7 +278,10 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
                     else:
                         FB_desired = str(int(aInterval.name[1:]) % 7)
                     if FB_desired == '1':
-                        FB_desired = '8'
+                        if i != len(pitch_four_voice) - 1:  # only non-bass can be translated into 8
+                            FB_desired = '8'
+                        else:
+                            continue  # do not need to add bass as FB result!
                     # Sometimes it can share the same pitch class, and in this case,
                     # it will give two identical FB, in this case, we only need one
 
@@ -275,9 +290,10 @@ def output_FB_to_XML(x, y, thisChord, outputtype, s, key):
                             if FB_desired == '3':
                                 thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
                                                                      sonority.pitch.accidental.unicode)
-                            else:
+                            elif i != len(pitch_four_voice) - 1:
                                 thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
                                                                      sonority.pitch.accidental.unicode + FB_desired)
+
                         else:
                             thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
                                                                  FB_desired)
@@ -876,6 +892,39 @@ def one_hot_PC_filler(list_number):
     return pitchclass
 
 
+def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
+    """
+    Look into passing tone and neighbour tone on the weak beat
+    :return:
+    """
+    if ii != 0 and ii < len(
+            sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
+        # so we can add NCT features for the current slice
+        lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
+        last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
+        nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
+        next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+        for i, item in enumerate(this_pitch_class_list):
+            if item != -1:
+                if len(last_pitch_list) > i and len(next_pitch_list) > i:
+                    if last_pitch_list[i].name != 'rest' and next_pitch_list[
+                    i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
+                        if (voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                               this_pitch_list[i].pitch.nameWithOctave,
+                                                               next_pitch_list[
+                                                                   i].pitch.nameWithOctave).couldBeNeighborTone() \
+                                or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                       this_pitch_list[i].pitch.nameWithOctave,
+                                                                       next_pitch_list[
+                                                                           i].pitch.nameWithOctave).couldBePassingTone()) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:
+                            this_pitch_class_list[i] = -2 # indicate this is a NCT
+                else:  # investigate in what occasion the dimension of pitch classes vary
+                    print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
+                          sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
+                          sChords.recurse().getElementsByClass('Chord')[ii])
+    return this_pitch_class_list
+
+
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
@@ -1070,7 +1119,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     for ii in range(len(gt)):
                         if (gt[ii] == prediction[ii]):  # the label is correct
                             correct_bit += 1
-                        if gt[ii] == one_hot_PC_filler(pitch_class_four_voice)[ii]:
+                        if gt[ii] == one_hot_PC_filler(pitch_class_four_voice[:-1])[ii]:
                             correct_bit_RB += 1
                     dimension = test_xx_only_pitch.shape[1]
 
@@ -1085,9 +1134,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
                     if j == 73:
                         print('debug')
-                    gt_FB = output_FB_to_XML(x, gt, thisChord, outputtype, s, k)
-                    predict_FB = output_FB_to_XML(x, prediction, thisChord, outputtype, s, k)
-                    predict_FB_RB = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB.recurse().getElementsByClass('Chord')[j], outputtype, s, k)
+                    gt_FB = output_FB_to_XML(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice)
+                    if gt_FB == ['2', '6', '4']:
+                        print('debug')
+                    predict_FB = output_FB_to_XML(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice)
+                    predict_FB_RB = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, 'RB')
                     gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, suspension is not considered
                     fake_gt_FB, predict_FB_RB = remove_implied_FB(gt_FB, predict_FB_RB, previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
 
