@@ -182,7 +182,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         num_salami_slice = numSalamiSlices[i]
         chord_label_list = []  # For RB chord inferred labels
         chord_tone_list = []  # store all the chord tones predicted by the model
-        all_answers_per_chorale = [{} for j in range(10000)]
+        all_answers_per_chorale = [{} for j in range(1000000)]
         print(fileName[i])
         s = converter.parse(os.path.join(inputpath, fileName[i]))
         s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
@@ -196,8 +196,10 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
             id = []
             id.append(os.path.splitext(fileName[i])[0])
         for fn in os.listdir(inputpath):
+            if os.path.isdir(os.path.join(inputpath, fn)): continue
             if 'transposed' in fn: continue
             if id[0] in fn or bach == 'N':  # get the key info
+                print('music21 is parsing:', fn, 'Is this a directory', os.path.isdir(os.path.join(inputpath, fn)))
                 s = converter.parse(os.path.join(inputpath, fn))
                 k = s.analyze('AardenEssen')
                 if k.mode == 'minor':
@@ -244,6 +246,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                             chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
 
                     a_counter += 1
+                previous_transposed_result = ''
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find(
                             'interval') != -1):  # sometimes the last
@@ -283,9 +286,10 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                     else:
                         thisChord.addLyric('_!')
                     transposed_result = transpose_chord(transposed_interval, chord)
-
-                    sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
+                    if previous_transposed_result != transposed_result:
+                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
                     print(transposed_result, file=f_ori)
+                    previous_transposed_result = transposed_result
                 f_ori.close()
                 f_transposed.close()
                 s.write('musicxml',
