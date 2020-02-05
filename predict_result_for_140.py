@@ -12,6 +12,7 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
+import collections
 import graphviz
 np.random.seed(1337)  # for reproducibility
 from keras import optimizers
@@ -221,7 +222,23 @@ def bootstrap_data(x, y, times):
     return xx, yy
 
 
-def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, type=''):
+def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
+    """
+    Modular function to add FB pitch class
+    :param FB:
+    :param pitchclass:
+    :param FB_index:
+    :param chord_tone:
+    :param i:
+    :return:
+    """
+    FB.append(pitchclass[i])
+    FB_index.append(i)
+    chord_tone[i] = 0
+    return FB, FB_index, chord_tone
+
+
+def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -241,24 +258,37 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     if list(y) == [0] * 12:
         thisChord.addLyric(' ')
         thisChord.addLyric(' ')  # to align
-        return actual_FB
+        return actual_FB, []
     FB = []
     FB_index = []
-
+    bass = get_bass_note(thisChord, this_pitch_list, this_pitch_class_list, 'Y')
     if outputtype.find('_pitch_class') != -1:
         for i, item in enumerate(y):
             if int(item) == 1:
+                if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
+                    continue  # Do not need to output bass as FB pitch class, if this PC only appear in bass
                 if type == '':  # only CT will be left if RB
-                    FB.append(pitchclass[i])
-                    FB_index.append(i)
-                    chord_tone[i] = 0
+                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
                 elif type == 'RB':
                     if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
                         break
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
-                        FB.append(pitchclass[i])
-                        FB_index.append(i)
-                        chord_tone[i] = 0
+                        if previous_bass != -1:
+                            if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
+                                    and pitchclass[i] in previous_FB_PC:
+                                # another rule: bass remaining the same, and the PC in the current slices does
+                                # not need to be labelled if already appeared in the previous slice
+                                if bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
+                                    # we also need to deal with other voices doubling the bass (e.g., 9-8)
+                                    # in this case, we need to keep the 8
+                                    print('no need to put this FB PC')
+                                elif i == bass.pitch.pitchClass:  # only add 8 in this case
+                                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
+                            else:
+                                FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
+                        else:
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
+
 
         if FB != []:
             thisChord.addLyric(FB)
@@ -300,7 +330,7 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     else:
                         thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
                                                              FB_desired)
-        return actual_FB
+        return actual_FB, FB
 
 
 def add_FB_result(thisChord, actual_FB, result):
@@ -865,7 +895,7 @@ def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, pr
     return gt_FB, predict_FB
 
 
-def count_correct_slices(correct_bit, gt, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord):
+def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord):
     """
     The modular function that counts the correct slides of (implied) FB
     :param correct_bit:
@@ -875,7 +905,7 @@ def count_correct_slices(correct_bit, gt, gt_FB, predict_FB, correct_num, correc
     :param thisChord:
     :return:
     """
-    if (correct_bit == len(gt)):
+    if predict_FB_PC == gt_FB_PC:
         correct_num += 1
         correct_num_implied += 1
         thisChord.addLyric('✓')
@@ -897,6 +927,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
     Look into passing tone and neighbour tone on the weak beat
     :return:
     """
+    this_pitch_class_list_2 = list(this_pitch_class_list)
     if ii != 0 and ii < len(
             sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
         # so we can add NCT features for the current slice
@@ -904,6 +935,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
         last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
         nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
         next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+
         for i, item in enumerate(this_pitch_class_list):
             if item != -1:
                 if len(last_pitch_list) > i and len(next_pitch_list) > i:
@@ -917,12 +949,12 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
                                                                        this_pitch_list[i].pitch.nameWithOctave,
                                                                        next_pitch_list[
                                                                            i].pitch.nameWithOctave).couldBePassingTone()) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:
-                            this_pitch_class_list[i] = -2 # indicate this is a NCT
+                            this_pitch_class_list_2[i] = -2 # indicate this is a NCT
                 else:  # investigate in what occasion the dimension of pitch classes vary
                     print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
                           sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
                           sChords.recurse().getElementsByClass('Chord')[ii])
-    return this_pitch_class_list
+    return this_pitch_class_list_2
 
 
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
@@ -1105,6 +1137,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 previous_gt_FB = []
                 previous_predict_FB = []
                 previous_predict_FB_RB = []
+                previous_predict_FB_RB_PC = []
                 previous_bass = -1
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     # if j == 14:
@@ -1116,11 +1149,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     prediction = predict_y[a_counter]
                     correct_bit = 0
                     correct_bit_RB = 0
-                    for ii in range(len(gt)):
-                        if (gt[ii] == prediction[ii]):  # the label is correct
-                            correct_bit += 1
-                        if gt[ii] == one_hot_PC_filler(pitch_class_four_voice[:-1])[ii]:
-                            correct_bit_RB += 1
+                    # for ii in range(len(gt)):
+                    #     if (gt[ii] == prediction[ii]):  # the label is correct
+                    #         correct_bit += 1
+                    #     if gt[ii] == one_hot_PC_filler(pitch_class_four_voice[:-1])[ii]:
+                    #         correct_bit_RB += 1
                     dimension = test_xx_only_pitch.shape[1]
 
                     realdimension = int(dimension / (2 * windowsize + 1))
@@ -1132,13 +1165,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    if j == 73:
-                        print('debug')
-                    gt_FB = output_FB_to_XML(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice)
+                    gt_FB, gt_FB_PC = output_FB_to_XML(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])
                     if gt_FB == ['2', '6', '4']:
                         print('debug')
-                    predict_FB = output_FB_to_XML(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice)
-                    predict_FB_RB = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, 'RB')
+                    predict_FB, predict_FB_PC = output_FB_to_XML(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])
+                    predict_FB_RB, predict_FB_RB_PC = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, 'RB')
                     gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, suspension is not considered
                     fake_gt_FB, predict_FB_RB = remove_implied_FB(gt_FB, predict_FB_RB, previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
 
@@ -1146,8 +1177,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     previous_predict_FB = predict_FB
                     previous_predict_FB_RB = predict_FB_RB
                     previous_bass = bass
-                    correct_num, correct_num_implied = count_correct_slices(correct_bit, gt, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord)
-                    correct_num_RB, correct_num_implied_RB = count_correct_slices(correct_bit_RB, gt, gt_FB, predict_FB_RB,
+                    previous_predict_FB_RB_PC = predict_FB_RB_PC
+                    correct_num, correct_num_implied = count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord)
+                    correct_num_RB, correct_num_implied_RB = count_correct_slices(predict_FB_RB_PC, gt_FB_PC, gt_FB, predict_FB_RB,
                                                                             correct_num_RB, correct_num_implied_RB, sChords_RB.recurse().getElementsByClass('Chord')[j])
                     # if (correct_bit == len(gt)):
                     #     correct_num += 1

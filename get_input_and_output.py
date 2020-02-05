@@ -277,6 +277,11 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 #if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes, sometimes there can be more than 4 voices in Bach chorales!
                 print('pitch four voice does not work!')  # this happens whenever there is an pick-up measure in between the music
                 return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
+        for i, each_pitch in enumerate(pitch_four_voice):  # remove Chorify voice
+            if each_pitch.isChord is True:
+                pitch_four_voice.remove(each_pitch)
+                del pitch_class_four_voice[i]
+
         return pitch_class_four_voice, pitch_four_voice
 
 
@@ -1112,7 +1117,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                    fn[:-4] + '.txt')):
             continue  # skip the files that already have encodings
         print(fn)
-        # if '161.06b' not in fn:
+        # if '136.06' not in fn:
         #     continue
         chorale_x = []
         chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
@@ -1173,6 +1178,14 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                    sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                    fn[:-4] + '.txt')
         np.savetxt(file_name_y, yy, fmt='%.1e')
+
+
+def fill_in_one_hot_PC(voice, voice_one_hot):
+    if voice.name != 'rest':
+        voice_one_hot[voice.pitch.pitchClass] = 1
+    return voice_one_hot
+
+
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
@@ -1198,11 +1211,18 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                                                                              thisChord, inputtype, s, sChords,
                                                                              i)
                 pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-                bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-                bass_one_hot = [0] * inputdim
-                if bass.name != 'rest':
-                    bass_one_hot[bass.pitch.pitchClass] = 1
-                pitchClass = bass_one_hot + pitchClass
+
+                if '4_voices' not in pitch:
+                    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+                    bass_one_hot = fill_in_one_hot_PC(bass, [0] * inputdim)
+                    pitchClass = bass_one_hot + pitchClass
+                else: # put the rest three voices separately, besides bass
+                    bass_one_hot = fill_in_one_hot_PC(pitch_four_voice[-1], [0] * inputdim)
+                    tenor_one_hot = fill_in_one_hot_PC(pitch_four_voice[-2], [0] * inputdim)
+                    alto_one_hot = fill_in_one_hot_PC(pitch_four_voice[-3], [0] * inputdim)
+                    soprano_one_hot = fill_in_one_hot_PC(pitch_four_voice[-4], [0] * inputdim)
+                    pitchClass = bass_one_hot + tenor_one_hot + alto_one_hot + soprano_one_hot + pitchClass
+
                 if 'scale' in pitch:  # currently make it local to only FB features for simplicity
                     key_scale = [0] * 12
                     for pitches in key.pitches:
