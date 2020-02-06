@@ -238,7 +238,7 @@ def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
     return FB, FB_index, chord_tone
 
 
-def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, type=''):
+def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -256,8 +256,8 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     chord_tone = [int(round(x)) for x in chord_tone]
     actual_FB = []
     if list(y) == [0] * 12:
-        thisChord.addLyric(' ')
-        thisChord.addLyric(' ')  # to align
+        # thisChord.addLyric(' ')
+        # thisChord.addLyric(' ')  # to align
         return actual_FB, []
     FB = []
     FB_index = []
@@ -281,8 +281,9 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                 if bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
                                     # we also need to deal with other voices doubling the bass (e.g., 9-8)
                                     # in this case, we need to keep the 8
+                                    # this will leave 8 present even though there is no 9-8 and 8 is found from the previous slice, but this does not affect any functionality
                                     print('no need to put this FB PC')
-                                elif i == bass.pitch.pitchClass:  # only add 8 in this case
+                                elif i == bass.pitch.pitchClass:  # only add 8 in this case, since there is a doubling of bass PC
                                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                             else:
                                 FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
@@ -290,10 +291,10 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                             FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
 
 
-        if FB != []:
-            thisChord.addLyric(FB)
-        else:
-            thisChord.addLyric(' ')
+        # if FB != []:
+        #     thisChord.addLyric(FB)  # output the PC indicated by FB
+        # else:
+        #     thisChord.addLyric(' ')
         # Output FB to the file too
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
@@ -318,22 +319,22 @@ def output_FB_to_XML(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     if sonority.pitch.accidental is not None:
                         if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
                             if FB_desired == '3':
-                                thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                actual_FB = add_FB_result(actual_FB,
                                                                      sonority.pitch.accidental.unicode)
                             elif i != len(pitch_four_voice) - 1:
-                                thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                                actual_FB = add_FB_result(actual_FB,
                                                                      sonority.pitch.accidental.unicode + FB_desired)
 
                         else:
-                            thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                            actual_FB = add_FB_result(actual_FB,
                                                                  FB_desired)
                     else:
-                        thisChord, actual_FB = add_FB_result(thisChord, actual_FB,
+                        actual_FB = add_FB_result(actual_FB,
                                                              FB_desired)
         return actual_FB, FB
 
 
-def add_FB_result(thisChord, actual_FB, result):
+def add_FB_result(actual_FB, result):
     """
     Modular function to add the FB annotation. If already exist, skip this part which will add a duplicated one, since
     there can be situations where multiple voices share the same pitch class
@@ -342,9 +343,15 @@ def add_FB_result(thisChord, actual_FB, result):
     :return:
     """
     if result not in actual_FB:
-        thisChord.addLyric(result)
+        # thisChord.addLyric(result)
         actual_FB.append(result)
-    return thisChord, actual_FB
+    return actual_FB
+
+
+def add_FB_result_to_score(thisChord, actual_FB):
+    for result in actual_FB:
+        thisChord.addLyric(result)
+    return thisChord
 
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
@@ -869,21 +876,29 @@ def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, 
                                 FB.remove(fig_b)
                         else:
                             sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+                            # At this point, 2-8 should be 9-8
+                            for i, each_FB in enumerate(previous_FB):
+                                if each_FB == '2':
+                                    previous_FB[i] = '9'
                         # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
-    return FB
+    return previous_FB, FB
 
 
 def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord):
-    gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
-    predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
-    gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
-    predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    previous_gt_FB, gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    previous_predict_FB, predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    previous_gt_FB, gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    previous_predict_FB, predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
     if '2' not in previous_gt_FB:
-        gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
-        predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+        previous_gt_FB, gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
     elif '9' not in previous_gt_FB:
-        gt_FB = determine_potential_sus('2', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
-        predict_FB = determine_potential_sus('2', '8', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+        previous_gt_FB, gt_FB = determine_potential_sus('2', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    if '2' not in previous_predict_FB:
+        previous_predict_FB, predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB,
+                                                                  previous_bass, bass, ptr, s, sChord)
+    elif '9' not in previous_predict_FB:
+        previous_predict_FB, predict_FB = determine_potential_sus('2', '8', predict_FB, previous_predict_FB,
+                                                                  previous_bass, bass, ptr, s, sChord)
     # TODO: resolve this 9 vs 2 issue!
     # Stop using because of the 8-7 problem
     if '4' in gt_FB and ('2' in gt_FB or '3' in gt_FB) and '7' not in previous_gt_FB:
@@ -892,10 +907,10 @@ def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, pr
     if '4' in predict_FB and ('2' in predict_FB or '3' in predict_FB) and '7' not in previous_predict_FB:
         if '6' in predict_FB and len(predict_FB) == 3:
             predict_FB.remove('6')
-    return gt_FB, predict_FB
+    return previous_gt_FB, gt_FB, previous_predict_FB, predict_FB
 
 
-def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord):
+def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, correct_mark_all):
     """
     The modular function that counts the correct slides of (implied) FB
     :param correct_bit:
@@ -908,11 +923,13 @@ def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num
     if predict_FB_PC == gt_FB_PC:
         correct_num += 1
         correct_num_implied += 1
-        thisChord.addLyric('✓')
+        correct_mark_all.append('✓')
     elif gt_FB == predict_FB:
         correct_num_implied += 1
-        thisChord.addLyric('✓_')
-    return correct_num, correct_num_implied
+        correct_mark_all.append('✓_')
+    else:
+        correct_mark_all.append(' ')
+    return correct_num, correct_num_implied, correct_mark_all
 
 
 def one_hot_PC_filler(list_number):
@@ -955,6 +972,22 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
                           sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
                           sChords.recurse().getElementsByClass('Chord')[ii])
     return this_pitch_class_list_2
+
+
+def output_FB_to_score(FB, FB_PC, sChords, j, correct_mark=''):
+    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    if FB_PC != []:  # output PC first
+        thisChord.addLyric(FB_PC)  # output the PC indicated by FB
+    else:
+        thisChord.addLyric(' ')
+    for each_FB in FB:
+        thisChord.addLyric(each_FB)
+    space_needed = 3 - len(FB)  # align the results
+    for i in range(space_needed):
+        thisChord.addLyric(' ') # beautify formatting
+    if correct_mark != '':
+        thisChord.addLyric(correct_mark)
+
 
 
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
@@ -1121,13 +1154,24 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                if '19.07' in fileName[i]:
+                if '140.07' in fileName[i]:
                     print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
                 correct_num_RB = 0
                 correct_num_implied_RB = 0
+                gt_FB_all = []
+                gt_FB_PC_all = []
+                gt_FB_all_implied = []
+                predict_FB_all = []
+                predict_FB_PC_all = []
+                predict_FB_all_implied = []
+                predict_FB_RB_all = []
+                predict_FB_RB_PC_all = []
+                predict_FB_RB_all_implied = []
+                correct_mark_all = []
+                correct_mark_all_RB = []
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 s_no_chordify = converter.parse(os.path.join(input, fileName[i]))  # remove the last voice which will always be the chorify voice
                 s_no_chordify.remove(s_no_chordify.parts[-1]) # remove the last voice which will always be the chorify voice
@@ -1165,22 +1209,39 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    gt_FB, gt_FB_PC = output_FB_to_XML(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])  # Get the resulting PC and FB
                     if gt_FB == ['2', '6', '4']:
                         print('debug')
-                    predict_FB, predict_FB_PC = output_FB_to_XML(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])
-                    predict_FB_RB, predict_FB_RB_PC = output_FB_to_XML(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, 'RB')
-                    gt_FB, predict_FB = remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, suspension is not considered
-                    fake_gt_FB, predict_FB_RB = remove_implied_FB(gt_FB, predict_FB_RB, previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
-
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [])
+                    predict_FB_RB, predict_FB_RB_PC = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, 'RB')
+                    previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied = remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
+                    print('previous_predict_FB_RB before', previous_predict_FB_RB)
+                    previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
+                    print('previous_predict_FB_RB after', previous_predict_FB_RB)
+                    # Save results
+                    if predict_FB_RB == ['8', '4', '6'] and '133.06' in fileName[i]:
+                        print('debug')
+                    gt_FB_all.append(gt_FB)
+                    gt_FB_PC_all.append(gt_FB_PC)
+                    gt_FB_all_implied.append(gt_FB_implied)
+                    predict_FB_all.append(predict_FB)
+                    predict_FB_PC_all.append(predict_FB_PC)
+                    predict_FB_all_implied.append(predict_FB_implied)
+                    predict_FB_RB_all.append(predict_FB_RB)
+                    predict_FB_RB_PC_all.append(predict_FB_RB_PC)
+                    predict_FB_RB_all_implied.append(predict_FB_RB_implied)
+                    if j != 0:
+                        gt_FB_all[j - 1] = previous_gt_FB
+                        predict_FB_all[j - 1] = previous_predict_FB
+                        predict_FB_RB_all[j - 1] = previous_predict_FB_RB
                     previous_gt_FB = gt_FB
                     previous_predict_FB = predict_FB
                     previous_predict_FB_RB = predict_FB_RB
                     previous_bass = bass
                     previous_predict_FB_RB_PC = predict_FB_RB_PC
-                    correct_num, correct_num_implied = count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, thisChord)
-                    correct_num_RB, correct_num_implied_RB = count_correct_slices(predict_FB_RB_PC, gt_FB_PC, gt_FB, predict_FB_RB,
-                                                                            correct_num_RB, correct_num_implied_RB, sChords_RB.recurse().getElementsByClass('Chord')[j])
+                    correct_num, correct_num_implied, correct_mark_all = count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB_implied, predict_FB_implied, correct_num, correct_num_implied, correct_mark_all)
+                    correct_num_RB, correct_num_implied_RB, correct_mark_all_RB = count_correct_slices(predict_FB_RB_PC, gt_FB_PC, gt_FB_implied, predict_FB_RB_implied,
+                                                                            correct_num_RB, correct_num_implied_RB, correct_mark_all_RB)
                     # if (correct_bit == len(gt)):
                     #     correct_num += 1
                     #     correct_num_implied += 1
@@ -1191,6 +1252,10 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     sChords_RB.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     a_counter += 1
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')): # output all the results to score
+                    output_FB_to_score(gt_FB_all[j], gt_FB_PC_all[j], sChords, j)
+                    output_FB_to_score(predict_FB_all[j], predict_FB_PC_all[j], sChords, j, correct_mark_all[j])
+                    output_FB_to_score(predict_FB_RB_all[j], predict_FB_RB_PC_all[j], sChords_RB, j, correct_mark_all_RB[j])
                 s.insert(0, sChords)
                 s.insert(0, sChords_RB)
                 a_counter_correct += correct_num
