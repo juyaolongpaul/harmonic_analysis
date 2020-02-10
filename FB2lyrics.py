@@ -396,14 +396,14 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
                     next_note = get_next_note(note_number, thisChord, s, voice_number)
                     if next_note == False:
                         return False
-                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6'):  # the previous note and the current note should be the same, or in the same pitch class (2)
+                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= abs(each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6'):  # the previous note and the current note should be the same, or in the same pitch class (2)
                         # and also the note should resolve downstep (3), or it is a 6-5 suspension
                         return True
                 elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
                     next_note = get_next_note(note_number, thisChord, s, voice_number)
                     if next_note == False:
                         return False
-                    if 1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2:
+                    if 1 <= abs(each_note.pitch.midi - next_note.pitch.midi) <= 2:
                         return True
     return False
 

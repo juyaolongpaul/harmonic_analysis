@@ -14,6 +14,53 @@ x = []
 y = []
 xx = []
 
+
+def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
+    """
+    Look into passing tone and neighbour tone on the weak beat
+    :return:
+    """
+    this_pitch_class_list_2 = list(this_pitch_class_list)
+    if ii != 0 and ii < len(
+            sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
+        # so we can add NCT features for the current slice
+        lastChord = sChords.recurse().getElementsByClass('Chord')[ii - 1]
+        last_pitch_class_list, last_pitch_list = get_pitch_class_for_four_voice(lastChord, s)
+        nextChord = sChords.recurse().getElementsByClass('Chord')[ii + 1]
+        next_pitch_class_list, next_pitch_list = get_pitch_class_for_four_voice(nextChord, s)
+
+        for i, item in enumerate(this_pitch_class_list):
+            if item != -1:
+                if len(last_pitch_list) > i and len(next_pitch_list) > i:
+                    if last_pitch_list[i].name != 'rest' and next_pitch_list[
+                    i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
+                        if (voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                               this_pitch_list[i].pitch.nameWithOctave,
+                                                               next_pitch_list[
+                                                                   i].pitch.nameWithOctave).couldBeNeighborTone() \
+                            # neighbor tone
+                                or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                       this_pitch_list[i].pitch.nameWithOctave,
+                                                                       next_pitch_list[
+                                                                           i].pitch.nameWithOctave).couldBePassingTone()
+                            # passing tone
+                            or (1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
+                                abs(this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) > 2) or
+                            # escape tone: step+leap
+                            (1 <= abs(next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
+                                abs(this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) > 2)
+                            # incomplete neighbour tone: leap+step
+                            # TODO: color different kinds of NCTs
+
+                        ) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:
+                            this_pitch_class_list_2[i] = -2 # indicate this is a NCT
+                else:  # investigate in what occasion the dimension of pitch classes vary
+                    print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
+                          sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
+                          sChords.recurse().getElementsByClass('Chord')[ii])
+    return this_pitch_class_list_2
+
+
 def get_FB(sChords, ptr):
     """
     Get FB from lyrics with multiple lines (indicating multiple figures)
@@ -278,9 +325,10 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 print('pitch four voice does not work!')  # this happens whenever there is an pick-up measure in between the music
                 return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
         for i, each_pitch in enumerate(pitch_four_voice):  # remove Chorify voice
-            if each_pitch.isChord is True:
-                pitch_four_voice.remove(each_pitch)
-                del pitch_class_four_voice[i]
+            if isinstance(each_pitch, int) is False:
+                if each_pitch.isChord is True:
+                    pitch_four_voice.remove(each_pitch)
+                    del pitch_class_four_voice[i]
 
         return pitch_class_four_voice, pitch_four_voice
 
@@ -1224,10 +1272,17 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                     pitchClass = bass_one_hot + tenor_one_hot + alto_one_hot + soprano_one_hot + pitchClass
 
                 if 'scale' in pitch:  # currently make it local to only FB features for simplicity
-                    key_scale = [0] * 12
+                    key_scale = [0] * inputdim
                     for pitches in key.pitches:
                         key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
                     pitchClass = key_scale + pitchClass
+                if 'NCT' in pitch:
+                    this_pitch_class_list_only_CT = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice)
+                    NCT = [0] * inputdim
+                    for each_pitch_class in pitch_class_four_voice:
+                        if each_pitch_class not in this_pitch_class_list_only_CT: # this means it is a NCT
+                            NCT[each_pitch_class] = 1
+                    pitchClass = NCT + pitchClass
             elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                 pitchClass, = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                            s,
