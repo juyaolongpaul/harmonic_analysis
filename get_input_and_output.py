@@ -45,11 +45,15 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
                                                                            i].pitch.nameWithOctave).couldBePassingTone()
                             # passing tone
                             or (1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
-                                abs(this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) > 2) or
-                            # escape tone: step+leap
+                                abs(this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) > 2 and
+                                (last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *
+                                (this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) < 0) or
+                            # escape tone: step+leap, in opposite direction
                             (1 <= abs(next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
-                                abs(this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) > 2)
-                            # incomplete neighbour tone: leap+step
+                                abs(this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) > 2 and
+                             (next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *
+                             (this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) < 0)
+                            # incomplete neighbour tone: leap+step, in opposite direction
                             # TODO: color different kinds of NCTs
 
                         ) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:

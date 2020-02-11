@@ -32,6 +32,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
 from keras.callbacks import TensorBoard
+import itertools
 import re
 import os
 import numpy as np
@@ -284,8 +285,12 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                     # we also need to deal with other voices doubling the bass (e.g., 9-8)
                                     # in this case, we need to keep the 8
                                     # this will leave 8 present even though there is no 9-8 and 8 is found from the previous slice, but this does not affect any functionality
-                                    print('no need to put this FB PC')
-                                    RB_reasons.append('FB already labeled')
+                                    # we need to eliminate 853 since they largely can all be implied anyways
+                                    aInterval = interval.Interval(noteStart=bass, noteEnd=this_pitch_list[this_pitch_class_list_only_CT.index(i)])
+                                    FB_desired = str(int(aInterval.name[1:]) % 7)
+                                    if FB_desired not in ['1', '3', '5']:
+                                        print('no need to put this FB PC')
+                                        RB_reasons.append('FB already labeled')
                                 elif i == bass.pitch.pitchClass:  # only add 8 in this case, since there is a doubling of bass PC
                                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                             else:
@@ -1112,6 +1117,10 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_counter_correct_implied = 0
             a_counter_correct_RB = 0
             a_counter_correct_RB_implied = 0
+            a_all_RB_reasons = []  # RB reason across all pieces
+            a_gt_FB_all = []  # GT FB across all pieces
+            a_predict_FB_RB_all = []
+            a_correct_mark_all_RB = []
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
@@ -1191,6 +1200,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, RB_reasons, [])
                     predict_FB_RB, predict_FB_RB_PC, RB_reasons = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, RB_reasons, 'RB')
+
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied = remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
                     previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
@@ -1208,6 +1218,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     predict_FB_RB_PC_all.append(predict_FB_RB_PC)
                     predict_FB_RB_all_implied.append(predict_FB_RB_implied)
                     all_RB_reasons.append(RB_reasons)
+                    a_all_RB_reasons.append(RB_reasons)
                     if j != 0:
                         gt_FB_all[j - 1] = previous_gt_FB
                         predict_FB_all[j - 1] = previous_predict_FB
@@ -1234,13 +1245,24 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     output_FB_to_score(gt_FB_all[j], gt_FB_PC_all[j], sChords, j)
                     output_FB_to_score(predict_FB_all[j], predict_FB_PC_all[j], sChords, j, correct_mark_all[j])
                     output_FB_to_score(predict_FB_RB_all[j], predict_FB_RB_PC_all[j], sChords_RB, j, correct_mark_all_RB[j])
+                    if correct_mark_all_RB[j] == '✓_' or correct_mark_all_RB[j] == '✓':
+                        continue
+                    else:
+                        print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason', all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j])
+                        print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason',
+                              all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j], file=f_all)
                 s.insert(0, sChords)
                 s.insert(0, sChords_RB)
                 a_counter_correct += correct_num
                 a_counter_correct_implied += correct_num_implied
                 a_counter_correct_RB += correct_num_RB
                 a_counter_correct_RB_implied += correct_num_implied_RB
+                a_predict_FB_RB_all.append(predict_FB_RB_all)  # add implied ones easy to compare
+                a_gt_FB_all.append(gt_FB_all)  # same with above
+                a_correct_mark_all_RB.append(correct_mark_all_RB)
                 print(end='\n', file=f_all)
+
+
                 print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
                 print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(
                     num_salami_slice),
@@ -1299,6 +1321,46 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%',
                   file=cv_log)
             print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%')
+            # statistical analysis
+            a_predict_FB_RB_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_all))
+            a_gt_FB_all_flat = list(itertools.chain.from_iterable(a_gt_FB_all))
+            a_correct_mark_all_RB_flat = list(itertools.chain.from_iterable(a_correct_mark_all_RB))
+            # first we need to count for which RB reason, how many got right and how many got wrong
+            NCT_bass_count = 0
+            NCT_bass_count_right = 0
+            NCT_upper_count = 0
+            NCT_upper_count_right = 0
+            FB_labelled_count = 0
+            FB_labelled_count_right = 0
+            error_counts = 0
+            for i, each_reason in enumerate(a_all_RB_reasons):
+                NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
+                                                                                          NCT_bass_count_right,
+                                                                                          a_correct_mark_all_RB_flat,
+                                                                                          'NCT bass', i)
+                NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
+                                                                                          NCT_upper_count_right,
+                                                                                          a_correct_mark_all_RB_flat,
+                                                                                          'NCT upper voices', i)
+                FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
+                                                                                                FB_labelled_count,
+                                                                                                FB_labelled_count_right,
+                                                                                                a_correct_mark_all_RB_flat,
+                                                                                                'FB already labeled', i)
+            # for i, each_answer in a_correct_mark_all_RB_flat:
+            #     if a_correct_mark_all_RB_flat[i] != '✓_' and a_correct_mark_all_RB_flat[i] != '✓':
+            #         error_counts += 1
+            #         if a_gt_FB_all_flat[i] == []:
+
+
+
+
+def count_each_reason_and_right_number(each_reason, count, count_right, a_correct_mark_all_RB_flat, reason_to_check, i):
+    if reason_to_check in each_reason:
+        count += 1
+        if a_correct_mark_all_RB_flat[i] == '✓_' or a_correct_mark_all_RB_flat[i] == '✓':
+            count_right += 1
+    return count, count_right
 
 
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
