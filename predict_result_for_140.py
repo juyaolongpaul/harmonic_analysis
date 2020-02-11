@@ -251,6 +251,11 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     :return:
     """
     thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    if j > 0:
+        previousChord = sChords.recurse().getElementsByClass('Chord')[j - 1]
+        previous_pitch_class_four_voice, previous_pitch_four_voice = get_pitch_class_for_four_voice(previousChord, s)
+    else:
+        previous_pitch_class_four_voice = []
     if type == 'RB':
         this_pitch_class_list_only_CT = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list)
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
@@ -278,7 +283,8 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
                             if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
-                                    and pitchclass[i] in previous_FB_PC:
+                                    and (pitchclass[i] in previous_FB_PC or i in previous_pitch_class_four_voice):
+                                # consider the fact that the same bass can have more than 2 slices with the same PC, none of them should be labelled
                                 # another rule: bass remaining the same, and the PC in the current slices does
                                 # not need to be labelled if already appeared in the previous slice
                                 if bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
@@ -1200,7 +1206,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, RB_reasons, [])
                     predict_FB_RB, predict_FB_RB_PC, RB_reasons = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, RB_reasons, 'RB')
-
+                    if predict_FB_RB == ['3', '8', '7']:
+                        print('debug')
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied = remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
                     previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)

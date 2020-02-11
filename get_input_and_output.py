@@ -20,6 +20,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
     Look into passing tone and neighbour tone on the weak beat
     :return:
     """
+    # TODO: we need to add suspension into the game!
     this_pitch_class_list_2 = list(this_pitch_class_list)
     if ii != 0 and ii < len(
             sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
