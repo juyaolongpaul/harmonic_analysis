@@ -187,7 +187,7 @@ def predict_new_music_FB(modelpath_FB, inputpath):
             x = xx_only_pitch[a_counter]
             prediction = predict_y[a_counter]
             predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, 'NCT_pitch_class', s, k,
-                                                         pitch_four_voice, pitch_class_four_voice, previous_bass,
+                                                         pitch_four_voice, pitch_class_four_voice, previous_bass, [],
                                                          [])
             if predict_FB_PC != []:
                 thisChord.addLyric(predict_FB_PC)

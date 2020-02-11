@@ -54,10 +54,14 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
                              (next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *
                              (this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) < 0)
                             # incomplete neighbour tone: leap+step, in opposite direction
+                            or (1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
+                            this_pitch_list[i].pitch.midi == next_pitch_list[i].pitch.midi)
+                            # anticipation
+                            # TODO: anticipation has not considered bass motion yet (this is enough already?)
                             # TODO: color different kinds of NCTs
 
                         ) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:
-                            this_pitch_class_list_2[i] = -2 # indicate this is a NCT
+                                this_pitch_class_list_2[i] = -2 # indicate this is a NCT
                 else:  # investigate in what occasion the dimension of pitch classes vary
                     print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
                           sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
