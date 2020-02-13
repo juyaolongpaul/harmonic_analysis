@@ -15,7 +15,7 @@ y = []
 xx = []
 
 
-def get_previous_note(note_number, thisChord, s, voice_number):
+def get_previous_note(note_number, thisChord, s, voice_number, sChord):
     """
     Modular function to get the previous note for suspension
     :return:
@@ -25,15 +25,27 @@ def get_previous_note(note_number, thisChord, s, voice_number):
                 and len(s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)) > 0:
             previous_note = \
                 s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
+            for each_chord in sChord.measure(thisChord.measureNumber - 1).getElementsByClass('Chord'):
+                if each_chord.beat == previous_note.beat:
+                    pitch_class_four_voice, pitch_four_voice = \
+                        get_pitch_class_for_four_voice(each_chord, s)
+                    previous_bass = pitch_four_voice[-1]
+
+
         else:
-            return False  # this edge case where there is not even a previous note, let alone will be susupension
+            return False, -1  # this edge case where there is not even a previous note, let alone will be susupension
     else:
         previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
             note_number - 1]
-    return previous_note
+        for each_chord in sChord.measure(thisChord.measureNumber).getElementsByClass('Chord'):
+            if each_chord.beat == previous_note.beat:
+                pitch_class_four_voice, pitch_four_voice = \
+                    get_pitch_class_for_four_voice(each_chord, s)
+                previous_bass = pitch_four_voice[-1]
+    return previous_note, previous_bass
 
 
-def get_next_note(note_number, thisChord, s, voice_number):
+def get_next_note(note_number, thisChord, s, voice_number, sChord):
     """
     Modular function to get the next note for suspension
     :return:
@@ -45,12 +57,80 @@ def get_next_note(note_number, thisChord, s, voice_number):
                 # This next measure cannot have just a rest like 086!
             next_note = \
                 s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)[0]
+            for each_chord in sChord.measure(thisChord.measureNumber + 1).getElementsByClass('Chord'):
+                if each_chord.beat == next_note.beat:
+                    pitch_class_four_voice, pitch_four_voice = \
+                        get_pitch_class_for_four_voice(each_chord, s)
+                    next_bass = pitch_four_voice[-1]
         else:
-            return False  # this edge case where there is not even a previous note, let alone will be susupension
+            return False, -1  # this edge case where there is not even a previous note, let alone will be susupension
     else:
         next_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
             note_number + 1]  # TODO: getting previous and next note can lead to edge cases
-    return next_note
+        for each_chord in sChord.measure(thisChord.measureNumber).getElementsByClass('Chord'):
+            if each_chord.beat == next_note.beat:
+                pitch_class_four_voice, pitch_four_voice = \
+                    get_pitch_class_for_four_voice(each_chord, s)
+                next_bass = pitch_four_voice[-1]
+    return next_note, next_bass
+
+
+def suspension_dissonant(start, end):
+    """
+    Modular function to detect whether the suspensions are dissonant or not
+    :param start:
+    :param end:
+    :return:
+    """
+    aInterval = interval.Interval(noteStart=start, noteEnd=end)
+    if int(aInterval.name[1:]) % 7 == 0:
+        FB_desired = '7'
+    else:
+        FB_desired = str(int(aInterval.name[1:]) % 7)  # only dissonance can be suspensions
+    if FB_desired in ['7', '2', '4', '6']:
+        return True
+    else:
+        return False
+
+
+def is_suspension_RB(ptr, s, sChord, voice_number, sus_type):
+    """
+    Similar with "is_suspension" but does not search suspension by figures
+    :return:
+    """
+    denominator_chorale = sChord.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
+    thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
+    pitch_class_four_voice, pitch_four_voice = \
+        get_pitch_class_for_four_voice(thisChord, s)
+    ## find which voice does this note live
+    # for real_voice_number, each_note in enumerate(pitch_four_voice) :
+    #     if each_note == thisChord._notes[voice_number]:
+    #         if real_voice_number != voice_number:  # There can be two edge cases: (1) voice crossing and (2) two voices
+    #             #share the same note
+    #             input('how to deal with these two edge cases?')
+    # TODO: use this section of code above to find the edge cases
+    for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
+        if each_note.beat == thisChord.beat: # found the potential suspension note
+            previous_note, previous_bass = get_previous_note(note_number, thisChord, s, voice_number, sChord)
+            if previous_note == False:
+                return False
+            next_note, next_bass = get_next_note(note_number, thisChord, s, voice_number, sChord)
+            if next_note == False:
+                return False
+            if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6') and previous_bass != -1 and next_bass != -1:  # the previous note and the current note should be the same, or in the same pitch class (2)
+                # and also the note should resolve downstep (3), or it is a 6-5 suspension, and bass should be the previous one different from the current one while the next one is the same with the current one
+                if pitch_four_voice[-1].pitch.pitchClass == next_bass.pitch.pitchClass and pitch_four_voice[-1].pitch.pitchClass != previous_bass.pitch.pitchClass:
+                    if suspension_dissonant(pitch_four_voice[-1], each_note):
+                        return True
+        elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength * denominator_chorale / 4 > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
+            next_note, next_bass = get_next_note(note_number, thisChord, s, voice_number, sChord)
+            if next_note == False:
+                return False
+            if 1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 and next_bass != -1:
+                if pitch_four_voice[-1].pitch.pitchClass == next_bass.pitch.pitchClass:
+                    if suspension_dissonant(pitch_four_voice[-1], each_note):
+                        return True
+    return False
 
 
 def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
@@ -58,6 +138,7 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     For possible suspension figures (e.g., 7+6, 6+5, 4+3), test if contrapuntally speaking it is a suspension or not
     :return:
     """
+    denominator_chorale = sChord.recurse().getElementsByClass(meter.TimeSignature)[0].denominator
     thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
     pitch_class_four_voice, pitch_four_voice = \
         get_pitch_class_for_four_voice(thisChord, s)
@@ -73,19 +154,20 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
         sChord.recurse().getElementsByClass('Chord')[ptr +  ptr2], s)
     if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
         if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass:  # bass remains the same or same pitch class coz sometimes there can be a decoration in between (e.g., 050 last measure), (1)
+            # TODO: problem found: you cannot compare these two basses, you need to find the bass where 'next_note' resides, and compare whether these two basses are the same!
             for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
                 if each_note.beat == thisChord.beat: # found the potential suspension note
-                    previous_note = get_previous_note(note_number, thisChord, s, voice_number)
+                    previous_note, previous_bass = get_previous_note(note_number, thisChord, s, voice_number, sChord)
                     if previous_note == False:
                         return False
-                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                    next_note, next_bass = get_next_note(note_number, thisChord, s, voice_number, sChord)
                     if next_note == False:
                         return False
                     if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6'):  # the previous note and the current note should be the same, or in the same pitch class (2)
                         # and also the note should resolve downstep (3), or it is a 6-5 suspension
                         return True
-                elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
-                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength * denominator_chorale / 4 > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
+                    next_note, next_bass = get_next_note(note_number, thisChord, s, voice_number, sChord)
                     if next_note == False:
                         return False
                     if 1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2:
@@ -119,7 +201,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
                             # TODO: add suspension detection here
 
                         if sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0 \
-                                and 'NCT_suspension' not in previous_NCT_sign_FB[i]:
+                                and 'NCT' not in previous_NCT_sign_FB[i]:
                             if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
                                                                 this_pitch_list[i].pitch.nameWithOctave,
                                                                 next_pitch_list[
@@ -157,20 +239,12 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
                                 NCT_sign_FB[i] = 'NCT_anticipation'
                                 sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'green' # hope is green
                         elif sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 == 0 \
-                                and 'NCT_suspension' not in previous_NCT_sign_FB[i]:
+                                and 'NCT' not in previous_NCT_sign_FB[i]:
                             # suspension is on beat
-                            if is_suspension(ii, 1, s, sChords, i, ''):
+                            if is_suspension_RB(ii, s, sChords, i, ''):
                                 this_pitch_class_list_2[i] = -2  # indicate this is a NCT
                                 NCT_sign_FB[i] = 'NCT_suspension'
                                 sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'yellow'
-                            elif ii < len(
-            sChords.recurse().getElementsByClass('Chord')) - 2:  # for suspensions, we need to consider 3 slices apart
-                                if is_suspension(ii, 2, s, sChords, i, ''):
-                                    this_pitch_class_list_2[i] = -2  # indicate this is a NCT
-                                    NCT_sign_FB[i] = 'NCT_suspension'
-                                    sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'yellow'
-
-
                 else:  # investigate in what occasion the dimension of pitch classes vary
                     print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
                           sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
