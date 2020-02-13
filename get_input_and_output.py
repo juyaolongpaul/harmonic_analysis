@@ -15,13 +15,92 @@ y = []
 xx = []
 
 
-def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
+def get_previous_note(note_number, thisChord, s, voice_number):
+    """
+    Modular function to get the previous note for suspension
+    :return:
+    """
+    if note_number == 0:  # this means the previous note is in last measure:
+        if thisChord.measureNumber > 1 \
+                and len(s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)) > 0:
+            previous_note = \
+                s.parts[voice_number].measure(thisChord.measureNumber - 1).getElementsByClass(note.Note)[-1]
+        else:
+            return False  # this edge case where there is not even a previous note, let alone will be susupension
+    else:
+        previous_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
+            note_number - 1]
+    return previous_note
+
+
+def get_next_note(note_number, thisChord, s, voice_number):
+    """
+    Modular function to get the next note for suspension
+    :return:
+    """
+    if note_number == len(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)) - 1:  # this means the next note is in next measure:
+        if s.parts[voice_number].measure(thisChord.measureNumber + 1) is not None \
+                and len(s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)) > 0:
+            # It has the next measure
+                # This next measure cannot have just a rest like 086!
+            next_note = \
+                s.parts[voice_number].measure(thisChord.measureNumber + 1).getElementsByClass(note.Note)[0]
+        else:
+            return False  # this edge case where there is not even a previous note, let alone will be susupension
+    else:
+        next_note = s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)[
+            note_number + 1]  # TODO: getting previous and next note can lead to edge cases
+    return next_note
+
+
+def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
+    """
+    For possible suspension figures (e.g., 7+6, 6+5, 4+3), test if contrapuntally speaking it is a suspension or not
+    :return:
+    """
+    thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
+    pitch_class_four_voice, pitch_four_voice = \
+        get_pitch_class_for_four_voice(thisChord, s)
+    ## find which voice does this note live
+    # for real_voice_number, each_note in enumerate(pitch_four_voice) :
+    #     if each_note == thisChord._notes[voice_number]:
+    #         if real_voice_number != voice_number:  # There can be two edge cases: (1) voice crossing and (2) two voices
+    #             #share the same note
+    #             input('how to deal with these two edge cases?')
+    # TODO: use this section of code above to find the edge cases
+
+    pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
+        sChord.recurse().getElementsByClass('Chord')[ptr +  ptr2], s)
+    if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
+        if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass:  # bass remains the same or same pitch class coz sometimes there can be a decoration in between (e.g., 050 last measure), (1)
+            for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
+                if each_note.beat == thisChord.beat: # found the potential suspension note
+                    previous_note = get_previous_note(note_number, thisChord, s, voice_number)
+                    if previous_note == False:
+                        return False
+                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                    if next_note == False:
+                        return False
+                    if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6'):  # the previous note and the current note should be the same, or in the same pitch class (2)
+                        # and also the note should resolve downstep (3), or it is a 6-5 suspension
+                        return True
+                elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
+                    next_note = get_next_note(note_number, thisChord, s, voice_number)
+                    if next_note == False:
+                        return False
+                    if 1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2:
+                        return True
+    return False
+
+
+def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB):
     """
     Look into passing tone and neighbour tone on the weak beat
     :return:
     """
     # TODO: we need to add suspension into the game!
     this_pitch_class_list_2 = list(this_pitch_class_list)
+    NCT_sign_FB = [''] * len(this_pitch_class_list)
     if ii != 0 and ii < len(
             sChords.recurse().getElementsByClass('Chord')) - 1:  # not the first slice nor the last
         # so we can add NCT features for the current slice
@@ -35,39 +114,68 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list):
                 if len(last_pitch_list) > i and len(next_pitch_list) > i:
                     if last_pitch_list[i].name != 'rest' and next_pitch_list[
                     i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
-                        if (voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
-                                                               this_pitch_list[i].pitch.nameWithOctave,
-                                                               next_pitch_list[
-                                                                   i].pitch.nameWithOctave).couldBeNeighborTone() \
-                            # neighbor tone
-                                or voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
-                                                                       this_pitch_list[i].pitch.nameWithOctave,
-                                                                       next_pitch_list[
-                                                                           i].pitch.nameWithOctave).couldBePassingTone()
-                            # passing tone
-                            or (1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
-                                abs(this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) > 2 and
-                                (last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *
-                                (this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) < 0) or
-                            # escape tone: step+leap, in opposite direction
-                            (1 <= abs(next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
-                                abs(this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) > 2 and
-                             (next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *
-                             (this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) < 0)
-                            # incomplete neighbour tone: leap+step, in opposite direction
-                            or (1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and
-                            this_pitch_list[i].pitch.midi == next_pitch_list[i].pitch.midi)
-                            # anticipation
                             # TODO: anticipation has not considered bass motion yet (this is enough already?)
                             # TODO: color different kinds of NCTs
+                            # TODO: add suspension detection here
 
-                        ) and sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0:
+                        if sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0 \
+                                and 'NCT_suspension' not in previous_NCT_sign_FB[i]:
+                            if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                this_pitch_list[i].pitch.nameWithOctave,
+                                                                next_pitch_list[
+                                                                    i].pitch.nameWithOctave).couldBeNeighborTone():
+                            # the mutually exclusive rule, currently only applied to suspension,
+                            # since we can have double passing tone and we don't want to mess with that
                                 this_pitch_class_list_2[i] = -2 # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_neighbor'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'blue' # navy
+                            elif voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
+                                                                       this_pitch_list[i].pitch.nameWithOctave,
+                                                                       next_pitch_list[
+                                                                           i].pitch.nameWithOctave).couldBePassingTone():
+                                this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_passing'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'white' # passive
+                            elif 1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and\
+                                abs(this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) > 2 and\
+                                (last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *\
+                                (this_pitch_list[i].pitch.midi - next_pitch_list[i].pitch.midi) < 0:
+                                this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_escape_tone'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'red' # red you need to escape
+                            elif 1 <= abs(next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and\
+                                abs(this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) > 2 and\
+                             (next_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) *\
+                             (this_pitch_list[i].pitch.midi - last_pitch_list[i].pitch.midi) < 0:
+                                this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_incomplete_neighbour_tone'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'grey' # incomplete, hollow inside (grey)
+                            elif 1 <= abs(last_pitch_list[i].pitch.midi - this_pitch_list[i].pitch.midi) <= 2 and\
+                            this_pitch_list[i].pitch.midi == next_pitch_list[i].pitch.midi and \
+                                    sChords.recurse().getElementsByClass('Chord')[ii + 1].beat % 1 == 0 :
+                                this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_anticipation'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'green' # hope is green
+                        elif sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 == 0 \
+                                and 'NCT_suspension' not in previous_NCT_sign_FB[i]:
+                            # suspension is on beat
+                            if is_suspension(ii, 1, s, sChords, i, ''):
+                                this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                NCT_sign_FB[i] = 'NCT_suspension'
+                                sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'yellow'
+                            elif ii < len(
+            sChords.recurse().getElementsByClass('Chord')) - 2:  # for suspensions, we need to consider 3 slices apart
+                                if is_suspension(ii, 2, s, sChords, i, ''):
+                                    this_pitch_class_list_2[i] = -2  # indicate this is a NCT
+                                    NCT_sign_FB[i] = 'NCT_suspension'
+                                    sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'yellow'
+
+
                 else:  # investigate in what occasion the dimension of pitch classes vary
                     print('measure:', sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'beat:',
                           sChords.recurse().getElementsByClass('Chord')[ii].measureNumber, 'pitch class',
                           sChords.recurse().getElementsByClass('Chord')[ii])
-    return this_pitch_class_list_2
+    return this_pitch_class_list_2, NCT_sign_FB
 
 
 def get_FB(sChords, ptr):
@@ -1249,6 +1357,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
     key = s.analyze('AardenEssen')
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         # print('measure number: ', thisChord.measureNumber)
+        previous_NCT_sign = [''] * 100
         slice_input += 1
         counter1 += 1
         if pitch != 'pitch_class_binary':
@@ -1286,12 +1395,13 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                         key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
                     pitchClass = key_scale + pitchClass
                 if 'NCT' in pitch:
-                    this_pitch_class_list_only_CT = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice)
+                    this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice, previous_NCT_sign)
                     NCT = [0] * inputdim
                     for each_pitch_class in pitch_class_four_voice:
                         if each_pitch_class not in this_pitch_class_list_only_CT: # this means it is a NCT
                             NCT[each_pitch_class] = 1
                     pitchClass = NCT + pitchClass
+                    previous_NCT_sign = NCT_sign
             elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                 pitchClass, = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                            s,

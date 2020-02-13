@@ -240,7 +240,7 @@ def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
     return FB, FB_index, chord_tone
 
 
-def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_FB, RB_reasons, type=''):
+def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -258,7 +258,7 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     else:
         previous_pitch_class_four_voice = []
     if type == 'RB':
-        this_pitch_class_list_only_CT = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list)
+        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB)
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
     chord_tone = [int(round(x)) for x in chord_tone]
@@ -271,28 +271,6 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     FB_index = []
     bass = get_bass_note(thisChord, this_pitch_list, this_pitch_class_list, 'Y')
     if outputtype.find('_pitch_class') != -1:
-        for i, item in enumerate(y):  # this is explicitly dealing with 53-64
-            if int(item) == 1:
-                if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
-                    continue  # Do not need to output bass as FB pitch class, if this PC only appear in bass
-                if type == 'RB':
-                    if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
-                        break
-                    if i in this_pitch_class_list_only_CT:
-                        continue
-                    elif i in this_pitch_class_list:  # NCT type goes into this category
-                        aInterval = interval.Interval(noteStart=bass,
-                                                      noteEnd=this_pitch_list[this_pitch_class_list.index(i)])
-                        if int(aInterval.name[1:]) % 7 == 0:
-                            FB_desired = '7'
-                        elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-                            FB_desired = aInterval.name[1:]
-                        else:
-                            FB_desired = str(int(aInterval.name[1:]) % 7)
-                        if previous_bass != -1:
-                            if bass.pitch.pitchClass == previous_bass.pitch.pitchClass and (
-                                    ('3' in previous_FB and '5' in previous_FB and (FB_desired == '6' or FB_desired == '4'))):
-                                five_three_six_four += 1
         for i, item in enumerate(y):
             if int(item) == 1:
                 if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
@@ -328,21 +306,9 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                 FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
                         else:
                             FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
-                    elif i in this_pitch_class_list:  # if these NCT forms a part of voice motion, still output them
-                        aInterval = interval.Interval(noteStart=bass,
-                                                      noteEnd=this_pitch_list[this_pitch_class_list.index(i)])
-                        if int(aInterval.name[1:]) % 7 == 0:
-                            FB_desired = '7'
-                        elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-                            FB_desired = aInterval.name[1:]
-                        else:
-                            FB_desired = str(int(aInterval.name[1:]) % 7)
-                        if previous_bass != -1:
-                            if bass.pitch.pitchClass == previous_bass.pitch.pitchClass and (
-                                    ('3' in previous_FB and '5' in previous_FB and (FB_desired == '6' or FB_desired == '4'))) and five_three_six_four == 2:
-                                FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i) # only 53-64 get to do this
-                            else:
-                                RB_reasons.append('NCT upper voices')
+                    elif i in this_pitch_class_list:
+                        if NCT_sign[this_pitch_class_list.index(i)] == 'NCT_suspension':  # still add this figure since it is SUS!
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                         else:
                             RB_reasons.append('NCT upper voices')
 
@@ -390,7 +356,7 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
         if type != 'RB':
             return actual_FB, FB
         else:
-            return actual_FB, FB, RB_reasons
+            return actual_FB, FB, RB_reasons, NCT_sign
 
 
 def add_FB_result(actual_FB, result):
@@ -944,6 +910,19 @@ def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, 
 
 
 def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord):
+    """
+
+    :param gt_FB:
+    :param predict_FB:
+    :param previous_gt_FB:
+    :param previous_predict_FB:
+    :param previous_bass:
+    :param bass:
+    :param ptr:
+    :param s:
+    :param sChord:
+    :return:
+    """
     previous_gt_FB, gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
     previous_predict_FB, predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
     previous_gt_FB, gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
@@ -954,10 +933,10 @@ def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, pr
         previous_gt_FB, gt_FB = determine_potential_sus('2', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
     if '2' not in previous_predict_FB:
         previous_predict_FB, predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB,
-                                                                  previous_bass, bass, ptr, s, sChord)
+                                                                  previous_bass, bass, ptr, s, sChord,)
     elif '9' not in previous_predict_FB:
         previous_predict_FB, predict_FB = determine_potential_sus('2', '8', predict_FB, previous_predict_FB,
-                                                                  previous_bass, bass, ptr, s, sChord)
+                                                                  previous_bass, bass, ptr, s, sChord,)
     # TODO: resolve this 9 vs 2 issue!
     # Stop using because of the 8-7 problem
     if '4' in gt_FB and ('2' in gt_FB or '3' in gt_FB) and '7' not in previous_gt_FB:
@@ -1184,7 +1163,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                if '140.07' in fileName[i]:
+                if '117.04' in fileName[i]:
                     print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
@@ -1214,10 +1193,13 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 previous_predict_FB_RB = []
                 previous_predict_FB_RB_PC = []
                 previous_bass = -1
+                previous_NCT_sign= [''] * 100  # a dummy first one
+
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     # if j == 14:
                     #     print('debug')
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                    NCT_sign = [''] * len(pitch_class_four_voice)
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
                     RB_reasons = [] # the RB rule worked for this slice
 
@@ -1241,20 +1223,19 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_gt_FB, RB_reasons, [])  # Get the resulting PC and FB
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons)  # Get the resulting PC and FB
                     if gt_FB == ['2', '6', '4']:
                         print('debug')
-                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB, RB_reasons, [])
-                    predict_FB_RB, predict_FB_RB_PC, RB_reasons = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_predict_FB_RB, RB_reasons, 'RB')
-                    if predict_FB_RB == ['5', '8', '3']:
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons)
+                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, 'RB')
+                    if predict_FB_RB == ['8', '3', '6']:
                         print('debug')
-                    previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied = remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
+                    previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
                     previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
                     #print('previous_predict_FB_RB after', previous_predict_FB_RB)
                     # Save results
-                    if predict_FB_RB == ['8', '4', '6'] and '133.06' in fileName[i]:
-                        print('debug')
+
                     gt_FB_all.append(gt_FB)
                     gt_FB_PC_all.append(gt_FB_PC)
                     gt_FB_all_implied.append(gt_FB_implied)
@@ -1275,6 +1256,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     previous_predict_FB_RB = predict_FB_RB
                     previous_bass = bass
                     previous_predict_FB_RB_PC = predict_FB_RB_PC
+                    previous_NCT_sign = NCT_sign
                     correct_num, correct_num_implied, correct_mark_all = count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB_implied, predict_FB_implied, correct_num, correct_num_implied, correct_mark_all)
                     correct_num_RB, correct_num_implied_RB, correct_mark_all_RB = count_correct_slices(predict_FB_RB_PC, gt_FB_PC, gt_FB_implied, predict_FB_RB_implied,
                                                                             correct_num_RB, correct_num_implied_RB, correct_mark_all_RB)

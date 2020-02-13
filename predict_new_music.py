@@ -232,7 +232,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
-    get_input_encoding(inputpath, encoding_path)  # generate input encodings
+    # get_input_encoding(inputpath, encoding_path)  # generate input encodings
     xx = generate_ML_matrix(encoding_path, 1, 'N')
     xx_no_window = generate_ML_matrix(encoding_path, 0, 'N')
     xx_only_pitch = generate_ML_matrix(encoding_path, 0, 'N', 'Y')
