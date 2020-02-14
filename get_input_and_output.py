@@ -201,7 +201,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
                             # TODO: add suspension detection here
 
                         if sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0 \
-                                and 'NCT' not in previous_NCT_sign_FB[i]:
+                                and ('NCT' not in previous_NCT_sign_FB[i] or sChords.recurse().getElementsByClass('Chord')[ii].beat % 0.5 != 0):  # mutual exclusive rule does not apply to 16th notes!
                             if voiceLeading.ThreeNoteLinearSegment(last_pitch_list[i].pitch.nameWithOctave,
                                                                 this_pitch_list[i].pitch.nameWithOctave,
                                                                 next_pitch_list[
@@ -1429,9 +1429,9 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
     key = s.analyze('AardenEssen')
+    previous_NCT_sign = [''] * 100
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         # print('measure number: ', thisChord.measureNumber)
-        previous_NCT_sign = [''] * 100
         slice_input += 1
         counter1 += 1
         if pitch != 'pitch_class_binary':
@@ -1469,6 +1469,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                         key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
                     pitchClass = key_scale + pitchClass
                 if 'NCT' in pitch:
+                    print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
                     this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice, previous_NCT_sign)
                     NCT = [0] * inputdim
                     for each_pitch_class in pitch_class_four_voice:

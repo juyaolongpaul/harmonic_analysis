@@ -1153,12 +1153,12 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             if times == 0:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_2') + '.txt',
                              'w')  # create this file to track every type of mistakes
             else:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_2') + '.txt',
                              'a')  # create this file to track every type of mistakes
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
@@ -1228,7 +1228,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons)
                     predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, 'RB')
-                    if predict_FB_RB == ['8', '3', '6']:
+                    if predict_FB_RB == ['3', '8', '6'] and '140.07' in fileName[i]:
                         print('debug')
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
