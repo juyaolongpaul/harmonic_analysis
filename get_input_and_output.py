@@ -198,7 +198,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
                     i].name != 'rest':  # need to judge NCT if there is a note in all 3 slices
                             # TODO: anticipation has not considered bass motion yet (this is enough already?)
                             # TODO: color different kinds of NCTs
-                            # TODO: add suspension detection here
+                            # TODO: add proper bass suspension detection here
 
                         if sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 != 0 \
                                 and ('NCT' not in previous_NCT_sign_FB[i] or sChords.recurse().getElementsByClass('Chord')[ii].beat % 0.5 != 0):  # mutual exclusive rule does not apply to 16th notes!
@@ -515,16 +515,19 @@ def get_pitch_class_for_four_voice(thisChord, s):
                 #if len(thisChord.pitchClasses) == 4:  # we don't need to use the actual funtion. Just flip the order of notes, sometimes there can be more than 4 voices in Bach chorales!
                 print('pitch four voice does not work because of pick up measure!')  # this happens whenever there is an pick-up measure in between the music
                 return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
-        for sonority in pitch_class_four_voice:
-            if sonority == -1: continue
-            if sonority not in thisChord.pitchClasses:  # like 29.08 where it has concert pitches and real pitches, this function won't work, and need to return the notes from thisChord!
-                print('pitch four voice does not work because of concert pitch!')
-                return thisChord.pitchClasses[::-1], thisChord._notes[::-1]
+
         for i, each_pitch in enumerate(pitch_four_voice):  # remove Chordify voice
             if isinstance(each_pitch, int) is False:
                 if each_pitch.isChord is True:
                     pitch_four_voice.remove(each_pitch)
                     del pitch_class_four_voice[i]
+
+
+        for sonority in pitch_class_four_voice:
+            if sonority == -1: continue
+            if sonority not in thisChord.pitchClasses:  # like 29.08 where it has concert pitches and real pitches, this function won't work, and need to return the notes from thisChord!
+                print('pitch four voice does not work because of concert pitch!')
+                return pitch_class_four_voice[-4:], pitch_four_voice[-4:]  # in this case, return only 4 voices, since the upper voices can contain concert pitches which are wrong
 
         return pitch_class_four_voice, pitch_four_voice
 
@@ -1361,7 +1364,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                    fn[:-4] + '.txt')):
             continue  # skip the files that already have encodings
         print(fn)
-        if '29.08' not in fn:
+        if '112.05' not in fn:
             continue
         chorale_x = []
         chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
