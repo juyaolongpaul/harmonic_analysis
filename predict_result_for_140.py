@@ -38,7 +38,7 @@ import os
 import numpy as np
 #import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
-from get_input_and_output import determine_NCT
+from get_input_and_output import determine_NCT, fill_in_pitch_class, contain_concert_pitch, contain_chordify_voice
 from music21 import *
 from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
@@ -240,7 +240,7 @@ def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
     return FB, FB_index, chord_tone
 
 
-def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, type=''):
+def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -251,6 +251,8 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     :return:
     """
     thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    # if thisChord.measureNumber == 5:
+    #     print('debug')
     five_three_six_four = 0  # track 53-64 motion
     if j > 0:
         previousChord = sChords.recurse().getElementsByClass('Chord')[j - 1]
@@ -258,7 +260,7 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     else:
         previous_pitch_class_four_voice = []
     if type == 'RB':
-        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB)
+        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice)
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
     chord_tone = [int(round(x)) for x in chord_tone]
@@ -280,6 +282,9 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                 elif type == 'RB':
                     if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
                         RB_reasons.append('NCT bass')
+                        break
+                    if thisChord.beat % 1 != 0 and thisChord.duration.quarterLength <= 0.25:  # if the current slice contains 16th notes off beat, prediction nothing too!
+                        RB_reasons.append('16th (or shorter) note slice ignored')
                         break
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
@@ -995,6 +1000,8 @@ def output_FB_to_score(FB, FB_PC, sChords, j, correct_mark=''):
 
 
 
+
+
 def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
@@ -1047,8 +1054,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        # if times != 2:
-        #     continue
+        if times != 8:
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -1153,18 +1160,21 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             if times == 0:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_2') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + '.txt',
                              'w')  # create this file to track every type of mistakes
             else:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_2') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + '.txt',
                              'a')  # create this file to track every type of mistakes
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                if '117.04' in fileName[i]:
+                # if '112.05' not in fileName[i]:
+                #     continue
+                if '112.05' in fileName[i]:
                     print('debug')
+
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1182,8 +1192,13 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 predict_FB_RB_all_implied = []
                 correct_mark_all = []
                 correct_mark_all_RB = []
+
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                concert_pitch = contain_concert_pitch(s)
+                chordify_voice = contain_chordify_voice(s)
+                # s = remove_concert_pitch_voices(s)
                 s_no_chordify = converter.parse(os.path.join(input, fileName[i]))  # remove the last voice which will always be the chorify voice
+                # s_no_chordify = remove_concert_pitch_voices(s_no_chordify)
                 s_no_chordify.remove(s_no_chordify.parts[-1]) # remove the last voice which will always be the chorify voice
                 sChords = s_no_chordify.chordify()
                 sChords_RB = s_no_chordify.chordify()
@@ -1196,6 +1211,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 previous_NCT_sign= [''] * 100  # a dummy first one
 
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    # print('measure', thisChord.measureNumber)
+                    # if '112.05' in fileName[i] and thisChord.measureNumber == 3:
+                    #     print('debug')
                     # if j == 14:
                     #     print('debug')
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
@@ -1223,12 +1241,12 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons)  # Get the resulting PC and FB
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)  # Get the resulting PC and FB
                     if gt_FB == ['2', '6', '4']:
                         print('debug')
-                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons)
-                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, 'RB')
-                    if predict_FB_RB == ['3', '8', '6'] and '140.07' in fileName[i]:
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
+                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
+                    if predict_FB_RB == ['8'] and '112.05' in fileName[i]:
                         print('debug')
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
@@ -1803,8 +1821,11 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
                 #num_of_disagreement = [] # record the number of disagreement across all chord inferring algorithms
                 num_of_agreement_per_chorale = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                # s = remove_concert_pitch_voices(s)
                 s_bb = converter.parse(os.path.join(input, fileName[i]))
+                # s_bb = remove_concert_pitch_voices(s_bb)
                 s_exclamation = converter.parse(os.path.join(input, fileName[i]))
+                # s_exclamation = remove_concert_pitch_voices(s_exclamation)
                 sChords = s.chordify()
                 sChords_bb = s_bb.chordify()
                 sChords_exclamation = s_exclamation.chordify()
