@@ -16,14 +16,9 @@ xx = []
 
 
 def contain_concert_pitch(s):
-    sChords = s.chordify()
-    for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-        pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-        for sonority in pitch_class_four_voice:
-            if sonority == -1: continue
-            if sonority not in thisChord.pitchClasses:  # like 29.08 where it has concert pitches and real pitches, this function won't work, and need to return the notes from thisChord!
-                print('pitch four voice does not work because of concert pitch!')
-                return True  # in this case, return only 4 voices, since the upper voices can contain concert pitches which are wrong
+    for part in s.parts:
+        if part.atSoundingPitch is False:
+            return True  # in this case, return only 4 voices, since the upper voices can contain concert pitches which are wrong
     return False
 
 
@@ -36,7 +31,6 @@ def contain_chordify_voice(s):
 
 
 def remove_concert_pitch_voices(s, concert_pitch, chordify_voice):
-    sChords = s.chordify()
     if concert_pitch: # if concert pitch, only keep SATB settings
         if chordify_voice: # contains chordify voice
             while len(s.parts) > 5:
@@ -207,7 +201,8 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     return False
 
 
-def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice):
+def \
+        determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice):
     """
     Look into passing tone and neighbour tone on the weak beat
     :return:
