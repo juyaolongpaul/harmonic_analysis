@@ -201,8 +201,7 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     return False
 
 
-def \
-        determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice):
+def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice):
     """
     Look into passing tone and neighbour tone on the weak beat
     :return:

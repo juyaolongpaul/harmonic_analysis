@@ -281,10 +281,10 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
                 elif type == 'RB':
                     if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
-                        RB_reasons.append('NCT bass')
+                        RB_reasons= ['NCT bass'] * len(this_pitch_class_list)
                         break
                     if thisChord.beat % 1 != 0 and thisChord.duration.quarterLength <= 0.25:  # if the current slice contains 16th notes off beat, prediction nothing too!
-                        RB_reasons.append('16th (or shorter) note slice ignored')
+                        RB_reasons = ['16th (or shorter) note slice ignored'] * len(this_pitch_class_list)
                         break
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
@@ -304,7 +304,7 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                     FB_desired = str(int(aInterval.name[1:]) % 7)
                                     if FB_desired not in ['1', '3', '5']:
                                         print('no need to put this FB PC')
-                                        RB_reasons.append('FB already labeled')
+                                        RB_reasons[this_pitch_class_list_only_CT.index(i)] = 'FB already labeled'
                                 elif i == bass.pitch.pitchClass:  # only add 8 in this case, since there is a doubling of bass PC
                                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                             else:
@@ -314,8 +314,9 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     elif i in this_pitch_class_list:
                         if NCT_sign[this_pitch_class_list.index(i)] == 'NCT_suspension':  # still add this figure since it is SUS!
                             FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
-                        else:
-                            RB_reasons.append('NCT upper voices')
+
+                        # RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices: ' + NCT_sign[this_pitch_class_list.index(i)]
+                        RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices'
 
 
         # if FB != []:
@@ -1054,7 +1055,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 9:
+        if times != 4:
             continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
@@ -1170,7 +1171,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                # if '112.05' not in fileName[i]:
+                # if '104.06' not in fileName[i]:
                 #     continue
                 if '29.08' in fileName[i]:
                     print('debug')
@@ -1219,7 +1220,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                     NCT_sign = [''] * len(pitch_class_four_voice)
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-                    RB_reasons = [] # the RB rule worked for this slice
+                    RB_reasons = [''] * len(pitch_class_four_voice)  # have reasons for each pitch!
 
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
@@ -1379,7 +1380,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             NCT_upper_count_right = 0
             FB_labelled_count = 0
             FB_labelled_count_right = 0
-            error_counts = 0
+            sixteenth_count = 0
+            sixteenth_count_right = 0
+            error_counts = a_counter - a_counter_correct_RB_implied
+            empty_count = 0
+            empty_count_right = 0
             for i, each_reason in enumerate(a_all_RB_reasons):
                 NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
                                                                                           NCT_bass_count_right,
@@ -1394,6 +1399,30 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                                                                                 FB_labelled_count_right,
                                                                                                 a_correct_mark_all_RB_flat,
                                                                                                 'FB already labeled', i)
+                sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count, sixteenth_count_right, a_correct_mark_all_RB_flat, '16th (or shorter) note slice ignored', i)
+                empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right, a_correct_mark_all_RB_flat, [''] * len(each_reason), i)
+            print('NCT bass accuracy:', NCT_bass_count_right/NCT_bass_count)
+            print('NCT bass accuracy:', NCT_bass_count_right / NCT_bass_count, file=cv_log)
+            print('NCT upper accuracy:', NCT_upper_count_right / NCT_upper_count)
+            print('NCT upper cccuracy:', NCT_upper_count_right / NCT_upper_count, file=cv_log)
+            print('FB already labeled accuracy:', FB_labelled_count_right/FB_labelled_count)
+            print('FB already labeled accuracy:', FB_labelled_count_right / FB_labelled_count, file=cv_log)
+            print('16th note no FB accuracy:', sixteenth_count_right/sixteenth_count)
+            print('16th note no FB accuracy:', sixteenth_count_right / sixteenth_count, file=cv_log)
+            print('empty FB Rule accuracy:', empty_count_right/empty_count)
+            print('empty FB Rule accuracy:', empty_count_right / empty_count, file=cv_log)
+            print('Here is the breakdown of different types of errors, among all errors:')
+            print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
+            print('% of NCT bass being wrong:', (NCT_bass_count - NCT_bass_count_right)/error_counts)
+            print('% of NCT bass being wrong:', (NCT_bass_count - NCT_bass_count_right) / error_counts, file=cv_log)
+            print('% of NCT upper being wrong:', (NCT_upper_count - NCT_upper_count_right) / error_counts)
+            print('% of NCT upper being wrong:', (NCT_upper_count - NCT_upper_count_right) / error_counts, file=cv_log)
+            print('% of FB already labeled being wrong:', (FB_labelled_count - FB_labelled_count_right) / error_counts, file=cv_log)
+            print('% of FB already labeled being wrong:', (FB_labelled_count - FB_labelled_count_right) / error_counts)
+            print('% of 16th note no FB being wrong:', (sixteenth_count - sixteenth_count_right) / error_counts)
+            print('% of 16th note no FB being wrong:', (sixteenth_count - sixteenth_count_right) / error_counts, file=cv_log)
+            print('% of empty FB Rule being wrong:', (empty_count - empty_count_right) / error_counts)
+            print('% of empty FB Rule being wrong:', (empty_count - empty_count_right) / error_counts, file = cv_log)
             # for i, each_answer in a_correct_mark_all_RB_flat:
             #     if a_correct_mark_all_RB_flat[i] != '✓_' and a_correct_mark_all_RB_flat[i] != '✓':
             #         error_counts += 1
@@ -1403,7 +1432,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
 
 
 def count_each_reason_and_right_number(each_reason, count, count_right, a_correct_mark_all_RB_flat, reason_to_check, i):
-    if reason_to_check in each_reason:
+    if reason_to_check in each_reason or reason_to_check == each_reason:
         count += 1
         if a_correct_mark_all_RB_flat[i] == '✓_' or a_correct_mark_all_RB_flat[i] == '✓':
             count_right += 1
