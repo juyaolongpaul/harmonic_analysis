@@ -1054,7 +1054,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 8:
+        if times != 9:
             continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
@@ -1160,19 +1160,19 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             if times == 0:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
                              'w')  # create this file to track every type of mistakes
             else:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + '.txt',
+                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
                              'a')  # create this file to track every type of mistakes
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
                 # if '112.05' not in fileName[i]:
                 #     continue
-                if '112.05' in fileName[i]:
+                if '29.08' in fileName[i]:
                     print('debug')
 
                 num_salami_slice = numSalamiSlices[i]
