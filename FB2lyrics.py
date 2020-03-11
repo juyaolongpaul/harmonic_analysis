@@ -434,8 +434,8 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
         for note_number, each_note in enumerate(
                 s.parts[-1].measure(thisChord.measureNumber).getElementsByClass(note.Note)):  # go through bass voice
             if each_note.beat == thisChord.beat:  # found the potential bass suspension note
-                previous_note = get_previous_note(note_number, thisChord, s, -1)
-                next_note = get_next_note(note_number, thisChord, s, -1)
+                previous_note, previous_bass = get_previous_note(note_number, thisChord, s, -1, sChord)
+                next_note, next_bass = get_next_note(note_number, thisChord, s, -1, sChord)
                 if previous_note != False and next_note != False and previous_note.pitch.pitchClass == each_note.pitch.pitchClass \
                     and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2) \
                         and sChord.recurse().getElementsByClass('Chord')[ptr + 1].orderedPitchClasses in thisChord.orderedPitchClasses:
@@ -643,13 +643,14 @@ def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
         # if '244.46' not in filename: continue
         # if '140.07' not in filename: continue
         if 'lyric' not in filename: continue
+        if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
+            continue
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
         #     continue
-
         print(filename)
         print(filename, file=f_sus)
         suspension_ptr = []  # list that records all the suspensions

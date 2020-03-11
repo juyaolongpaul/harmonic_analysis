@@ -1399,7 +1399,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                    fn[:-4] + '.txt')):
             continue  # skip the files that already have encodings
         print(fn)
-        if '112.05' not in fn:
+        if any(each_ID in fn for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
             continue
         chorale_x = []
         chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
@@ -1433,13 +1433,14 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
             pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
             bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
             for i, sonority in enumerate(thisChord._notes):
-                aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-                colllapsed_interval = colllapse_interval(aInterval.name[1:])
-                intervals.append(colllapsed_interval)
-                if any(colllapsed_interval in each for each in fig_collapsed) or ('3' in colllapsed_interval and
-                                                any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
-            # explicitly labeled in FB
-                    FB_sonority[sonority.pitch.pitchClass] = 1
+                if sonority.isRest == False and bass is not False:
+                    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                    intervals.append(colllapsed_interval)
+                    if any(colllapsed_interval in each for each in fig_collapsed) or ('3' in colllapsed_interval and
+                                                    any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
+                # explicitly labeled in FB
+                        FB_sonority[sonority.pitch.pitchClass] = 1
             # for each_figure in fig_collapsed:
             #     if each_figure == '' or '_' in each_figure:
             #         continue
@@ -1514,7 +1515,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                         key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
                     pitchClass = key_scale + pitchClass
                 if 'NCT' in pitch:
-                    print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
+                    #print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
                     this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice, previous_NCT_sign, concert_pitch, chordify_voice)
                     NCT = [0] * inputdim
                     for each_pitch_class in pitch_class_four_voice:

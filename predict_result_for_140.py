@@ -1341,8 +1341,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         continue
                     else:
                         print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason', all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j])
-                        print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason',
-                              all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j], file=f_all)
+                        # print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason',
+                        #       all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j], file=f_all)
                 s.insert(0, sChords)
                 s.insert(0, sChords_RB)
                 a_counter_correct += correct_num
