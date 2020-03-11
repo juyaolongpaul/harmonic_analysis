@@ -1046,6 +1046,25 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     FB_already_labeled_err = []
     sixteenth_note_err = []
     empty_FB_err = []
+    # ML copy of it
+    NCT_bass_acc_ML = []
+    NCT_bass_percentage_ML = []
+    NCT_upper_acc_ML = []
+    NCT_upper_percentage_ML = []
+    FB_already_labeled_acc_ML = []
+    FB_already_labeled_percentage_ML = []
+    sixteenth_note_acc_ML = []
+    sixteenth_note_percentage_ML = []
+    empty_FB_acc_ML = []
+    empty_FB_percentage_ML = []
+    ML_rule_acc = []
+    ML_rule_percentage = []
+    NCT_bass_err_ML = []
+    NCT_upper_err_ML = []
+    FB_already_labeled_err_ML = []
+    sixteenth_note_err_ML = []
+    empty_FB_err_ML = []
+    ML_rule_err = []
     batch_size = 256
     epochs = 500
     if modelID == 'DNN':
@@ -1166,9 +1185,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_counter_correct_RB = 0
             a_counter_correct_RB_implied = 0
             a_all_RB_reasons = []  # RB reason across all pieces
+            a_all_ML_reasons = []
             a_gt_FB_all = []  # GT FB across all pieces
             a_predict_FB_RB_all = []
             a_correct_mark_all_RB = []
+            a_correct_mark_all_ML = []
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
@@ -1186,10 +1207,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                # if '104.06' not in fileName[i]:
-                #     continue
-                if '29.08' in fileName[i]:
-                    print('debug')
+                if '13.06' not in fileName[i]:
+                    if '133.06' not in fileName[i]:
+                        continue
 
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
@@ -1205,6 +1225,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 predict_FB_RB_all = []
                 predict_FB_RB_PC_all = []
                 all_RB_reasons = []
+                all_ML_reasons = []
                 predict_FB_RB_all_implied = []
                 correct_mark_all = []
                 correct_mark_all_RB = []
@@ -1236,7 +1257,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     NCT_sign = [''] * len(pitch_class_four_voice)
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
                     RB_reasons = [''] * len(pitch_class_four_voice)  # have reasons for each pitch!
-
+                    ML_reasons = [''] * len(pitch_class_four_voice)
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
                     correct_bit = 0
@@ -1281,6 +1302,14 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     predict_FB_RB_all_implied.append(predict_FB_RB_implied)
                     all_RB_reasons.append(RB_reasons)
                     a_all_RB_reasons.append(RB_reasons)
+                    # need to add ML reasons, same if the implied FB is the same, specify "ML rules" if different
+                    if predict_FB_implied == predict_FB_RB_implied:
+                        all_ML_reasons.append(RB_reasons)
+                        a_all_ML_reasons.append(RB_reasons)
+                    else:
+                        ML_reasons = ['ML rules'] * len(pitch_class_four_voice)
+                        all_ML_reasons.append(ML_reasons)
+                        a_all_ML_reasons.append(ML_reasons)
                     if j != 0:
                         gt_FB_all[j - 1] = previous_gt_FB
                         predict_FB_all[j - 1] = previous_predict_FB
@@ -1323,6 +1352,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 a_predict_FB_RB_all.append(predict_FB_RB_all)  # add implied ones easy to compare
                 a_gt_FB_all.append(gt_FB_all)  # same with above
                 a_correct_mark_all_RB.append(correct_mark_all_RB)
+                a_correct_mark_all_ML.append(correct_mark_all)
                 print(end='\n', file=f_all)
 
 
@@ -1388,77 +1418,194 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_predict_FB_RB_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_all))
             a_gt_FB_all_flat = list(itertools.chain.from_iterable(a_gt_FB_all))
             a_correct_mark_all_RB_flat = list(itertools.chain.from_iterable(a_correct_mark_all_RB))
+            a_correct_mark_all_ML_flat = list(itertools.chain.from_iterable(a_correct_mark_all_ML))
+            output_accuracy_for_each_reason(a_counter, a_counter_correct_RB_implied, a_all_RB_reasons,
+                                            a_correct_mark_all_RB_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc,
+                                            NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage,
+                                            sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc,
+                                            empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err,
+                                            sixteenth_note_err, empty_FB_err, cv_log, [], [],
+                                            [])
+            output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_ML_reasons,
+                                            a_correct_mark_all_ML_flat, NCT_bass_acc_ML, NCT_bass_percentage_ML, NCT_upper_acc_ML,
+                                            NCT_upper_percentage_ML, FB_already_labeled_acc_ML, FB_already_labeled_percentage_ML,
+                                            sixteenth_note_acc_ML, sixteenth_note_percentage_ML, empty_FB_acc_ML,
+                                            empty_FB_percentage_ML, NCT_bass_err_ML, NCT_upper_err_ML, FB_already_labeled_err_ML,
+                                            sixteenth_note_err_ML, empty_FB_err_ML, cv_log, ML_rule_acc, ML_rule_percentage,
+                                            ML_rule_err)
+
             # first we need to count for which RB reason, how many got right and how many got wrong
-            NCT_bass_count = 0
-            NCT_bass_count_right = 0
-            NCT_upper_count = 0
-            NCT_upper_count_right = 0
-            FB_labelled_count = 0
-            FB_labelled_count_right = 0
-            sixteenth_count = 0
-            sixteenth_count_right = 0
-            error_counts = a_counter - a_counter_correct_RB_implied
-            empty_count = 0
-            empty_count_right = 0
-            for i, each_reason in enumerate(a_all_RB_reasons):
-                NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
-                                                                                          NCT_bass_count_right,
-                                                                                          a_correct_mark_all_RB_flat,
-                                                                                          'NCT bass', i)
-                NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
-                                                                                          NCT_upper_count_right,
-                                                                                          a_correct_mark_all_RB_flat,
-                                                                                          'NCT upper voices', i)
-                FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
-                                                                                                FB_labelled_count,
-                                                                                                FB_labelled_count_right,
-                                                                                                a_correct_mark_all_RB_flat,
-                                                                                                'FB already labeled', i)
-                sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count, sixteenth_count_right, a_correct_mark_all_RB_flat, '16th (or shorter) note slice ignored', i)
-                empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right, a_correct_mark_all_RB_flat, [''] * len(each_reason), i)
-            NCT_bass_acc.append((NCT_bass_count_right/NCT_bass_count) * 100)
-            NCT_bass_percentage.append(NCT_bass_count/a_counter * 100)
-            NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100)
-            NCT_upper_percentage.append(NCT_upper_count/a_counter * 100)
-            FB_already_labeled_acc.append((FB_labelled_count_right/FB_labelled_count) * 100)
-            FB_already_labeled_percentage.append(FB_labelled_count/a_counter * 100)
-            sixteenth_note_acc.append((sixteenth_count_right/sixteenth_count) * 100)
-            sixteenth_note_percentage.append(sixteenth_count/a_counter * 100)
-            empty_FB_acc.append((empty_count_right / empty_count) * 100)
-            empty_FB_percentage.append(empty_count/a_counter * 100)
-            NCT_bass_err.append((NCT_bass_count - NCT_bass_count_right)/error_counts * 100)
-            NCT_upper_err.append((NCT_upper_count - NCT_upper_count_right) / error_counts * 100)
-            FB_already_labeled_err.append((FB_labelled_count - FB_labelled_count_right) / error_counts * 100)
-            sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100)
-            empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100)
-            print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%;', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;')
-            print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;', file=cv_log)
-            print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;')
-            print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;', file=cv_log)
-            print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;')
-            print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;', file=cv_log)
-            print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;')
-            print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;', file=cv_log)
-            print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;')
-            print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;', file=cv_log)
-            print('Here is the breakdown of different types of errors, among all errors:')
-            print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
-            print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err))
-            print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err), file=cv_log)
-            print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err))
-            print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err), file=cv_log)
-            print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err), file=cv_log)
-            print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err))
-            print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err))
-            print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err), file=cv_log)
-            print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err))
-            print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err), file = cv_log)
-            # for i, each_answer in a_correct_mark_all_RB_flat:
-            #     if a_correct_mark_all_RB_flat[i] != '✓_' and a_correct_mark_all_RB_flat[i] != '✓':
-            #         error_counts += 1
-            #         if a_gt_FB_all_flat[i] == []:
+            # NCT_bass_count = 0
+            # NCT_bass_count_right = 0
+            # NCT_upper_count = 0
+            # NCT_upper_count_right = 0
+            # FB_labelled_count = 0
+            # FB_labelled_count_right = 0
+            # sixteenth_count = 0
+            # sixteenth_count_right = 0
+            # error_counts = a_counter - a_counter_correct_RB_implied
+            # empty_count = 0
+            # empty_count_right = 0
+            # for i, each_reason in enumerate(a_all_RB_reasons):
+            #     NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
+            #                                                                               NCT_bass_count_right,
+            #                                                                               a_correct_mark_all_RB_flat,
+            #                                                                               'NCT bass', i)
+            #     NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
+            #                                                                               NCT_upper_count_right,
+            #                                                                               a_correct_mark_all_RB_flat,
+            #                                                                               'NCT upper voices', i)
+            #     FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
+            #                                                                                     FB_labelled_count,
+            #                                                                                     FB_labelled_count_right,
+            #                                                                                     a_correct_mark_all_RB_flat,
+            #                                                                                     'FB already labeled', i)
+            #     sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count, sixteenth_count_right, a_correct_mark_all_RB_flat, '16th (or shorter) note slice ignored', i)
+            #     empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right, a_correct_mark_all_RB_flat, [''] * len(each_reason), i)
+            # NCT_bass_acc.append((NCT_bass_count_right/NCT_bass_count) * 100)
+            # NCT_bass_percentage.append(NCT_bass_count/a_counter * 100)
+            # NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100)
+            # NCT_upper_percentage.append(NCT_upper_count/a_counter * 100)
+            # FB_already_labeled_acc.append((FB_labelled_count_right/FB_labelled_count) * 100)
+            # FB_already_labeled_percentage.append(FB_labelled_count/a_counter * 100)
+            # sixteenth_note_acc.append((sixteenth_count_right/sixteenth_count) * 100)
+            # sixteenth_note_percentage.append(sixteenth_count/a_counter * 100)
+            # empty_FB_acc.append((empty_count_right / empty_count) * 100)
+            # empty_FB_percentage.append(empty_count/a_counter * 100)
+            # NCT_bass_err.append((NCT_bass_count - NCT_bass_count_right)/error_counts * 100)
+            # NCT_upper_err.append((NCT_upper_count - NCT_upper_count_right) / error_counts * 100)
+            # FB_already_labeled_err.append((FB_labelled_count - FB_labelled_count_right) / error_counts * 100)
+            # sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100)
+            # empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100)
+            # print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%;', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;')
+            # print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;', file=cv_log)
+            # print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;')
+            # print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;', file=cv_log)
+            # print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;')
+            # print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;', file=cv_log)
+            # print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;')
+            # print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;', file=cv_log)
+            # print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;')
+            # print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;', file=cv_log)
+            # print('Here is the breakdown of different types of errors, among all errors:')
+            # print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
+            # print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err))
+            # print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err), file=cv_log)
+            # print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err))
+            # print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err), file=cv_log)
+            # print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err), file=cv_log)
+            # print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err))
+            # print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err))
+            # print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err), file=cv_log)
+            # print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err))
+            # print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err), file = cv_log)
+            # # for i, each_answer in a_correct_mark_all_RB_flat:
+            # #     if a_correct_mark_all_RB_flat[i] != '✓_' and a_correct_mark_all_RB_flat[i] != '✓':
+            # #         error_counts += 1
+            # #         if a_gt_FB_all_flat[i] == []:
 
-
+def output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_reasons, a_correct_mark_all_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc, NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage, sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc, empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err, sixteenth_note_err, empty_FB_err, cv_log, ML_rule_acc, ML_rule_percentage, ML_rule_err):
+    NCT_bass_count = 0
+    NCT_bass_count_right = 0
+    NCT_upper_count = 0
+    NCT_upper_count_right = 0
+    FB_labelled_count = 0
+    FB_labelled_count_right = 0
+    sixteenth_count = 0
+    sixteenth_count_right = 0
+    error_counts = a_counter - a_counter_correct_implied
+    empty_count = 0
+    empty_count_right = 0
+    ML_count = 0
+    ML_count_right = 0
+    for i, each_reason in enumerate(a_all_reasons):
+        NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
+                                                                                  NCT_bass_count_right,
+                                                                                  a_correct_mark_all_flat,
+                                                                                  'NCT bass', i)
+        NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
+                                                                                    NCT_upper_count_right,
+                                                                                    a_correct_mark_all_flat,
+                                                                                    'NCT upper voices', i)
+        FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
+                                                                                        FB_labelled_count,
+                                                                                        FB_labelled_count_right,
+                                                                                        a_correct_mark_all_flat,
+                                                                                        'FB already labeled', i)
+        sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count,
+                                                                                    sixteenth_count_right,
+                                                                                    a_correct_mark_all_flat,
+                                                                                    '16th (or shorter) note slice ignored',
+                                                                                    i)
+        empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right,
+                                                                            a_correct_mark_all_flat,
+                                                                            [''] * len(each_reason), i)
+        ML_count, ML_count_right = count_each_reason_and_right_number(each_reason, ML_count, ML_count_right,
+                                                                            a_correct_mark_all_flat,
+                                                                            'ML rules', i)
+    NCT_bass_acc.append((NCT_bass_count_right / NCT_bass_count) * 100) if NCT_bass_count != 0 else 0
+    NCT_bass_percentage.append(NCT_bass_count / a_counter * 100)
+    NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100) if NCT_upper_count != 0 else 0
+    NCT_upper_percentage.append(NCT_upper_count / a_counter * 100)
+    FB_already_labeled_acc.append((FB_labelled_count_right / FB_labelled_count) * 100) if FB_labelled_count != 0 else 0
+    FB_already_labeled_percentage.append(FB_labelled_count / a_counter * 100)
+    sixteenth_note_acc.append((sixteenth_count_right / sixteenth_count) * 100) if sixteenth_count != 0 else 0
+    sixteenth_note_percentage.append(sixteenth_count / a_counter * 100)
+    empty_FB_acc.append((empty_count_right / empty_count) * 100) if empty_count != 0 else 0
+    empty_FB_percentage.append(empty_count / a_counter * 100)
+    ML_rule_acc.append((ML_count_right / ML_count) * 100) if ML_count != 0 else 0
+    ML_rule_percentage.append((ML_count / a_counter) * 100)
+    NCT_bass_err.append((NCT_bass_count - NCT_bass_count_right) / error_counts * 100) if error_counts != 0 else 0
+    NCT_upper_err.append((NCT_upper_count - NCT_upper_count_right) / error_counts * 100) if error_counts != 0 else 0
+    FB_already_labeled_err.append((FB_labelled_count - FB_labelled_count_right) / error_counts * 100) if error_counts != 0 else 0
+    sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100) if error_counts != 0 else 0
+    empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100) if error_counts != 0 else 0
+    ML_rule_err.append((ML_count - ML_count_right) / error_counts * 100) if error_counts != 0 else 0
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%;', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;')
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;', file=cv_log)
+    print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;')
+    print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;', file=cv_log)
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc),
+          '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±',
+          np.std(FB_already_labeled_percentage), '%;')
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc),
+          'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage),
+          '%;', file=cv_log)
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;')
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;',
+          file=cv_log)
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;')
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;', file=cv_log)
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', np.std(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', np.std(ML_rule_percentage), '%;')
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', np.std(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', np.std(ML_rule_percentage), '%;', file=cv_log)
+    print('Here is the breakdown of different types of errors, among all errors:')
+    print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err))
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err), file=cv_log)
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err))
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err), file=cv_log)
+    print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
+          np.std(FB_already_labeled_err), file=cv_log)
+    print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
+          np.std(FB_already_labeled_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err),
+          file=cv_log)
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err))
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err), file=cv_log)
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', np.std(ML_rule_err))
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', np.std(ML_rule_err), file=cv_log)
+    print('----------------------------------------------------------------------')
 
 
 def count_each_reason_and_right_number(each_reason, count, count_right, a_correct_mark_all_RB_flat, reason_to_check, i):
