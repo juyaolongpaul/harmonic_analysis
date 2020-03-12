@@ -493,13 +493,20 @@ def extract_FB_as_lyrics(path):
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
     for filename in os.listdir(path):
         if 'FB.musicxml' not in filename: continue
-        # if '244.46' not in filename: continue
-        if '8.06' not in filename: continue
+        # if '140.07' not in filename: continue
+        # if '8.06' not in filename: continue
         print(filename, '---------------------')
         tree = ET.ElementTree(file=os.path.join(path, filename))
         parts = []
         for elem in tree.iter(tag='part'):  # get the bass voice
             parts.append(elem)
+        for divisions in tree.iter(tag='divisions'):
+            division = divisions.text
+            break
+        for beattype in tree.iter(tag='beat-type'):
+            beat_type = beattype.text
+            break
+
         child = parts[-1]  # no matter how many voices, the last one will have FB
         for measure in child.iter(tag='measure'):  # get all the measures within the bass voice
             print(measure.attrib)
@@ -529,7 +536,10 @@ def extract_FB_as_lyrics(path):
                                 FB_digit['prefix'] = single_prefix
                                 FB_digit['extension'] = extension
                             if each_FB_digit.tag == 'duration':
-                                FB_digit['duration'] = each_FB_digit.text
+                                FB_digit['duration'] = str((int(each_FB_digit.text) / int(division)) * (int(beat_type) / 4))
+                                # standardize dur., the first component is text/division, which will give you how many quarter note this is
+                                # to get the real duration, we also need to consider the beat_type,
+                                # the output is the absolute duration in beat
                         fig.append(FB_digit)
                         #print(fig)
                     if ele.tag == 'note':
@@ -567,6 +577,9 @@ def add_FB_align(fig, thisChord, MIDI, ptr):
 
     for i, line in enumerate(fig):
         thisChord.addLyric(line)
+    # space_needed = 3 - len(fig)  # align the results
+    # for i in range(space_needed):
+    #     thisChord.addLyric(' ')  # beautify formatting
     # put space for future chord labels to align
     # if len(fig) == 1:
     #     thisChord.addLyric(' ')
@@ -590,6 +603,8 @@ def align_FB_with_slice(bassline, sChords, MIDI):
         print('demoniator is', denominator_chorale, file=f_sus)
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
+            # TODO: bug found: thischord measure number does not increase if it steps into a pickup measure, the same happen for each voice, the pick up measure is not counted, so the pickup chordify slice is merged into the previous measure
+            # TODO: needs a solution!
             if each_bass.beat == thisChord.beat:
                 bassnote = each_bass
                 if bassnote.lyrics != []:
@@ -605,30 +620,44 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                         for j, one_FB in enumerate(fig):
                             if 'duration' in fig[j]:
                                 total_bass_duration += float(fig[j]['duration'])
+                        if total_bass_duration != 0:
+                            if denominator_chorale * bassnote.duration.quarterLength / 4 == total_bass_duration or len(fig) == 1: # sometimes there can be one figure over a stationary bass that has unnecessary duration, this rule should consider that too
+                                flag = 0 # this is a normal piece
 
-                        if denominator_chorale * bassnote.duration.quarterLength * 2 / 4 == total_bass_duration and denominator_chorale == 4:
-                            # we need to double the duration in
-                            # this piece as a whole
-                            flag = 1
+                            # elif denominator_chorale * bassnote.duration.quarterLength * 2 / 4 == total_bass_duration and denominator_chorale == 4:
+                            #     # we need to double the duration in
+                            #     # this piece as a whole
+                            #     flag = 1
+                            # elif denominator_chorale * bassnote.duration.quarterLength / 4 == total_bass_duration and denominator_chorale == 4:
+                            #     # we need to quarple the duration in pieces like 10.07. Don't know why it is fucked up
+                            #     # this piece as a whole
+                            #     flag = 2
+                            else:
+                                input('the duration of this piece is fucked up. Look into why')
 
                     for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
                         slice_duration = sChords.recurse().getElementsByClass('Chord')[
                             i + j + displacement].duration.quarterLength * denominator_chorale / 4
                         if 'duration' in fig[j]:
-                            if flag == 1:
-                                fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
-                                # don't know why some xml has half of its standard duration value
-                            if float(fig[j]['duration']) / float(denominator_chorale) == slice_duration:  # this means
+
+                            # if flag == 1:
+                            #     fig[j]['duration'] = str(float(fig[j]['duration']) * 2)
+                            #     # don't know why some xml has half of its standard duration value
+                            # elif flag == 2:
+                            #     fig[j]['duration'] = str(float(fig[j]['duration']) * 4) # e.g., 10.07
+                            if float(fig[j]['duration']) == slice_duration:  # this means
                                 # the current FB should go to the current slice
                                 add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
                             else:  # the duration does not add up, meaning it should look further ahead
                                 add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
-                                while slice_duration < float(fig[j]['duration']) / float(denominator_chorale):
+                                if slice_duration == total_bass_duration: # this one addresses situation with FB not found in sonority
+                                    break
+                                while slice_duration < float(fig[j]['duration']):
                                     displacement += 1
                                     slice_duration += sChords.recurse().getElementsByClass('Chord')[
                                         i + j + displacement].duration.quarterLength * denominator_chorale / 4
-                                if slice_duration != float(fig[j]['duration']) / float(denominator_chorale):
-                                    print('duration of FB does not equal to the duration of many slices!')
+                                if slice_duration != float(fig[j]['duration']):
+                                    input('duration of FB does not equal to the duration of many slices!')
                                     break
 
                         else:  # no duration, only one FB, just matching the current slice
@@ -641,10 +670,11 @@ def align_FB_with_slice(bassline, sChords, MIDI):
 def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '244.46' not in filename: continue
-        # if '140.07' not in filename: continue
+        # if '11.06' not in filename: continue
+        # if '153.01' not in filename: continue
         if 'lyric' not in filename: continue
-        if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
-            continue
+        # if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
+        #     continue
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
@@ -706,6 +736,10 @@ def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
             for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
                 c.closedPosition(forceOctave=4, inPlace=True)
                 c.annotateIntervals()
+                # space_needed = 3 - len(c.lyrics)  # align the results
+                # if space_needed > 0:
+                #     for i in range(space_needed):
+                #         thisChord.addLyric(' ')  # beautify formatting
             IR2 = s.chordify()  # this is used because annotateIntervals only works properly if I collapse octaves, but for suspension, I need the uncollapsed version,
             # so I need to create a new chordify voice
             for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):
