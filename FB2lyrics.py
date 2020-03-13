@@ -423,6 +423,10 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     :param thisChord:
     :return:
     """
+    space_needed = 3 - len(fig)  # align the results
+    if space_needed > 0:
+        for i in range(space_needed):
+            thisChord.addLyric(' ')  # beautify formatting
     chord_pitch = []
     if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
@@ -577,15 +581,6 @@ def add_FB_align(fig, thisChord, MIDI, ptr):
 
     for i, line in enumerate(fig):
         thisChord.addLyric(line)
-    # space_needed = 3 - len(fig)  # align the results
-    # for i in range(space_needed):
-    #     thisChord.addLyric(' ')  # beautify formatting
-    # put space for future chord labels to align
-    # if len(fig) == 1:
-    #     thisChord.addLyric(' ')
-    #     thisChord.addLyric(' ')
-    # elif len(fig) == 2:
-    #     thisChord.addLyric(' ')
 
 
 def align_FB_with_slice(bassline, sChords, MIDI):
@@ -662,8 +657,8 @@ def align_FB_with_slice(bassline, sChords, MIDI):
 
                         else:  # no duration, only one FB, just matching the current slice
                             add_FB_align(fig[j]['number'], sChords.recurse().getElementsByClass('Chord')[i + j + displacement], MIDI, i + j + displacement)
-                else:
-                    thisChord.addLyric(' ')
+                # else:
+                #     thisChord.addLyric(' ')
                 break
 
 
