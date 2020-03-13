@@ -41,6 +41,43 @@ def remove_concert_pitch_voices(s, concert_pitch, chordify_voice):
     return s
 
 
+def remove_instrumental_voices(s, chordify_voice, continuo_voice):
+    if chordify_voice:
+        if continuo_voice:
+            while len(s.parts) > 6:
+                s.remove(s.parts[0])
+        else:
+            while len(s.parts) > 5:
+                s.remove(s.parts[0])
+    else:
+        if continuo_voice:
+            while len(s.parts) > 5:
+                s.remove(s.parts[0])
+        else:
+            while len(s.parts) > 4:
+                s.remove(s.parts[0])
+    return s
+
+
+def contain_continuo_voice(s):
+    for each_note in s.parts[-1].measure(1).notes:
+        if isinstance(each_note, int) is False:
+            if each_note.isChord is True: # contain chordify voice, then the second last voice can be continuo
+                if s.parts[-2].id != 'Voice':
+                    return True
+                else:
+                    return False
+    if s.parts[-1].id != 'Voice':
+        return True
+    else:
+        return False
+
+    # for each_part in s.parts:
+    #     if each_part.id == 'Continuo':
+    #         return True
+    # return False
+
+
 def get_previous_note(note_number, thisChord, s, voice_number, sChord):
     """
     Modular function to get the previous note for suspension

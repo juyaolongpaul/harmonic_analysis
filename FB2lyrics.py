@@ -3,7 +3,7 @@ import os
 from music21 import *
 import re
 import codecs
-from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note, get_FB, colllapse_interval, is_suspension, get_next_note, get_previous_note
+from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note, get_FB, colllapse_interval, is_suspension, get_next_note, get_previous_note, contain_continuo_voice, remove_instrumental_voices, contain_chordify_voice
 from mido import MetaMessage, MidiFile
 
 
@@ -492,6 +492,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
 
 
 def extract_FB_as_lyrics(path):
+    # I decided to remove all the instrumental voices for now
     if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi')):
         os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi'))
     f_continuation = open(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'continuation.txt'), 'w')
@@ -555,9 +556,15 @@ def extract_FB_as_lyrics(path):
                             fig = []  # reset the FB for the next note with FB
         tree.write(codecs.open(os.path.join(path, filename[:-9] + '_' + 'lyric' + '.xml'), 'w', encoding='utf-8'), encoding='unicode')
         s = converter.parse(os.path.join(path, filename[:-9] + '_' + 'lyric' + '.xml'))
+
         if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics')):
             os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics'))
         s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics', filename + '.mid'))
+        # remove all the extra instrumental voices
+        continuo_voice = contain_continuo_voice(s)
+        chordify_voice = contain_chordify_voice(s)
+        s = remove_instrumental_voices(s, chordify_voice, continuo_voice)
+        s.write('musicxml', os.path.join(path, filename[:-9] + '_' + 'lyric_no_instrumental' + '.xml'))
     f_continuation.close()
 
 def add_FB_align(fig, thisChord, MIDI, ptr):
@@ -628,7 +635,7 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                             #     # this piece as a whole
                             #     flag = 2
                             else:
-                                input('the duration of this piece is fucked up. Look into why')
+                                print('the duration of this piece is fucked up. Look into why')
 
                     for j, one_FB in enumerate(fig):  # this is the place where FB should align each slice
                         slice_duration = sChords.recurse().getElementsByClass('Chord')[
@@ -652,7 +659,7 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                                     slice_duration += sChords.recurse().getElementsByClass('Chord')[
                                         i + j + displacement].duration.quarterLength * denominator_chorale / 4
                                 if slice_duration != float(fig[j]['duration']):
-                                    input('duration of FB does not equal to the duration of many slices!')
+                                    print('duration of FB does not equal to the duration of many slices!')
                                     break
 
                         else:  # no duration, only one FB, just matching the current slice
@@ -667,7 +674,7 @@ def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
         # if '244.46' not in filename: continue
         # if '11.06' not in filename: continue
         # if '153.01' not in filename: continue
-        if 'lyric' not in filename: continue
+        if 'lyric_no_instrumental' not in filename: continue
         # if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
         #     continue
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
