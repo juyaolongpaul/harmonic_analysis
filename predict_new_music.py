@@ -37,7 +37,7 @@ def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
         #     if fn.find('_ori') == -1:
         #         continue
         fn_all.append(fn)
-    fn_all.sort()
+    #fn_all.sort()
     print(fn_all)
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))

@@ -247,7 +247,7 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
     this_pitch_class_list_2 = list(this_pitch_class_list)
     NCT_sign_FB = [''] * len(this_pitch_class_list)
     thisChord = sChords.recurse().getElementsByClass('Chord')[ii]
-    s = remove_concert_pitch_voices(s, concert_pitch, chordify_voice)
+    #s = remove_concert_pitch_voices(s, concert_pitch, chordify_voice)
     # print('previous NCT dim', len(previous_NCT_sign_FB), 'current NCT dim', len(this_pitch_class_list))
     # print('current PC', this_pitch_class_list)
     # if ii != 0 and ii < len(
@@ -587,9 +587,9 @@ def get_pitch_class_for_four_voice(thisChord, s):
                     pitch_four_voice.remove(each_pitch)
                     del pitch_class_four_voice[i]
 
-        for part in s.parts:
-            if part.atSoundingPitch is False:  # once found concert pitch, only return 4 voices
-                return pitch_class_four_voice[-4:], pitch_four_voice[-4:]  # in this case, return only 4 voices, since the upper voices can contain concert pitches which are wrong
+        # for part in s.parts:
+        #     if part.atSoundingPitch is False:  # once found concert pitch, only return 4 voices
+        #         return pitch_class_four_voice[-4:], pitch_four_voice[-4:]  # in this case, return only 4 voices, since the upper voices can contain concert pitches which are wrong
 
         # for sonority in thisChord._notes:  # this will trigger whenever there is concert pitch as well, so concert pitch is identified first
         #     if sonority.pitch.pitchClass not in pitch_class_four_voice:  # this means this function has bugs like BWV 117 mm.6

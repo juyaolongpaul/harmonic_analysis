@@ -13,7 +13,7 @@ GPU command:
 from __future__ import print_function
 import numpy as np
 import collections
-import graphviz
+#import graphviz
 np.random.seed(1337)  # for reproducibility
 from keras import optimizers
 from sklearn.tree import DecisionTreeClassifier
@@ -134,7 +134,13 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
                 else:
                     if fn.find('ori') != -1:
                         filename.append(fn)  # only include files that are in the original key
-    filename.sort()
+    #filename.sort()
+    filename2 = []  # making sure the sequence is the same of data_id!
+    for i, each_id in enumerate(data_id):
+        for j, each_file in enumerate(filename):
+            if each_id in each_file:
+                filename2.append(each_file)
+
     for id, fn in enumerate(filename):
         length = 0
         s = converter.parse(os.path.join(input, fn))
@@ -142,7 +148,7 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
             length += 1
         num_salami_slices.append(length)
-    return filename, num_salami_slices
+    return filename2, num_salami_slices
 
 
 def binary_decode(arr):
@@ -350,8 +356,11 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                 actual_FB = add_FB_result(actual_FB,
                                                                      sonority.pitch.accidental.unicode)
                             elif i != len(pitch_four_voice) - 1:
-                                actual_FB = add_FB_result(actual_FB,
-                                                                     sonority.pitch.accidental.unicode + FB_desired)
+                                if not (aInterval.name[0] == 'P' and FB_desired == '8'):
+                                    actual_FB = add_FB_result(actual_FB,
+                                                                         sonority.pitch.accidental.unicode + FB_desired)
+                                else:
+                                    actual_FB = add_FB_result(actual_FB, FB_desired)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
 
                         else:
                             actual_FB = add_FB_result(actual_FB,
@@ -736,7 +745,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if id_id[0] in id:
             fn_all.append(fn)
     print(fn_all)
-    fn_all.sort()
+    #fn_all.sort()
     print(fn_all)
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
@@ -1204,12 +1213,14 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                               windowsize + 1), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
                              'a')  # create this file to track every type of mistakes
+            # the sequence of the filename should be the same with test_id!
+
             for i in range(length):
                 print(fileName[i][:-4], file=f_all)
                 print(fileName[i])
-                if '13.06' not in fileName[i]:
-                    if '133.06' not in fileName[i]:
-                        continue
+                # if '13.06' not in fileName[i]:
+                #     if '133.06' not in fileName[i]:
+                #         continue
 
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0

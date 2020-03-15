@@ -21,7 +21,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -35,7 +35,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_with_bass_scale_NCT')
+                        type=str, default='pitch_class_with_bass_scale')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -75,7 +75,7 @@ def main():
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     elif args.source == 'Bach_e_FB':
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
-    # transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
+    #transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
@@ -103,7 +103,7 @@ def main():
     train_and_predict_FB(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
-                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297']) # Evaluate on the reserved chorales
+                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297', '195.06', '100.06', '149.07', '171.06', '195.06']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()

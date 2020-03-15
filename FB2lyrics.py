@@ -166,7 +166,10 @@ def is_legal_chord(chord_label):
                              'minor triad',
                              'diminished triad',
                              'augmented triad']
-    chord_name = chord_label.pitchedCommonName
+    try:
+        chord_name = chord_label.pitchedCommonName
+    except:
+        return None
     chord_name = re.sub(r'\d', '', chord_name)  # remove all the octave information
     if any(each in chord_name for each in allowed_chord_quality):
         if harmony.chordSymbolFigureFromChord(chord_label).find(
@@ -491,7 +494,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     return suspension_ptr
 
 
-def extract_FB_as_lyrics(path):
+def extract_FB_as_lyrics(path, no_instrument=False):
     # I decided to remove all the instrumental voices for now
     if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi')):
         os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi'))
@@ -560,11 +563,12 @@ def extract_FB_as_lyrics(path):
         if not os.path.isdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics')):
             os.mkdir(os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics'))
         s.write('midi', os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'translated_midi', 'no_FB_as_lyrics', filename + '.mid'))
-        # remove all the extra instrumental voices
-        continuo_voice = contain_continuo_voice(s)
-        chordify_voice = contain_chordify_voice(s)
-        s = remove_instrumental_voices(s, chordify_voice, continuo_voice)
-        s.write('musicxml', os.path.join(path, filename[:-9] + '_' + 'lyric_no_instrumental' + '.xml'))
+        if no_instrument:
+            # remove all the extra instrumental voices
+            continuo_voice = contain_continuo_voice(s)
+            chordify_voice = contain_chordify_voice(s)
+            s = remove_instrumental_voices(s, chordify_voice, continuo_voice)
+            s.write('musicxml', os.path.join(path, filename[:-9] + '_' + 'lyric_no_instrumental' + '.xml'))
     f_continuation.close()
 
 def add_FB_align(fig, thisChord, MIDI, ptr):
@@ -669,16 +673,20 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 break
 
 
-def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
+def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
-        # if '244.46' not in filename: continue
+        # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
         # if '153.01' not in filename: continue
-        if 'lyric_no_instrumental' not in filename: continue
-        # if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
-        #     continue
-        # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
-        #     continue  # don't need to translate the chord labels if already there
+        if no_instrument:
+            if 'lyric_no_instrumental' not in filename: continue
+        else:
+            if 'lyric' not in filename: continue
+        if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '129.05', '167.05', '171.06', '24.06', '248.09', '248.23', '248.42', '248.64', '76.07']):
+            if '124.06' not in filename: # don't exclude this one!
+                continue  # exclude all the interlude chorales
+        if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
+            continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
@@ -769,8 +777,9 @@ def lyrics_to_chordify(want_IR, path, translate_chord='Y'):
 if __name__ == '__main__':
     want_IR = True
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
-    # extract_FB_as_lyrics(path)
+    no_instrument = False
+    # extract_FB_as_lyrics(path, no_instrument)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    # lyrics_to_chordify(want_IR, path, 'N') # generate only FB as lyrics without translating as chords
-    lyrics_to_chordify(want_IR, path)
+    # lyrics_to_chordify(want_IR, path, no_instrument, 'N') # generate only FB as lyrics without translating as chords
+    lyrics_to_chordify(want_IR, path, no_instrument)
 
