@@ -215,7 +215,7 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
 
     pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
         sChord.recurse().getElementsByClass('Chord')[ptr +  ptr2], s)
-    if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
+    if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1 and thisChord.beat % 1 == 0:  # both no rest, and the slice should be on beat!
         if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass:  # bass remains the same or same pitch class coz sometimes there can be a decoration in between (e.g., 050 last measure), (1)
             # TODO: problem found: you cannot compare these two basses, you need to find the bass where 'next_note' resides, and compare whether these two basses are the same!
             for note_number, each_note in enumerate(s.parts[voice_number].measure(thisChord.measureNumber).getElementsByClass(note.Note)):
