@@ -898,29 +898,29 @@ def unify_GTChord_and_inferred_chord(name):
 
 
 def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, ptr, s, sChord):
-    if fig_a not in FB:
-        if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
-            if fig_b in FB:
-                FB.remove(fig_b)
-        elif previous_bass.name != 'rest' and bass.name != 'rest':
-            pitch_class_four_voice, pitch_four_voice = \
-                get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
-            for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
-                # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
-                if pitch_class_four_voice[voice_number] != -1:
-                    aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
-                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
-                    if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
-                        if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
-                            if fig_b in FB:
-                                FB.remove(fig_b)
-                        else:
-                            sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
-                            # At this point, 2-8 should be 9-8
-                            for i, each_FB in enumerate(previous_FB):
-                                if each_FB == '2':
-                                    previous_FB[i] = '9'
-                        # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
+    # if fig_a not in FB:
+    if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
+        if fig_b in FB:
+            FB.remove(fig_b)
+    elif previous_bass.name != 'rest' and bass.name != 'rest':
+        pitch_class_four_voice, pitch_four_voice = \
+            get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
+        for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
+            # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
+            if pitch_class_four_voice[voice_number] != -1:
+                aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
+                colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
+                    if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
+                        if fig_b in FB:
+                            FB.remove(fig_b)
+                    else:
+                        sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+                        # At this point, 2-8 should be 9-8
+                        for i, each_FB in enumerate(previous_FB):
+                            if each_FB == '2':
+                                previous_FB[i] = '9'
+                    # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
     return previous_FB, FB
 
 
@@ -1098,7 +1098,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 3 :
+        if times != 5 :
             continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
@@ -1183,9 +1183,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             for i, each_file in enumerate(fileName):
                 fileName[i] = fileName[i][:-3] + 'xml'
             numSalamiSlices = []
-            for id, fn in enumerate(fileName):
+            for id, FN in enumerate(fileName):
                 length = 0
-                s = converter.parse(os.path.join(input, fn))
+                s = converter.parse(os.path.join(input, FN))
                 sChords = s.chordify()
                 for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     length += 1
@@ -1231,7 +1231,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                if '124.06' not in fileName[i]: continue
+                if '248.46' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1304,7 +1304,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
                     predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
-                    if predict_FB_RB == ['3', '5', '4', '8']:
+                    if predict_FB_RB == ['2', '♯4', '9', '8']:
                         print('debug')
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
