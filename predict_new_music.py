@@ -37,7 +37,7 @@ def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
         #     if fn.find('_ori') == -1:
         #         continue
         fn_all.append(fn)
-    #fn_all.sort()
+    fn_all.sort()
     print(fn_all)
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
@@ -49,7 +49,7 @@ def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
             encoding_all = np.concatenate((encoding_all, encoding_window))
         counter += 1
     print('finished')
-    return encoding_all
+    return encoding_all, fn_all
 
 
 def get_input_encoding(inputpath, encoding_path, type=''):
@@ -143,8 +143,8 @@ def predict_new_music_FB(modelpath_FB, inputpath):
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
     get_input_encoding(inputpath, encoding_path, 'FB')  # generate input encodings
-    xx = generate_ML_matrix(encoding_path, 1, 'Y')
-    xx_only_pitch = generate_ML_matrix(encoding_path, 0, 'Y', 'Y')
+    xx, fileName = generate_ML_matrix(encoding_path, 1, 'Y')
+    xx_only_pitch, fileName_fake = generate_ML_matrix(encoding_path, 0, 'Y', 'Y')
     model = load_model(modelpath_FB)  # we need to assemble x now
     predict_y = model.predict(xx)
     for i in predict_y:  # regulate the prediction
@@ -153,7 +153,16 @@ def predict_new_music_FB(modelpath_FB, inputpath):
                 i[j] = 1
             else:
                 i[j] = 0
-    fileName, numSalamiSlices = get_predict_file_name(inputpath, [], 'Y', bach='N')
+    for i, each_file in enumerate(fileName):
+        fileName[i] = fileName[i][:-3] + 'xml'
+    numSalamiSlices = []
+    for id, fn in enumerate(fileName):
+        length = 0
+        s = converter.parse(os.path.join(input, fn))
+        sChords = s.chordify()
+        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+            length += 1
+        numSalamiSlices.append(length)
     length = len(fileName)
     a_counter = 0
     if not os.path.isdir(os.path.join(inputpath, 'predicted_result')):
@@ -233,9 +242,9 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
     # get_input_encoding(inputpath, encoding_path)  # generate input encodings
-    xx = generate_ML_matrix(encoding_path, 1, 'N')
-    xx_no_window = generate_ML_matrix(encoding_path, 0, 'N')
-    xx_only_pitch = generate_ML_matrix(encoding_path, 0, 'N', 'Y')
+    xx, fileName = generate_ML_matrix(encoding_path, 1, 'N')
+    xx_no_window, fileName_fake = generate_ML_matrix(encoding_path, 0, 'N')
+    xx_only_pitch, fileName_fake= generate_ML_matrix(encoding_path, 0, 'N', 'Y')
     xx_chord_tone = list(xx_only_pitch)
     model = load_model(modelpath_NCT)  # we need to assemble x now
     model_chord_tone = load_model(modelpath_CL)
@@ -273,7 +282,16 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
     predict_y_chord_tone = model_chord_tone.predict_classes(predict_xx_chord_tone_window,
                                                             verbose=0)  # TODO: we need to make this part modular so it can deal with all possible specs
 
-    fileName, numSalamiSlices = get_predict_file_name(inputpath, [], 'N', bach='N')
+    for i, each_file in enumerate(fileName):
+        fileName[i] = fileName[i][:-3] + 'xml'
+    numSalamiSlices = []
+    for id, fn in enumerate(fileName):
+        length = 0
+        s = converter.parse(os.path.join(input, fn))
+        sChords = s.chordify()
+        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+            length += 1
+        numSalamiSlices.append(length)
     length = len(fileName)
     with open('chord_name_retrained.txt') as f:
         chord_name = f.read().splitlines()

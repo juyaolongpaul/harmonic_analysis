@@ -1436,8 +1436,6 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                    fn[:-4] + '.txt')):
             continue  # skip the files that already have encodings
         print(fn)
-        if any(each_ID in fn for each_ID in ['100.06', '105.06', '113.01', '24.06', '248.09', '248.23', '248.42', '76.07']):  # these chorales with no bass voice for the entire measure at least
-            continue
         chorale_x = []
         chorale_x_12 = []  # This is created to store 12 pitch class encoding when generic (7)
         # pitch class is used. This one is used to indicate which one is NCT.

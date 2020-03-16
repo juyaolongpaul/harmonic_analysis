@@ -135,11 +135,11 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
                     if fn.find('ori') != -1:
                         filename.append(fn)  # only include files that are in the original key
     #filename.sort()
-    filename2 = []  # making sure the sequence is the same of data_id!
-    for i, each_id in enumerate(data_id):
-        for j, each_file in enumerate(filename):
-            if each_id in each_file:
-                filename2.append(each_file)
+    # filename2 = []  # making sure the sequence is the same of data_id!
+    # for i, each_id in enumerate(data_id):
+    #     for j, each_file in enumerate(filename):
+    #         if each_id in each_file:
+    #             filename2.append(each_file)
 
     for id, fn in enumerate(filename):
         length = 0
@@ -148,7 +148,7 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
             length += 1
         num_salami_slices.append(length)
-    return filename2, num_salami_slices
+    return filename, num_salami_slices
 
 
 def binary_decode(arr):
@@ -745,7 +745,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if id_id[0] in id:
             fn_all.append(fn)
     print(fn_all)
-    #fn_all.sort()
+    fn_all.sort()
     print(fn_all)
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
@@ -769,7 +769,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
                 encoding_all = np.concatenate((encoding_all, encoding))
         counter += 1
     print(portion, 'finished')
-    return encoding_all
+    return encoding_all, fn_all
 
 
 def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign, FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx, valid_yy):
@@ -1098,8 +1098,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        # if times != 7:
-        #     continue
+        if times != 3 :
+            continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -1108,17 +1108,17 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
         # if exclude != []:
         #     train_id.extend(test_id)
         #     test_id = exclude # Swap the test id into the 39 ones
-        valid_yy = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+        valid_yy, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
                                       os.path.join('.', 'data_for_ML', sign,
                                                    sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
-        valid_xx = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+        valid_xx, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
                                       os.path.join('.', 'data_for_ML', sign,
                                                    sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
         if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
-            train_xx = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+            train_xx, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
                                           os.path.join('.', 'data_for_ML', sign,
                                                        sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
-            train_yy = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+            train_yy, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
                                           os.path.join('.', 'data_for_ML', sign,
                                                        sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
             train_xx = train_xx[
@@ -1131,14 +1131,14 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                    valid_yy)  # train the machine learning model
         else:
             model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
-        test_xx = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+        test_xx, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
                                      os.path.join('.', 'data_for_ML', sign,
                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
-        test_xx_only_pitch = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+        test_xx_only_pitch, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
                                                 os.path.join('.', 'data_for_ML', sign,
                                                              sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                                 'FB_Y')
-        test_yy = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+        test_yy, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
                                      os.path.join('.', 'data_for_ML', sign,
                                                   sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
 
@@ -1180,7 +1180,17 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
         tn.append(true_negative)
         if predict == 'Y':
             # prediction put into files
-            fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
+            for i, each_file in enumerate(fileName):
+                fileName[i] = fileName[i][:-3] + 'xml'
+            numSalamiSlices = []
+            for id, fn in enumerate(fileName):
+                length = 0
+                s = converter.parse(os.path.join(input, fn))
+                sChords = s.chordify()
+                for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    length += 1
+                numSalamiSlices.append(length)
+            # fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
             sum = 0
             for i in range(len(numSalamiSlices)):
                 sum += numSalamiSlices[i]
@@ -1221,7 +1231,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-
+                if '124.06' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1294,7 +1304,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         print('debug')
                     predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
                     predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
-                    if predict_FB_RB == ['8'] and '112.05' in fileName[i]:
+                    if predict_FB_RB == ['3', '5', '4', '8']:
                         print('debug')
                     previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)

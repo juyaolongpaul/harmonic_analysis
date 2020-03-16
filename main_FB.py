@@ -9,6 +9,7 @@ from predict_result_for_140 import train_and_predict_FB
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony_FB
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 def main():
@@ -35,7 +36,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_with_bass_scale')
+                        type=str, default='pitch_class_with_bass_scale_new_data')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -75,7 +76,7 @@ def main():
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     elif args.source == 'Bach_e_FB':
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
-    #transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
+    # transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
@@ -104,6 +105,7 @@ def main():
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
                                      args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297', '195.06', '100.06', '149.07', '171.06', '195.06']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
+    # this gives us 124 training chorales: 143-12 interlude chorales - 7 chorales with both missing figures and the first three where music21 has issues. Look into 297!
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()
