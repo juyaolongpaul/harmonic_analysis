@@ -262,8 +262,8 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     else:
         upper_voice = list(this_pitch_class_list[:-1])
     thisChord = sChords.recurse().getElementsByClass('Chord')[j]
-    if thisChord.measureNumber == 8:
-        print('debug')
+    # if thisChord.measureNumber == 8 or thisChord.measureNumber == 9 or thisChord.measureNumber == 10:
+    #     print('debug')
     five_three_six_four = 0  # track 53-64 motion
     if j > 0:
         previousChord = sChords.recurse().getElementsByClass('Chord')[j - 1]
@@ -1241,7 +1241,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                if '37.06' not in fileName[i]: continue
+                # if '37.06' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
