@@ -38,7 +38,7 @@ import os
 import numpy as np
 #import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
-from get_input_and_output import determine_NCT, fill_in_pitch_class, contain_concert_pitch, contain_chordify_voice
+from get_input_and_output import determine_NCT, fill_in_pitch_class, contain_concert_pitch, contain_chordify_voice, contain_continuo_voice
 from music21 import *
 from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
@@ -256,9 +256,14 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     :param s:
     :return:
     """
+    contain_continuo = contain_continuo_voice(s)
+    if contain_continuo:
+        upper_voice = list(this_pitch_class_list[:-2])
+    else:
+        upper_voice = list(this_pitch_class_list[:-1])
     thisChord = sChords.recurse().getElementsByClass('Chord')[j]
-    # if thisChord.measureNumber == 5:
-    #     print('debug')
+    if thisChord.measureNumber == 8:
+        print('debug')
     five_three_six_four = 0  # track 53-64 motion
     if j > 0:
         previousChord = sChords.recurse().getElementsByClass('Chord')[j - 1]
@@ -281,7 +286,7 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     if outputtype.find('_pitch_class') != -1:
         for i, item in enumerate(y):
             if int(item) == 1:
-                if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
+                if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in upper_voice:
                     continue  # Do not need to output bass as FB pitch class, if this PC only appear in bass
                 if type == '':  # only CT will be left if RB
                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
@@ -295,11 +300,12 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
                             if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
-                                    and (pitchclass[i] in previous_FB_PC or i in previous_pitch_class_four_voice):
+                                    and (pitchclass[i] in previous_FB_PC):
                                 # consider the fact that the same bass can have more than 2 slices with the same PC, none of them should be labelled
                                 # another rule: bass remaining the same, and the PC in the current slices does
                                 # not need to be labelled if already appeared in the previous slice
-                                if bass.pitch.pitchClass not in this_pitch_class_list[:-1]:
+
+                                if bass.pitch.pitchClass not in upper_voice:
                                     # we also need to deal with other voices doubling the bass (e.g., 9-8)
                                     # in this case, we need to keep the 8
                                     # this will leave 8 present even though there is no 9-8 and 8 is found from the previous slice, but this does not affect any functionality
@@ -1102,7 +1108,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 5 :
+        if times != 6 :
             continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
@@ -1235,7 +1241,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                # if '248.46' not in fileName[i]: continue
+                if '37.06' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
