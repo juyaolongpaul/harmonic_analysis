@@ -1151,8 +1151,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        if times != 6 :
-            continue
+        # if times != 6 :
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -1286,7 +1286,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                if '37.06' not in fileName[i]: continue
+                # if '37.06' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1542,8 +1542,8 @@ def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_i
     ML_count = 0
     ML_count_right = 0
     for i, each_reason in enumerate(a_all_reasons):
-        if i == 39:
-            print('debug')
+        # if i == 39:
+        #     print('debug')
         error_reasons = []
         for each_gt_figure in a_gt_FB_all_implied_flat_temp[i]:
             if each_gt_figure not in a_intervals_all[i]:
@@ -1557,7 +1557,8 @@ def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_i
         difference = a_predict_FB_implied_all_flat_temp[i] + a_gt_FB_all_implied_flat_temp[i]  # the difference figures are two sets minusing the common elements
         for each_difference in difference:
             error_reasons.append(each_reason[a_intervals_all[i].index(each_difference)])
-        print('error reasons', error_reasons)
+        if error_reasons != []:
+            print('slice number', i, 'error reasons', error_reasons)
         NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
                                                                                   NCT_bass_count_right,
                                                                                   'NCT bass', error_reasons)
