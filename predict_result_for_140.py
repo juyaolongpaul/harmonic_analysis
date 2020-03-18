@@ -1336,7 +1336,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     ML_reasons = [''] * len(pitch_class_four_voice)
                     intervals = []  # store all the exhaustive FB
                     # get all the intervals for the slice
-                    for i, sonority in enumerate(pitch_four_voice):
+                    for sonority in pitch_four_voice:
                         if hasattr(sonority, 'pitch'):
                             intervals = get_actual_figures(bass, sonority, intervals, k, 'Y')
                     #print('all the figures for this slice is', intervals)
