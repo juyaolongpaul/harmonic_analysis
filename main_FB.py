@@ -22,7 +22,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)

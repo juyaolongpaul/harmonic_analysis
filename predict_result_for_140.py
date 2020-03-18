@@ -12,6 +12,7 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
+import copy
 import collections
 #import graphviz
 np.random.seed(1337)  # for reproducibility
@@ -259,8 +260,10 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
     contain_continuo = contain_continuo_voice(s)
     if contain_continuo:
         upper_voice = list(this_pitch_class_list[:-2])
+        upper_voice_actual_note = list(this_pitch_list[:-2])
     else:
         upper_voice = list(this_pitch_class_list[:-1])
+        upper_voice_actual_note = list(this_pitch_list[:-1])
     thisChord = sChords.recurse().getElementsByClass('Chord')[j]
     # if thisChord.measureNumber == 8 or thisChord.measureNumber == 9 or thisChord.measureNumber == 10:
     #     print('debug')
@@ -338,49 +341,86 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
         # Output FB to the file too
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-        for i, sonority in enumerate(pitch_four_voice):
+        for i, sonority in enumerate(upper_voice_actual_note):
             if hasattr(sonority, 'pitch'):
                 if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
-                    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-                    if int(aInterval.name[1:]) % 7 == 0:
-                        FB_desired = '7'
-                    elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-                        FB_desired = aInterval.name[1:]
-                    else:
-                        FB_desired = str(int(aInterval.name[1:]) % 7)
-                    if FB_desired == '1':
-                        if i != len(pitch_four_voice) - 1:  # only non-bass can be translated into 8
-                            FB_desired = '8'
-                        else:
-                            continue  # do not need to add bass as FB result!
-                    # Sometimes it can share the same pitch class, and in this case,
-                    # it will give two identical FB, in this case, we only need one
-
-                    if sonority.pitch.accidental is not None:
-                        if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
-                            if FB_desired == '3':
-                                actual_FB = add_FB_result(actual_FB,
-                                                                     sonority.pitch.accidental.unicode)
-                            elif i != len(pitch_four_voice) - 1:
-                                if not (aInterval.name[0] == 'P' and FB_desired == '8'):
-                                    actual_FB = add_FB_result(actual_FB,
-                                                                         sonority.pitch.accidental.unicode + FB_desired)
-                                else:
-                                    actual_FB = add_FB_result(actual_FB, FB_desired)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
-
-                        else:
-                            actual_FB = add_FB_result(actual_FB,
-                                                                 FB_desired)
-                    else:
-                        actual_FB = add_FB_result(actual_FB,
-                                                             FB_desired)
+                    actual_FB = get_actual_figures(bass, sonority, actual_FB, key)
+                    # aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                    # if int(aInterval.name[1:]) % 7 == 0:
+                    #     FB_desired = '7'
+                    # elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
+                    #     FB_desired = aInterval.name[1:]
+                    # else:
+                    #     FB_desired = str(int(aInterval.name[1:]) % 7)
+                    # if FB_desired == '1':
+                    #     if i != len(pitch_four_voice) - 1:  # only non-bass can be translated into 8
+                    #         FB_desired = '8'
+                    #     else:
+                    #         continue  # do not need to add bass as FB result!
+                    # # Sometimes it can share the same pitch class, and in this case,
+                    # # it will give two identical FB, in this case, we only need one
+                    #
+                    # if sonority.pitch.accidental is not None:
+                    #     if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
+                    #         if FB_desired == '3':
+                    #             actual_FB = add_FB_result(actual_FB,
+                    #                                                  sonority.pitch.accidental.unicode)
+                    #         elif i != len(pitch_four_voice) - 1:
+                    #             if not (aInterval.name[0] == 'P' and FB_desired == '8'):
+                    #                 actual_FB = add_FB_result(actual_FB,
+                    #                                                      sonority.pitch.accidental.unicode + FB_desired)
+                    #             else:
+                    #                 actual_FB = add_FB_result(actual_FB, FB_desired)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
+                    #
+                    #     else:
+                    #         actual_FB = add_FB_result(actual_FB,
+                    #                                              FB_desired)
+                    # else:
+                    #     actual_FB = add_FB_result(actual_FB,
+                    #                                          FB_desired)
         if type != 'RB':
             return actual_FB, FB
         else:
             return actual_FB, FB, RB_reasons, NCT_sign
 
 
-def add_FB_result(actual_FB, result):
+def get_actual_figures(bass, sonority, actual_FB, key, duplicate='N'):
+    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+    if int(aInterval.name[1:]) % 7 == 0:
+        FB_desired = '7'
+    elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
+        FB_desired = aInterval.name[1:]
+    else:
+        FB_desired = str(int(aInterval.name[1:]) % 7)
+    if FB_desired == '1':
+          # only non-bass can be translated into 8
+        FB_desired = '8'
+
+    # Sometimes it can share the same pitch class, and in this case,
+    # it will give two identical FB, in this case, we only need one
+
+    if sonority.pitch.accidental is not None:
+        if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
+            if FB_desired == '3':
+                actual_FB = add_FB_result(actual_FB,
+                                          sonority.pitch.accidental.unicode, duplicate)
+            else:
+                if not (aInterval.name[0] == 'P' and FB_desired == '8'):
+                    actual_FB = add_FB_result(actual_FB,
+                                              sonority.pitch.accidental.unicode + FB_desired, duplicate)
+                else:
+                    actual_FB = add_FB_result(actual_FB,
+                                              FB_desired, duplicate)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
+
+        else:
+            actual_FB = add_FB_result(actual_FB,
+                                      FB_desired, duplicate)
+    else:
+        actual_FB = add_FB_result(actual_FB,
+                                  FB_desired, duplicate)
+    return actual_FB
+
+def add_FB_result(actual_FB, result, duplicate='N'):
     """
     Modular function to add the FB annotation. If already exist, skip this part which will add a duplicated one, since
     there can be situations where multiple voices share the same pitch class
@@ -388,8 +428,11 @@ def add_FB_result(actual_FB, result):
     :param actual_FB:
     :return:
     """
-    if result not in actual_FB:
-        # thisChord.addLyric(result)
+    if duplicate == 'N':  # don't want duplicates
+        if result not in actual_FB:
+            # thisChord.addLyric(result)
+            actual_FB.append(result)
+    else:  # output duplicates
         actual_FB.append(result)
     return actual_FB
 
@@ -991,7 +1034,7 @@ def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num
         correct_num_implied += 1
         correct_mark_all.append('✓_')
     else:
-        correct_mark_all.append(' ')
+        correct_mark_all.append('✘')
     return correct_num, correct_num_implied, correct_mark_all
 
 
@@ -1215,8 +1258,10 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_counter_correct_RB_implied = 0
             a_all_RB_reasons = []  # RB reason across all pieces
             a_all_ML_reasons = []
-            a_gt_FB_all = []  # GT FB across all pieces
-            a_predict_FB_RB_all = []
+            a_gt_FB_implied_all = []  # GT FB across all pieces
+            a_predict_FB_implied_all = []
+            a_predict_FB_RB_implied_all = []
+            a_intervals_all = []
             a_correct_mark_all_RB = []
             a_correct_mark_all_ML = []
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
@@ -1241,7 +1286,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                # if '37.06' not in fileName[i]: continue
+                if '37.06' not in fileName[i]: continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1260,7 +1305,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 predict_FB_RB_all_implied = []
                 correct_mark_all = []
                 correct_mark_all_RB = []
-
+                intervals_all = []
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 concert_pitch = contain_concert_pitch(s)
                 chordify_voice = contain_chordify_voice(s)
@@ -1289,6 +1334,12 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
                     RB_reasons = [''] * len(pitch_class_four_voice)  # have reasons for each pitch!
                     ML_reasons = [''] * len(pitch_class_four_voice)
+                    intervals = []  # store all the exhaustive FB
+                    # get all the intervals for the slice
+                    for i, sonority in enumerate(pitch_four_voice):
+                        if hasattr(sonority, 'pitch'):
+                            intervals = get_actual_figures(bass, sonority, intervals, k, 'Y')
+                    #print('all the figures for this slice is', intervals)
                     gt = test_yy[a_counter]
                     prediction = predict_y[a_counter]
                     correct_bit = 0
@@ -1337,6 +1388,8 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                     predict_FB_RB_all_implied.append(predict_FB_RB_implied)
                     all_RB_reasons.append(RB_reasons)
                     a_all_RB_reasons.append(RB_reasons)
+                    intervals_all.append(intervals)
+                    a_intervals_all.append(intervals)
                     # need to add ML reasons, same if the implied FB is the same, specify "ML rules" if different
                     if predict_FB_implied == predict_FB_RB_implied:
                         all_ML_reasons.append(RB_reasons)
@@ -1384,8 +1437,9 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 a_counter_correct_implied += correct_num_implied
                 a_counter_correct_RB += correct_num_RB
                 a_counter_correct_RB_implied += correct_num_implied_RB
-                a_predict_FB_RB_all.append(predict_FB_RB_all)  # add implied ones easy to compare
-                a_gt_FB_all.append(gt_FB_all)  # same with above
+                a_predict_FB_RB_implied_all.append(predict_FB_RB_all_implied)  # add implied ones easy to compare
+                a_gt_FB_implied_all.append(gt_FB_all_implied)  # same with above
+                a_predict_FB_implied_all.append(predict_FB_all_implied)
                 a_correct_mark_all_RB.append(correct_mark_all_RB)
                 a_correct_mark_all_ML.append(correct_mark_all)
                 print(end='\n', file=f_all)
@@ -1450,18 +1504,19 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                   file=cv_log)
             print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%')
             # statistical analysis
-            a_predict_FB_RB_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_all))
-            a_gt_FB_all_flat = list(itertools.chain.from_iterable(a_gt_FB_all))
+            a_predict_FB_RB_implied_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_implied_all))
+            a_gt_FB_all_implied_flat = list(itertools.chain.from_iterable(a_gt_FB_implied_all))
+            a_predict_FB_all_implied_flat = list(itertools.chain.from_iterable(a_predict_FB_implied_all))
             a_correct_mark_all_RB_flat = list(itertools.chain.from_iterable(a_correct_mark_all_RB))
             a_correct_mark_all_ML_flat = list(itertools.chain.from_iterable(a_correct_mark_all_ML))
-            output_accuracy_for_each_reason(a_counter, a_counter_correct_RB_implied, a_all_RB_reasons,
+            output_accuracy_for_each_reason(a_predict_FB_RB_implied_all_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_RB_implied, a_all_RB_reasons,
                                             a_correct_mark_all_RB_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc,
                                             NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage,
                                             sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc,
                                             empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err,
                                             sixteenth_note_err, empty_FB_err, cv_log, [], [],
                                             [])
-            output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_ML_reasons,
+            output_accuracy_for_each_reason(a_predict_FB_all_implied_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_implied, a_all_ML_reasons,
                                             a_correct_mark_all_ML_flat, NCT_bass_acc_ML, NCT_bass_percentage_ML, NCT_upper_acc_ML,
                                             NCT_upper_percentage_ML, FB_already_labeled_acc_ML, FB_already_labeled_percentage_ML,
                                             sixteenth_note_acc_ML, sixteenth_note_percentage_ML, empty_FB_acc_ML,
@@ -1469,77 +1524,10 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                                             sixteenth_note_err_ML, empty_FB_err_ML, cv_log, ML_rule_acc, ML_rule_percentage,
                                             ML_rule_err)
 
-            # first we need to count for which RB reason, how many got right and how many got wrong
-            # NCT_bass_count = 0
-            # NCT_bass_count_right = 0
-            # NCT_upper_count = 0
-            # NCT_upper_count_right = 0
-            # FB_labelled_count = 0
-            # FB_labelled_count_right = 0
-            # sixteenth_count = 0
-            # sixteenth_count_right = 0
-            # error_counts = a_counter - a_counter_correct_RB_implied
-            # empty_count = 0
-            # empty_count_right = 0
-            # for i, each_reason in enumerate(a_all_RB_reasons):
-            #     NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
-            #                                                                               NCT_bass_count_right,
-            #                                                                               a_correct_mark_all_RB_flat,
-            #                                                                               'NCT bass', i)
-            #     NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
-            #                                                                               NCT_upper_count_right,
-            #                                                                               a_correct_mark_all_RB_flat,
-            #                                                                               'NCT upper voices', i)
-            #     FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
-            #                                                                                     FB_labelled_count,
-            #                                                                                     FB_labelled_count_right,
-            #                                                                                     a_correct_mark_all_RB_flat,
-            #                                                                                     'FB already labeled', i)
-            #     sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count, sixteenth_count_right, a_correct_mark_all_RB_flat, '16th (or shorter) note slice ignored', i)
-            #     empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right, a_correct_mark_all_RB_flat, [''] * len(each_reason), i)
-            # NCT_bass_acc.append((NCT_bass_count_right/NCT_bass_count) * 100)
-            # NCT_bass_percentage.append(NCT_bass_count/a_counter * 100)
-            # NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100)
-            # NCT_upper_percentage.append(NCT_upper_count/a_counter * 100)
-            # FB_already_labeled_acc.append((FB_labelled_count_right/FB_labelled_count) * 100)
-            # FB_already_labeled_percentage.append(FB_labelled_count/a_counter * 100)
-            # sixteenth_note_acc.append((sixteenth_count_right/sixteenth_count) * 100)
-            # sixteenth_note_percentage.append(sixteenth_count/a_counter * 100)
-            # empty_FB_acc.append((empty_count_right / empty_count) * 100)
-            # empty_FB_percentage.append(empty_count/a_counter * 100)
-            # NCT_bass_err.append((NCT_bass_count - NCT_bass_count_right)/error_counts * 100)
-            # NCT_upper_err.append((NCT_upper_count - NCT_upper_count_right) / error_counts * 100)
-            # FB_already_labeled_err.append((FB_labelled_count - FB_labelled_count_right) / error_counts * 100)
-            # sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100)
-            # empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100)
-            # print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%;', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;')
-            # print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%', 'percentage is:', np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;', file=cv_log)
-            # print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;')
-            # print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:', np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;', file=cv_log)
-            # print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;')
-            # print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc), 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage), '%;', file=cv_log)
-            # print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;')
-            # print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc), 'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;', file=cv_log)
-            # print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;')
-            # print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:', np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;', file=cv_log)
-            # print('Here is the breakdown of different types of errors, among all errors:')
-            # print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
-            # print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err))
-            # print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err), file=cv_log)
-            # print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err))
-            # print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err), file=cv_log)
-            # print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err), file=cv_log)
-            # print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±', np.std(FB_already_labeled_err))
-            # print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err))
-            # print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err), file=cv_log)
-            # print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err))
-            # print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err), file = cv_log)
-            # # for i, each_answer in a_correct_mark_all_RB_flat:
-            # #     if a_correct_mark_all_RB_flat[i] != '✓_' and a_correct_mark_all_RB_flat[i] != '✓':
-            # #         error_counts += 1
-            # #         if a_gt_FB_all_flat[i] == []:
 
-def output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_reasons, a_correct_mark_all_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc, NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage, sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc, empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err, sixteenth_note_err, empty_FB_err, cv_log, ML_rule_acc, ML_rule_percentage, ML_rule_err):
+def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_implied, a_all_reasons, a_correct_mark_all_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc, NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage, sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc, empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err, sixteenth_note_err, empty_FB_err, cv_log, ML_rule_acc, ML_rule_percentage, ML_rule_err):
+    a_predict_FB_implied_all_flat_temp = copy.deepcopy(a_predict_FB_implied_all_flat)
+    a_gt_FB_all_implied_flat_temp = copy.deepcopy(a_gt_FB_all_implied_flat)
     NCT_bass_count = 0
     NCT_bass_count_right = 0
     NCT_upper_count = 0
@@ -1554,30 +1542,44 @@ def output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_
     ML_count = 0
     ML_count_right = 0
     for i, each_reason in enumerate(a_all_reasons):
+        if i == 39:
+            print('debug')
+        error_reasons = []
+        for each_gt_figure in a_gt_FB_all_implied_flat_temp[i]:
+            if each_gt_figure not in a_intervals_all[i]:
+                a_gt_FB_all_implied_flat_temp[i].remove(each_gt_figure)  # remove the ones not actually in the sonority
+
+        common_part = copy.deepcopy(set(a_predict_FB_implied_all_flat_temp[i]) & set(a_gt_FB_all_implied_flat_temp[i]))
+        if len(common_part) != 0:
+            for each_common_figure in common_part:
+                a_predict_FB_implied_all_flat_temp[i].remove(each_common_figure)
+                a_gt_FB_all_implied_flat_temp[i].remove(each_common_figure)
+        difference = a_predict_FB_implied_all_flat_temp[i] + a_gt_FB_all_implied_flat_temp[i]  # the difference figures are two sets minusing the common elements
+        for each_difference in difference:
+            error_reasons.append(each_reason[a_intervals_all[i].index(each_difference)])
+        print('error reasons', error_reasons)
         NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
                                                                                   NCT_bass_count_right,
-                                                                                  a_correct_mark_all_flat,
-                                                                                  'NCT bass', i)
+                                                                                  'NCT bass', error_reasons)
         NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
                                                                                     NCT_upper_count_right,
-                                                                                    a_correct_mark_all_flat,
-                                                                                    'NCT upper voices', i)
+
+                                                                                    'NCT upper voices', error_reasons)
         FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
                                                                                         FB_labelled_count,
                                                                                         FB_labelled_count_right,
-                                                                                        a_correct_mark_all_flat,
-                                                                                        'FB already labeled', i)
+
+                                                                                        'FB already labeled', error_reasons)
         sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count,
                                                                                     sixteenth_count_right,
-                                                                                    a_correct_mark_all_flat,
-                                                                                    '16th (or shorter) note slice ignored',
-                                                                                    i)
+
+                                                                                    '16th (or shorter) note slice ignored', error_reasons
+                                                                                    )
         empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right,
-                                                                            a_correct_mark_all_flat,
-                                                                            [''] * len(each_reason), i)
+                                                                            '', error_reasons)
         ML_count, ML_count_right = count_each_reason_and_right_number(each_reason, ML_count, ML_count_right,
-                                                                            a_correct_mark_all_flat,
-                                                                            'ML rules', i)
+
+                                                                            'ML rules', error_reasons)
     NCT_bass_acc.append((NCT_bass_count_right / NCT_bass_count) * 100) if NCT_bass_count != 0 else 0
     NCT_bass_percentage.append(NCT_bass_count / a_counter * 100)
     NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100) if NCT_upper_count != 0 else 0
@@ -1643,11 +1645,18 @@ def output_accuracy_for_each_reason(a_counter, a_counter_correct_implied, a_all_
     print('----------------------------------------------------------------------')
 
 
-def count_each_reason_and_right_number(each_reason, count, count_right, a_correct_mark_all_RB_flat, reason_to_check, i):
-    if reason_to_check in each_reason or reason_to_check == each_reason:
+def count_each_reason_and_right_number(each_reason, count, count_right, reason_to_check, error_reasons):
+
+    if reason_to_check in each_reason:
         count += 1
-        if a_correct_mark_all_RB_flat[i] == '✓_' or a_correct_mark_all_RB_flat[i] == '✓':
+        if reason_to_check not in error_reasons:
             count_right += 1
+        # else:  # if not exactly the same, we need to find out which one causes the error
+        #     for each_interval in intervals:
+        #         if not each_interval in gt_FB_implied and each_interval not in predict_FB_implied:
+        #             count_right += 1
+        #     # find what are the difference in GT and prediction
+        #     # find these differences in intervals, and attribute to specific voices
     return count, count_right
 
 
