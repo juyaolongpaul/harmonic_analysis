@@ -947,29 +947,29 @@ def unify_GTChord_and_inferred_chord(name):
 
 
 def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, ptr, s, sChord):
-    # if fig_a not in FB:
-    if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
-        if fig_b in FB:
-            FB.remove(fig_b)
-    elif previous_bass.name != 'rest' and bass.name != 'rest':
-        pitch_class_four_voice, pitch_four_voice = \
-            get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
-        for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
-            # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
-            if pitch_class_four_voice[voice_number] != -1:
-                aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
-                colllapsed_interval = colllapse_interval(aInterval.name[1:])
-                if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
-                    if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
-                        if fig_b in FB:
-                            FB.remove(fig_b)
-                    else:
-                        sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
-                        # At this point, 2-8 should be 9-8
-                        for i, each_FB in enumerate(previous_FB):
-                            if each_FB == '2':
-                                previous_FB[i] = '9'
-                    # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
+    if fig_a not in FB:  # this applies whether 5 can be implied when there is 6 in the slice, for example
+        if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
+            if fig_b in FB:
+                FB.remove(fig_b)
+        elif previous_bass.name != 'rest' and bass.name != 'rest':
+            pitch_class_four_voice, pitch_four_voice = \
+                get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
+            for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
+                # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
+                if pitch_class_four_voice[voice_number] != -1:
+                    aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
+                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                    if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
+                        if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
+                            if fig_b in FB:
+                                FB.remove(fig_b)
+                        else:
+                            sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+                            # At this point, 2-8 should be 9-8
+                            for i, each_FB in enumerate(previous_FB):
+                                if each_FB == '2':
+                                    previous_FB[i] = '9'
+                        # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
     return previous_FB, FB
 
 
@@ -1003,14 +1003,31 @@ def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, pr
                                                                   previous_bass, bass, ptr, s, sChord,)
     # TODO: resolve this 9 vs 2 issue!
     # Stop using because of the 8-7 problem
-    if '4' in gt_FB and ('2' in gt_FB or '3' in gt_FB) and '7' not in previous_gt_FB:
-        if '6' in gt_FB and len(gt_FB) == 3:
-            gt_FB.remove('6')
-    if '4' in predict_FB and ('2' in predict_FB or '3' in predict_FB) and '7' not in previous_predict_FB:
-        if '6' in predict_FB and len(predict_FB) == 3:
-            predict_FB.remove('6')
+    gt_FB = remove_6_and_4(gt_FB, previous_gt_FB, sChord, s, ptr)
+    predict_FB = remove_6_and_4(predict_FB, previous_predict_FB, sChord, s, ptr)
     return previous_gt_FB, gt_FB, previous_predict_FB, predict_FB
 
+
+def remove_6_and_4(FB, previous_FB, sChord, s, ptr):
+    if '4' in FB and ('2' in FB or '3' in FB) and '7' not in previous_FB:
+        if '6' in FB and len(FB) == 3:
+            FB.remove('6')
+            if '2' in FB:  # also remove 4 when it is a 642 chord
+                FB.remove('4')
+        elif len(FB) == 2 and '2' in FB:  # it is a 42 chord (with no 6), and if 6 is in the sonority, it should be reduced into 2 as well
+            thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
+            k = s.analyze('AardenEssen')
+            pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+            bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+            intervals = []  # store all the exhaustive FB
+            # get all the intervals for the slice
+            for sonority in pitch_four_voice:
+                if hasattr(sonority, 'pitch'):
+                    intervals = get_actual_figures(bass, sonority, intervals, k)
+            if '6' in intervals and '2' in intervals and '4' in intervals and '7' not in intervals and '5' not in intervals and '3' not in intervals: # if this is a 42 label but is a 642 chord, then 4 can be implied
+                FB.remove('4')
+                #input('4 is removed from a 42 chord, check its functionality!')
+    return FB
 
 def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, correct_mark_all):
     """
