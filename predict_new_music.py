@@ -437,9 +437,13 @@ if __name__ == "__main__":
                                 'Model',
                                 '3layer300DNNwindow_size1_2training_data1timestep0Bach_o_FBNCT_pitch_classpitch_class_with_bass3meter_NewOnset_New_annotation_12keys__training79_cv_1.hdf5')
 
+
     inputpath = os.path.join(os.getcwd(), 'new_music', 'New')
-    # predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath)
-    predict_new_music_FB(modelpath_FB, inputpath)
+    if not os.path.isdir(inputpath):
+        os.mkdir(os.path.join(os.getcwd(), 'new_music'))
+        os.mkdir(inputpath)
+    predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath)
+    # predict_new_music_FB(modelpath_FB, inputpath)
     # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Praetorius')
     # predict_new_music(modelpath_NCT, modelpath_CL, inputpath)
     # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Schutz')
