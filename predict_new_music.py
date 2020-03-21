@@ -10,8 +10,7 @@ from test_musicxml_gt import translate_chord_name_into_music21
 from predict_result_for_140 import find_tranposed_interval
 from predict_result_for_140 import transpose_chord
 from predict_result_for_140 import get_FB_and_FB_PC
-from FB2lyrics import translate_FB_into_chords
-
+from FB2lyrics import translate_FB_into_chords, add_chord
 
 def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
     counter = 0
@@ -237,7 +236,7 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 
 
 def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
-    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
+    # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
@@ -286,13 +285,12 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         fileName[i] = fileName[i][:-3] + 'xml'
     numSalamiSlices = []
     for id, fn in enumerate(fileName):
-        length = 0
-        s = converter.parse(os.path.join(input, fn))
+        s = converter.parse(os.path.join(inputpath, fn))
         sChords = s.chordify()
-        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            length += 1
-        numSalamiSlices.append(length)
-    length = len(fileName)
+        numSalamiSlices.append(len(sChords.recurse().getElementsByClass('Chord')))
+    length = len(numSalamiSlices)
+    # print('file slices', length)
+    # print('slices from matrix', len(xx_only_pitch))
     with open('chord_name_retrained.txt') as f:
         chord_name = f.read().splitlines()
     a_counter = 0
@@ -320,118 +318,122 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         for fn in os.listdir(inputpath):
             if os.path.isdir(os.path.join(inputpath, fn)): continue
             if 'transposed' in fn: continue
+            if 'DS_Store' in fn: continue
             if id[0] in fn or bach == 'N':  # get the key info
-                print('music21 is parsing:', fn, 'Is this a directory', os.path.isdir(os.path.join(inputpath, fn)))
-                s = converter.parse(os.path.join(inputpath, fn))
-                k = s.analyze('AardenEssen')
-                if k.mode == 'minor':
-                    key_info = k.tonic.name.lower()
-                    transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
-                else:
-                    key_info = k.tonic.name.upper()
-                    transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
-                if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info)):
-                    os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info))
-                sNew = s_ori.transpose(transposed_interval)
-                sChords_new = sNew.chordify()
-                sNew.insert(0, sChords_new)
-                f_transposed = open(os.path.join(inputpath, 'predicted_result', fileName[i][
-                                                                                :-4]) + '_chord_labels.txt', 'w')
-                f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
-                                                                                                   :-4]) + '_chord_labels.txt',
-                             'w')
-                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    thisChord.closedPosition(forceOctave=4, inPlace=True)
-                    sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
-                    x = xx_only_pitch[a_counter]
-                    chord_tone = output_NCT_to_XML(x, predict_y[a_counter], thisChord, '_pitch_class')
-                    chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
-                                                                           chord_label_list)
-                    if j == 0:
-                        thisChord.addLyric(
-                            ('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]]))
-                        print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
-                        thisChord.addLyric(
-                            ('DH (ML):', chord_name[predict_y_direct_harmonic_analysis[a_counter]]))
+                if fileName[i][fileName[i].find('KE') + 2:-4] in fn:
+                    print(fileName[i][fileName[i].find('KE') + 2:-4])
+                    print('music21 is parsing:', fn, 'Is this a directory', os.path.isdir(os.path.join(inputpath, fn)))
+                    s = converter.parse(os.path.join(inputpath, fn))
+                    s.insert(0, sChords)
+                    k = s.analyze('AardenEssen')
+                    if k.mode == 'minor':
+                        key_info = k.tonic.name.lower()
+                        transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
                     else:
-                        thisChord.addLyric(
-                            (chord_name[predict_y_chord_tone[a_counter]]))  # Output chords in the transposed key
-                        thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]])
-                        print(chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
-                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
-                        chord_name[predict_y_direct_harmonic_analysis[a_counter]]))] = all_answers_per_chorale[j].get(
-                        unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
-                            chord_name[predict_y_direct_harmonic_analysis[a_counter]])), 0) + 1
-                    all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
-                        chord_name[predict_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(
-                        unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
-                            chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
+                        key_info = k.tonic.name.upper()
+                        transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
+                    if not os.path.isdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info)):
+                        os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key', key_info))
+                    sNew = s_ori.transpose(transposed_interval)
+                    sChords_new = sNew.chordify()
+                    sNew.insert(0, sChords_new)
+                    f_transposed = open(os.path.join(inputpath, 'predicted_result', fileName[i][
+                                                                                    :-4]) + '_chord_labels.txt', 'w')
+                    f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
+                                                                                                       :-4]) + '_chord_labels.txt',
+                                 'w')
+                    for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        thisChord.closedPosition(forceOctave=4, inPlace=True)
+                        sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
+                        x = xx_only_pitch[a_counter]
+                        chord_tone = output_NCT_to_XML(x, predict_y[a_counter], thisChord, '_pitch_class')
+                        if j == 479:
+                            print('debug')
+                        chord_tone_list, chord_label_list = infer_chord_label1(thisChord, chord_tone, chord_tone_list,
+                                                                               chord_label_list)
+                        if j == 0:
+                            thisChord.addLyric(
+                                ('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]]))
+                            print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                            thisChord.addLyric(
+                                ('DH (ML):', chord_name[predict_y_direct_harmonic_analysis[a_counter]]))
+                        else:
+                            thisChord.addLyric(
+                                (chord_name[predict_y_chord_tone[a_counter]]))  # Output chords in the transposed key
+                            thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]])
+                            print(chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                        all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[predict_y_direct_harmonic_analysis[a_counter]]))] = all_answers_per_chorale[j].get(
+                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                                chord_name[predict_y_direct_harmonic_analysis[a_counter]])), 0) + 1
+                        all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                            chord_name[predict_y_chord_tone[a_counter]]))] = all_answers_per_chorale[j].get(
+                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
+                                chord_name[predict_y_chord_tone[a_counter]])), 0) + 1
 
-                    a_counter += 1
-                previous_transposed_result = ''
-                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find(
-                            'interval') != -1):  # sometimes the last
-                        # chord is un-determined because there are only two tones!
-                        infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
-                    infer_chord_label3(j, thisChord, chord_label_list,
-                                       chord_tone_list)  # TODO: Look into this later: ch
-                    if j == 0:
-                        thisChord.addLyric(
-                            ('NCT + CL (RB):', chord_label_list[j]))
-                    else:
-                        thisChord.addLyric(
-                            (chord_label_list[j]))
-                    all_answers_per_chorale[j][
-                        unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j]))] = \
-                        all_answers_per_chorale[j].get(
-                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])),
-                            0) + 1
-                    sorted_result = sorted(all_answers_per_chorale[j].items(), key=lambda d: d[1], reverse=True)
-                    # print(sorted_result[0])
-                    ##print(sorted_result[0][-1])
-                    # print(chord_tone_list[j])
-                    for jj in range(len(sorted_result)):
-                        if unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])) == \
-                                sorted_result[jj][0]:  # when there are all different answers, choose the RB one!
-                            break
-                    if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
-                        chord = sorted_result[jj][0]  # output chords in the original key
-                    else:
-                        chord = sorted_result[0][0]
-                    if j == 0:
-                        thisChord.addLyric('Voting: ' + chord)
-                    else:
-                        thisChord.addLyric(chord)
-                    if sorted_result[0] == sorted_result[-1]:  # Only one answer, agreed
-                        thisChord.addLyric(' ')
-                    else:
-                        thisChord.addLyric('_!')
-                    transposed_result = transpose_chord(transposed_interval, chord)
-                    if previous_transposed_result != transposed_result:
-                        sChords_new.recurse().getElementsByClass('Chord')[j].addLyric(transposed_result)
-                    print(transposed_result, file=f_ori)
-                    previous_transposed_result = transposed_result
-                f_ori.close()
-                f_transposed.close()
-                s.write('musicxml',
-                        fp=os.path.join(inputpath, 'predicted_result', fileName[i][
-                                                                       :-4]) + '.xml')
+                        a_counter += 1
+                    previous_transposed_result = ''
+                    for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find(
+                                'interval') != -1):  # sometimes the last
+                            # chord is un-determined because there are only two tones!
+                            infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list)  # determine the final chord
+                        infer_chord_label3(j, thisChord, chord_label_list,
+                                           chord_tone_list)  # TODO: Look into this later: ch
+                        if j == 0:
+                            thisChord.addLyric(
+                                ('NCT + CL (RB):', chord_label_list[j]))
+                        else:
+                            thisChord.addLyric(
+                                (chord_label_list[j]))
+                        all_answers_per_chorale[j][
+                            unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j]))] = \
+                            all_answers_per_chorale[j].get(
+                                unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])),
+                                0) + 1
+                        sorted_result = sorted(all_answers_per_chorale[j].items(), key=lambda d: d[1], reverse=True)
+                        # print(sorted_result[0])
+                        ##print(sorted_result[0][-1])
+                        # print(chord_tone_list[j])
+                        for jj in range(len(sorted_result)):
+                            if unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(chord_label_list[j])) == \
+                                    sorted_result[jj][0]:  # when there are all different answers, choose the RB one!
+                                break
+                        if sorted_result[0][-1] == 1 or len(chord_tone_list[j]) <= 1:
+                            chord = sorted_result[jj][0]  # output chords in the original key
+                        else:
+                            chord = sorted_result[0][0]
+                        if j == 0:
+                            thisChord.addLyric('Voting: ' + chord)
+                        else:
+                            thisChord.addLyric(chord)
+                        if sorted_result[0] == sorted_result[-1]:  # Only one answer, agreed
+                            thisChord.addLyric(' ')
+                        else:
+                            thisChord.addLyric('_!')
+                        transposed_result = transpose_chord(transposed_interval, chord)
+                        if previous_transposed_result != transposed_result:
+                            add_chord(sChords_new.recurse().getElementsByClass('Chord')[j], transposed_result)  # get rid of - bug
+                        print(transposed_result, file=f_ori)
+                        previous_transposed_result = transposed_result
+                    f_ori.close()
+                    f_transposed.close()
+                    s.write('musicxml',
+                            fp=os.path.join(inputpath, 'predicted_result', fileName[i][
+                                                                           :-4]) + '.xml')
 
-                sNew.write('musicxml',
-                           fp=os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
-                                                                                                    :-4]) + '.xml')
+                    sNew.write('musicxml',
+                               fp=os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fileName[i][
+                                                                                                        :-4]) + '.xml')
 
 
 if __name__ == "__main__":
     modelpath_NCT = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019',
-                                 '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39',
+                                 'Model',
                                  '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39_cv_1.hdf5')
-    modelpath_CL = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019',
-                                '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39',
+    modelpath_CL = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019', 'Model',
                                 '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39_cv_1_chord_tone.hdf5')
-    modelpath_DH = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019',
-                                '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39',
+    modelpath_DH = os.path.join(os.getcwd(), 'ML_result', 'ISMIR2019', 'Model',
                                 '3layer300DNNwindow_size1_2training_data1timestep0ISMIR2019NCT_pitch_classpitch_class3meter_NewOnset_New_annotation_keyC__training264_39_cv_1_direct_harmonic_analysis.hdf5')
     modelpath_FB = os.path.join(os.getcwd(), 'ML_result', 'Bach_o_FB',
                                 'Model',

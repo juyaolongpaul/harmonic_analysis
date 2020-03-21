@@ -491,7 +491,7 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                              'incomplete dominant-seventh chord', 'dominant seventh chord',
                              'major triad',
                              'minor triad',
-                             'diminished triad']
+                             'diminished triad', 'minortriad']  # 4_op44ii_3_revised.musicxml has 'minortriad'
     if chord_tone != [0] * len(chord_tone) and chord_label.pitchClasses != []:  # there must be a slice having at least one chord tone
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
             # This is the chord we can output directly
@@ -511,14 +511,24 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-major triad') != -1: #(e.g., E--major triad) in  279 slice 33
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-major triad', '')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minor triad') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-minor triad', 'm')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minortriad') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-minortriad', 'm')) # translate to support
                 elif chord_label.pitchedCommonName.find('-dominant seventh chord') != -1: #(e.g., E--major triad) in  279 slice 33
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-dominant seventh chord', '7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-half-diminished seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-half-diminished seventh chord', '/o7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-minor-seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-minor-seventh chord', 'm7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minor seventh chord') != -1:
+                    chord_label_list.append(
+                        chord_label.pitchedCommonName.replace('-minor seventh chord', 'm7'))  # translate to support
                 elif chord_label.pitchedCommonName.find('-major-seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-major-seventh chord', 'M7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-major seventh chord') != -1:
+                    chord_label_list.append(
+                        chord_label.pitchedCommonName.replace('-major seventh chord', 'M7'))  # translate to support
                 else:
                     chord_label_list.append(chord_label.pitchedCommonName)  # Just in case the function cannot accept any names (e.g., E--major triad)
             else:
