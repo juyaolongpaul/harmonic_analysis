@@ -9,6 +9,60 @@ from mido import MetaMessage, MidiFile
 
 f_sus = open('suspension.txt', 'w')
 
+
+def get_actual_figures(bass, sonority, actual_FB, key, duplicate='N'):
+    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+    if int(aInterval.name[1:]) % 7 == 0:
+        FB_desired = '7'
+    elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
+        FB_desired = aInterval.name[1:]
+    else:
+        FB_desired = str(int(aInterval.name[1:]) % 7)
+    if FB_desired == '1':
+          # only non-bass can be translated into 8
+        FB_desired = '8'
+
+    # Sometimes it can share the same pitch class, and in this case,
+    # it will give two identical FB, in this case, we only need one
+
+    if sonority.pitch.accidental is not None:
+        if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
+            if FB_desired == '3':
+                actual_FB = add_FB_result(actual_FB,
+                                          sonority.pitch.accidental.unicode, duplicate)
+            else:
+                if not (aInterval.name[0] == 'P' and FB_desired == '8'):
+                    actual_FB = add_FB_result(actual_FB,
+                                              sonority.pitch.accidental.unicode + FB_desired, duplicate)
+                else:
+                    actual_FB = add_FB_result(actual_FB,
+                                              FB_desired, duplicate)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
+
+        else:
+            actual_FB = add_FB_result(actual_FB,
+                                      FB_desired, duplicate)
+    else:
+        actual_FB = add_FB_result(actual_FB,
+                                  FB_desired, duplicate)
+    return actual_FB
+
+def add_FB_result(actual_FB, result, duplicate='N'):
+    """
+    Modular function to add the FB annotation. If already exist, skip this part which will add a duplicated one, since
+    there can be situations where multiple voices share the same pitch class
+    :param thisChord:
+    :param actual_FB:
+    :return:
+    """
+    if duplicate == 'N':  # don't want duplicates
+        if result not in actual_FB:
+            # thisChord.addLyric(result)
+            actual_FB.append(result)
+    else:  # output duplicates
+        actual_FB.append(result)
+    return actual_FB
+
+
 def translate_FB_as_lyrics(number, suffix, prefix, extension):
     """
     Translate FB in lists into string added to lyrics
@@ -431,7 +485,7 @@ def suspension_processing(fig, thisChord, bass, sChord, fig_collapsed, ptr, s, s
 
 
 
-def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
+def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, suspension_ptr=[]):
     """
 
     :param fig:
@@ -440,7 +494,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, suspension_ptr=[]):
     """
     # if thisChord.measureNumber == 4:
     #     print('debug')
-    space_needed = 3 - len(fig)  # align the results
+    space_needed = number_of_space - len(fig)  # align the results
     if space_needed > 0:
         for i in range(space_needed):
             thisChord.addLyric(' ')  # beautify formatting
@@ -698,7 +752,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        if '83.05' not in filename: continue
+        # if '3.06' not in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -741,7 +795,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
                     print(fig)
                 if fig == ['7', '5', '3']:
                     print('debug')
-                suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, suspension_ptr)
+                suspension_ptr = translate_FB_into_chords(fig, thisChord, i, sChords, s, 3, suspension_ptr)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
                 # octave apart will be collapsed!
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -761,16 +815,20 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         else:
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
-
+        k = s.analyze('AardenEssen')
         if want_IR and translate_chord == "Y":
             IR = s.chordify()
             for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
                 c.closedPosition(forceOctave=4, inPlace=True)
-                c.annotateIntervals()
-                # space_needed = 3 - len(c.lyrics)  # align the results
-                # if space_needed > 0:
-                #     for i in range(space_needed):
-                #         thisChord.addLyric(' ')  # beautify formatting
+                pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(c, s)
+                bass = get_bass_note(c, pitch_four_voice, pitch_class_four_voice, 'Y')
+                intervals = []  # store all the exhaustive FB
+                for sonority in pitch_four_voice:
+                    if hasattr(sonority, 'pitch'):
+                        intervals = get_actual_figures(bass, sonority, intervals, k)
+                for i, line in enumerate(intervals):
+                    c.addLyric(line)
+                # c.annotateIntervals()
             IR2 = s.chordify()  # this is used because annotateIntervals only works properly if I collapse octaves, but for suspension, I need the uncollapsed version,
             # so I need to create a new chordify voice
             for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):
@@ -782,8 +840,9 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
                     print(fig)
                 if fig == ['6', '5', '4']:
                     print('debug')
-                translate_FB_into_chords(fig, c, j, IR2, s)
+                translate_FB_into_chords(fig, c, j, IR2, s, 4)
                 c.closedPosition(forceOctave=4, inPlace=True)
+                c.lyrics[-1].text = c.lyrics[-1].text.replace('?!', '')  # TODO: look into why this happens later! Some root position chords has this unnecessary ?! sign
             s.insert(0, sChords)
             s.insert(0, IR2)
         else:

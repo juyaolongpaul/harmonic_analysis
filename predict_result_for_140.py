@@ -54,7 +54,7 @@ from get_input_and_output import adding_window_one_hot
 from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
-from FB2lyrics import is_suspension, colllapse_interval
+from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures, add_FB_result
 
 c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
 
@@ -390,57 +390,7 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
             return actual_FB, FB, RB_reasons, NCT_sign
 
 
-def get_actual_figures(bass, sonority, actual_FB, key, duplicate='N'):
-    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-    if int(aInterval.name[1:]) % 7 == 0:
-        FB_desired = '7'
-    elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-        FB_desired = aInterval.name[1:]
-    else:
-        FB_desired = str(int(aInterval.name[1:]) % 7)
-    if FB_desired == '1':
-          # only non-bass can be translated into 8
-        FB_desired = '8'
 
-    # Sometimes it can share the same pitch class, and in this case,
-    # it will give two identical FB, in this case, we only need one
-
-    if sonority.pitch.accidental is not None:
-        if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
-            if FB_desired == '3':
-                actual_FB = add_FB_result(actual_FB,
-                                          sonority.pitch.accidental.unicode, duplicate)
-            else:
-                if not (aInterval.name[0] == 'P' and FB_desired == '8'):
-                    actual_FB = add_FB_result(actual_FB,
-                                              sonority.pitch.accidental.unicode + FB_desired, duplicate)
-                else:
-                    actual_FB = add_FB_result(actual_FB,
-                                              FB_desired, duplicate)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
-
-        else:
-            actual_FB = add_FB_result(actual_FB,
-                                      FB_desired, duplicate)
-    else:
-        actual_FB = add_FB_result(actual_FB,
-                                  FB_desired, duplicate)
-    return actual_FB
-
-def add_FB_result(actual_FB, result, duplicate='N'):
-    """
-    Modular function to add the FB annotation. If already exist, skip this part which will add a duplicated one, since
-    there can be situations where multiple voices share the same pitch class
-    :param thisChord:
-    :param actual_FB:
-    :return:
-    """
-    if duplicate == 'N':  # don't want duplicates
-        if result not in actual_FB:
-            # thisChord.addLyric(result)
-            actual_FB.append(result)
-    else:  # output duplicates
-        actual_FB.append(result)
-    return actual_FB
 
 
 def add_FB_result_to_score(thisChord, actual_FB):
