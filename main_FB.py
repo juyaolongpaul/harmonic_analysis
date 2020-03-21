@@ -69,6 +69,9 @@ def main():
     parser.add_argument('-pre', '--predict',
                         help='specify whether you want to predict and output the result in XML (default: %(default))',
                         type=str, default='Y')
+    parser.add_argument('-ru', '--rule',
+                        help='specify which rules you wanna use (default: %(default))',
+                        type=list, default=['NCT bass', 'NCT upper voices', 'FB already labeled', '16th (or shorter) note slice ignored'])
     args = parser.parse_args()
     f1 = '.xml'
     f2 = '.txt'
@@ -101,7 +104,7 @@ def main():
     # # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
     # #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
     # #                                  args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
-    train_and_predict_FB(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+    train_and_predict_FB(['NCT bass', 'NCT upper voices', 'FB already labeled', '16th (or shorter) note slice ignored'], args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
                                      args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297', '195.06', '100.06', '149.07', '171.06', '195.06']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot

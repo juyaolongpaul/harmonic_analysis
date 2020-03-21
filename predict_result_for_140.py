@@ -247,7 +247,7 @@ def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
     return FB, FB_index, chord_tone
 
 
-def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, type=''):
+def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -296,10 +296,12 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                 elif type == 'RB':
                     if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
                         RB_reasons= ['NCT bass'] * len(this_pitch_class_list)
-                        break
+                        if 'NCT bass' in rule_set:
+                            break
                     if thisChord.beat % 1 != 0 and thisChord.duration.quarterLength <= 0.25:  # if the current slice contains 16th notes off beat, prediction nothing too!
                         RB_reasons = ['16th (or shorter) note slice ignored'] * len(this_pitch_class_list)
-                        break
+                        if '16th (or shorter) note slice ignored' in rule_set:
+                            break
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
                             if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
@@ -320,6 +322,9 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                                     if FB_desired not in ['1', '3', '5']:
                                         print('no need to put this FB PC')
                                         RB_reasons[this_pitch_class_list_only_CT.index(i)] = 'FB already labeled'
+                                        if 'FB already labeled' not in rule_set:  # if this rule is not specified, still output the figure
+                                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone,
+                                                                                 i)
                                 elif i == bass.pitch.pitchClass:  # only add 8 in this case, since there is a doubling of bass PC
                                     FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                             else:
@@ -329,7 +334,8 @@ def get_FB_and_FB_PC(x, y, sChords, j, outputtype, s, key, this_pitch_list, this
                     elif i in this_pitch_class_list:
                         if NCT_sign[this_pitch_class_list.index(i)] == 'NCT_suspension':  # still add this figure since it is SUS!
                             FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
-
+                        if 'NCT upper voices' not in rule_set:
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
                         # RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices: ' + NCT_sign[this_pitch_class_list.index(i)]
                         RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices'
 
@@ -1082,7 +1088,7 @@ def output_FB_to_score(FB, FB_PC, sChords, j, correct_mark=''):
 
 
 
-def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
     print('Training and testing the machine learning models')
@@ -1157,7 +1163,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     HIDDEN_NODE = nodes
     MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                  str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
-                 + str(timestep) + extension
+                 + str(timestep) + extension + '_rule_' + str(len(rule_set))
     print('Loading data...')
     print('Build model...')
     if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
@@ -1168,11 +1174,11 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
     for times in range(cv):
-        # if times != 6 :
+        # if times != 0 :
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
-                     + str(timestep) + extension  + '_cv_' + str(times + 1)
+                     + str(timestep) + extension  + '_cv_' + str(times + 1) + '_rule_' + str(len(rule_set))
         FOLDER_NAME = 'MODEL'
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
         # if exclude != []:
@@ -1283,17 +1289,17 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
             a_correct_mark_all_ML = []
             if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
                 os.mkdir(os.path.join('.', 'predicted_result', sign))
-            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
-                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1)))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1) + '_rule_' + str(len(rule_set)))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1) + '_rule_' + str(len(rule_set))))
             if times == 0:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
+                                              windowsize + 1) + '_rule_' + str(len(rule_set)), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
                              'w')  # create this file to track every type of mistakes
             else:
                 f_all = open(os.path.join('.', 'predicted_result', sign,
                                           outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                              windowsize + 1), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
+                                              windowsize + 1) + '_rule_' + str(len(rule_set)), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
                              'a')  # create this file to track every type of mistakes
             # the sequence of the filename should be the same with test_id!
 
@@ -1377,13 +1383,13 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)  # Get the resulting PC and FB
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(rule_set, x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)  # Get the resulting PC and FB
                     if gt_FB == ['2', '6', '4']:
                         print('debug')
                     # if j == 25 and '248.53' in fileName[i]:
                     #     print('debug')
-                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
-                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(rule_set, x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
+                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(rule_set, x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
                     if predict_FB_RB == ['5', '8', '4'] and '248.53' in fileName[i]:
                         print('debug')
                     if predict_FB_RB == ['8', '7', '3'] and '30.06' in fileName[i]:
@@ -1478,7 +1484,7 @@ def train_and_predict_FB(layer, nodes, windowsize, portion, modelID, ts, bootstr
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign,
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
-                                            windowsize + 1), fileName[i][
+                                            windowsize + 1) + '_rule_' + str(len(rule_set)), fileName[i][
                                                              :-4]) + '.xml')
             frame_acc.append((a_counter_correct / a_counter) * 100)
             frame_acc_implied.append((a_counter_correct_implied / a_counter) * 100)
