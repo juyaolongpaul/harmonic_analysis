@@ -629,12 +629,15 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
             if len(common_tone1) == len(common_tone2): # if sharing the same number of pcs, choose the chord label whose root is the bass of the slice
                 slice_bass = thisChord.bass().pitchClass
                 chord_root_1 = harmony.ChordSymbol(chord_label_list[j - 1])._cache['root'].pitchClass
-                chord_root_2 = harmony.ChordSymbol(chord_label_list[jj])._cache['root'].pitchClass
-                if chord_root_1 == slice_bass:
-                    chord_label_list[j] = chord_label_list[j - 1]
-                elif chord_root_2 == slice_bass:
-                    chord_label_list[j] = chord_label_list[jj]
-                else:
+                try: # 5_op44iii_2_revised.musicxml has an error about this
+                    chord_root_2 = harmony.ChordSymbol(chord_label_list[jj])._cache['root'].pitchClass
+                    if chord_root_1 == slice_bass:
+                        chord_label_list[j] = chord_label_list[j - 1]
+                    elif chord_root_2 == slice_bass:
+                        chord_label_list[j] = chord_label_list[jj]
+                    else:
+                        chord_label_list[j] = chord_label_list[j - 1]
+                except:
                     chord_label_list[j] = chord_label_list[j - 1]
             elif len(common_tone1) > len(common_tone2):
                 chord_label_list[j] = chord_label_list[j - 1]

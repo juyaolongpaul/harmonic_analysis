@@ -236,11 +236,11 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 
 
 def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
-    # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
+    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
-    # get_input_encoding(inputpath, encoding_path)  # generate input encodings
+    get_input_encoding(inputpath, encoding_path)  # generate input encodings
     xx, fileName = generate_ML_matrix(encoding_path, 1, 'N')
     xx_no_window, fileName_fake = generate_ML_matrix(encoding_path, 0, 'N')
     xx_only_pitch, fileName_fake= generate_ML_matrix(encoding_path, 0, 'N', 'Y')
