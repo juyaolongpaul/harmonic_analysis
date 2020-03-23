@@ -752,7 +752,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        # if '3.06' not in filename: continue
+        # if '161.06a' not in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -824,7 +824,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
                 bass = get_bass_note(c, pitch_four_voice, pitch_class_four_voice, 'Y')
                 intervals = []  # store all the exhaustive FB
                 for sonority in pitch_four_voice:
-                    if hasattr(sonority, 'pitch'):
+                    if hasattr(sonority, 'pitch') and bass.name != 'rest':
                         intervals = get_actual_figures(bass, sonority, intervals, k)
                 for i, line in enumerate(intervals):
                     c.addLyric(line)

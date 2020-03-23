@@ -54,7 +54,7 @@ from get_input_and_output import adding_window_one_hot
 from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
-from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures, add_FB_result
+from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures
 
 c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
 
@@ -351,46 +351,10 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
             if hasattr(sonority, 'pitch'):
                 if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
                     actual_FB = get_actual_figures(bass, sonority, actual_FB, key)
-                    # aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-                    # if int(aInterval.name[1:]) % 7 == 0:
-                    #     FB_desired = '7'
-                    # elif '9' == aInterval.name[1] or '8' == aInterval.name[1]:
-                    #     FB_desired = aInterval.name[1:]
-                    # else:
-                    #     FB_desired = str(int(aInterval.name[1:]) % 7)
-                    # if FB_desired == '1':
-                    #     if i != len(pitch_four_voice) - 1:  # only non-bass can be translated into 8
-                    #         FB_desired = '8'
-                    #     else:
-                    #         continue  # do not need to add bass as FB result!
-                    # # Sometimes it can share the same pitch class, and in this case,
-                    # # it will give two identical FB, in this case, we only need one
-                    #
-                    # if sonority.pitch.accidental is not None:
-                    #     if not any(sonority.pitch.pitchClass == each_scale.pitchClass for each_scale in key.pitches):
-                    #         if FB_desired == '3':
-                    #             actual_FB = add_FB_result(actual_FB,
-                    #                                                  sonority.pitch.accidental.unicode)
-                    #         elif i != len(pitch_four_voice) - 1:
-                    #             if not (aInterval.name[0] == 'P' and FB_desired == '8'):
-                    #                 actual_FB = add_FB_result(actual_FB,
-                    #                                                      sonority.pitch.accidental.unicode + FB_desired)
-                    #             else:
-                    #                 actual_FB = add_FB_result(actual_FB, FB_desired)  # the exception is where continuo and bass are both raised, we need to output 8 not #8!
-                    #
-                    #     else:
-                    #         actual_FB = add_FB_result(actual_FB,
-                    #                                              FB_desired)
-                    # else:
-                    #     actual_FB = add_FB_result(actual_FB,
-                    #                                          FB_desired)
         if type != 'RB':
             return actual_FB, FB
         else:
             return actual_FB, FB, RB_reasons, NCT_sign
-
-
-
 
 
 def add_FB_result_to_score(thisChord, actual_FB):
@@ -998,7 +962,7 @@ def remove_6_and_4(FB, previous_FB, sChord, s, ptr):
                 #input('4 is removed from a 42 chord, check its functionality!')
     return FB
 
-def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num, correct_num_implied, correct_mark_all):
+def count_correct_slices(rule_set, predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, gt_FB_implied, predict_FB_implied, correct_num, correct_num_implied, correct_mark_all, sign=''):
     """
     The modular function that counts the correct slides of (implied) FB
     :param correct_bit:
@@ -1008,15 +972,19 @@ def count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, correct_num
     :param thisChord:
     :return:
     """
-    for each_figure in ['3', '5', '8']:
-        if each_figure not in gt_FB:  # this means these intervals can still be implied since GT does not have it
+    if sign == 'RB' and 'No853' in rule_set:
+        for each_figure in ['3', '5', '8']:
             if each_figure in predict_FB:
                 predict_FB.remove(each_figure)
-    if predict_FB_PC == gt_FB_PC:
+    for each_figure in ['3', '5', '8']:
+        if each_figure not in gt_FB_implied:  # this means these intervals can still be implied since GT does not have it
+            if each_figure in predict_FB_implied:
+                predict_FB_implied.remove(each_figure)
+    if predict_FB_PC == gt_FB_PC or predict_FB == gt_FB:
         correct_num += 1
         correct_num_implied += 1
         correct_mark_all.append('✓')
-    elif gt_FB == predict_FB:
+    elif gt_FB_implied == predict_FB_implied:
         correct_num_implied += 1
         correct_mark_all.append('✓_')
     else:
@@ -1361,6 +1329,23 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                     #print('previous_predict_FB_RB before', previous_predict_FB_RB)
                     previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
                     #print('previous_predict_FB_RB after', previous_predict_FB_RB)
+                    correct_num, correct_num_implied, correct_mark_all = count_correct_slices(rule_set, predict_FB_PC,
+                                                                                              gt_FB_PC, gt_FB,
+                                                                                              predict_FB, gt_FB_implied,
+                                                                                              predict_FB_implied,
+                                                                                              correct_num,
+                                                                                              correct_num_implied,
+                                                                                              correct_mark_all)
+                    correct_num_RB, correct_num_implied_RB, correct_mark_all_RB = count_correct_slices(rule_set,
+                                                                                                       predict_FB_RB_PC,
+                                                                                                       gt_FB_PC, gt_FB,
+                                                                                                       predict_FB_RB,
+                                                                                                       gt_FB_implied,
+                                                                                                       predict_FB_RB_implied,
+                                                                                                       correct_num_RB,
+                                                                                                       correct_num_implied_RB,
+                                                                                                       correct_mark_all_RB,
+                                                                                                       'RB')
                     # Save results
 
                     gt_FB_all.append(gt_FB)
@@ -1394,16 +1379,8 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                     previous_bass = bass
                     previous_predict_FB_RB_PC = predict_FB_RB_PC
                     previous_NCT_sign = NCT_sign
-                    correct_num, correct_num_implied, correct_mark_all = count_correct_slices(predict_FB_PC, gt_FB_PC, gt_FB_implied, predict_FB_implied, correct_num, correct_num_implied, correct_mark_all)
-                    correct_num_RB, correct_num_implied_RB, correct_mark_all_RB = count_correct_slices(predict_FB_RB_PC, gt_FB_PC, gt_FB_implied, predict_FB_RB_implied,
-                                                                            correct_num_RB, correct_num_implied_RB, correct_mark_all_RB)
-                    # if (correct_bit == len(gt)):
-                    #     correct_num += 1
-                    #     correct_num_implied += 1
-                    #     thisChord.addLyric('✓')
-                    # elif gt_FB == predict_FB:
-                    #     correct_num_implied += 1
-                    #     thisChord.addLyric('✓_')
+
+
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     sChords_RB.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                     a_counter += 1
