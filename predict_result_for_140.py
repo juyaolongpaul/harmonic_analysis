@@ -305,28 +305,16 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
                     if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
                         if previous_bass != -1:
                             if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
-                                    and (pitchclass[i] in previous_FB_PC):
+                                    and (pitchclass[i] in previous_FB_PC or i in previous_pitch_class_four_voice):
                                 # consider the fact that the same bass can have more than 2 slices with the same PC, none of them should be labelled
                                 # another rule: bass remaining the same, and the PC in the current slices does
                                 # not need to be labelled if already appeared in the previous slice
-
-                                if bass.pitch.pitchClass not in upper_voice:
-                                    # we also need to deal with other voices doubling the bass (e.g., 9-8)
-                                    # in this case, we need to keep the 8
-                                    # this will leave 8 present even though there is no 9-8 and 8 is found from the previous slice, but this does not affect any functionality
-                                    # we need to eliminate 853 since they largely can all be implied anyways
-                                    aInterval = interval.Interval(noteStart=bass,
-                                                                  noteEnd=this_pitch_list[
-                                                                      this_pitch_class_list_only_CT.index(i)])
-                                    FB_desired = str(int(aInterval.name[1:]) % 7)
-                                    if FB_desired not in ['1', '3', '5']:
-                                        print('no need to put this FB PC')
-                                        RB_reasons[this_pitch_class_list_only_CT.index(i)] = 'FB already labeled'
-                                        if 'FB already labeled' not in rule_set:  # if this rule is not specified, still output the figure
-                                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone,
-                                                                                 i)
-                                elif i == bass.pitch.pitchClass:  # only add 8 in this case, since there is a doubling of bass PC
-                                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
+                                # keep it simple, although this will lead to errors when suspensions like 9-8, where 8 is in the 9 slice, and then then -8 won't show, but oh well, we are not doing nested conditions
+                                print('no need to put this FB PC')
+                                RB_reasons[this_pitch_class_list_only_CT.index(i)] = 'FB already labeled'
+                                if 'FB already labeled' not in rule_set:  # if this rule is not specified, still output the figure
+                                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone,
+                                                                         i)
                             else:
                                 FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
                         else:
@@ -1240,7 +1228,8 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                 # if '13.06' not in fileName[i]:
                 #     if '133.06' not in fileName[i]:
                 #         continue
-                # if '37.06' not in fileName[i]: continue
+                # if '137.05' not in fileName[i]:
+                #     continue
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 correct_num_implied = 0
@@ -1281,8 +1270,9 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                     # print('measure', thisChord.measureNumber)
                     # if '112.05' in fileName[i] and thisChord.measureNumber == 3:
                     #     print('debug')
-                    # if j == 14:
-                    #     print('debug')
+                    # print('current slice number is', j)
+                    if j == 15:
+                        print('debug')
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                     NCT_sign = [''] * len(pitch_class_four_voice)
                     bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
@@ -1315,7 +1305,7 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
                     gt_FB, gt_FB_PC = get_FB_and_FB_PC(rule_set, x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)  # Get the resulting PC and FB
-                    if gt_FB == ['2', '6', '4']:
+                    if gt_FB == ['3', '8', '5']:
                         print('debug')
                     # if j == 25 and '248.53' in fileName[i]:
                     #     print('debug')

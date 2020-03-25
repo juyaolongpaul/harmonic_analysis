@@ -107,7 +107,7 @@ def main():
     train_and_predict_FB(['NCT bass', 'NCT upper voices', 'FB already labeled', '16th (or shorter) note slice ignored'], args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
-                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '297', '195.06', '100.06', '149.07', '171.06', '195.06']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
+                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
     # this gives us 124 training chorales: 143-12 interlude chorales - 7 chorales with both missing figures and the first three where music21 has issues. Look into 297!
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
