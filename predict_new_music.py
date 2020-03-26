@@ -51,6 +51,36 @@ def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
     return encoding_all, fn_all
 
 
+def parse_key_info(filename):
+    key_boundary1 = filename.find('KB')
+    key_boundary2 = filename.find('KE')
+    key_info = ''
+    if key_boundary1 != -1 and key_boundary2 != -1:
+        key_info = filename[key_boundary1 + 2:key_boundary2]
+        key_info = key_info.replace('_ori', '')
+    return key_info
+
+
+def bypass_outputing_transposed_file(path, filename):
+    """
+    Bypass outputing the tranposed file and re-parse them again, less prone to encoding errors
+    :param path:
+    :param filename:
+    :return:
+    """
+    origin_file_name = filename[filename.find('KE') + 2:]
+    try:
+        s_ori = converter.parse(os.path.join(path, origin_file_name))
+    except:
+        s_ori = converter.parse(os.path.join(path, origin_file_name[:-4] + '.musicxml'))
+    k = s_ori.analyze('AardenEssen')
+    original_key = parse_key_info(filename)
+    transposed_interval = interval.Interval(k.tonic, pitch.Pitch(original_key))
+    print('debug')
+    s_transposed = s_ori.transpose(transposed_interval)
+    s_transposed.show()
+    return s_transposed
+
 def get_input_encoding(inputpath, encoding_path, type=''):
     input_dim = 12
     fn_total = []
@@ -83,7 +113,8 @@ def get_input_encoding(inputpath, encoding_path, type=''):
         chorale_x_only_meter = []  # we want to save the meter info for the gt chord label as input feature to do chord inferral
         chorale_x_only_newOnset = []
         print(fn, id)
-        s = converter.parse(os.path.join(inputpath, fn))
+        bypass_outputing_transposed_file(inputpath, fn)
+        s = bypass_outputing_transposed_file(inputpath, fn)
         sChords = s.chordify(removeRedundantPitches=False)
         part = s.parts[0]
         s_new = stream.Stream()
@@ -157,7 +188,8 @@ def predict_new_music_FB(modelpath_FB, inputpath):
     numSalamiSlices = []
     for id, fn in enumerate(fileName):
         length = 0
-        s = converter.parse(os.path.join(input, fn))
+        s = bypass_outputing_transposed_file(input, fn)
+        #s = converter.parse(os.path.join(input, fn))
         sChords = s.chordify()
         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
             length += 1
@@ -170,7 +202,8 @@ def predict_new_music_FB(modelpath_FB, inputpath):
         os.mkdir(os.path.join(inputpath, 'predicted_result', 'original_key'))
     for ii in range(length):
         print(fileName[ii])
-        s = converter.parse(os.path.join(inputpath, fileName[ii]))
+        s = bypass_outputing_transposed_file(inputpath, fileName[ii])
+        #s = converter.parse(os.path.join(inputpath, fileName[ii]))
         sChords = s.chordify()
         s.insert(0, sChords)
         id = []
@@ -236,7 +269,7 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 
 
 def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
-    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
+    # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
@@ -285,7 +318,8 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         fileName[i] = fileName[i][:-3] + 'xml'
     numSalamiSlices = []
     for id, fn in enumerate(fileName):
-        s = converter.parse(os.path.join(inputpath, fn))
+        s = bypass_outputing_transposed_file(inputpath, fn)
+        #s = converter.parse(os.path.join(inputpath, fn))
         sChords = s.chordify()
         numSalamiSlices.append(len(sChords.recurse().getElementsByClass('Chord')))
     length = len(numSalamiSlices)
@@ -304,8 +338,10 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
         chord_tone_list = []  # store all the chord tones predicted by the model
         all_answers_per_chorale = [{} for j in range(1000000)]
         print(fileName[i])
-        s = converter.parse(os.path.join(inputpath, fileName[i]))
-        s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
+        s = bypass_outputing_transposed_file(inputpath, fileName[i])
+        #s = converter.parse(os.path.join(inputpath, fileName[i]))
+        s_ori = bypass_outputing_transposed_file(inputpath, fileName[i])
+        # s_ori = converter.parse(os.path.join(inputpath, fileName[i]))
         sChords = s.chordify()
         s.insert(0, sChords)
         # transpose back to the original keys
@@ -323,7 +359,8 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                 if fileName[i][fileName[i].find('KE') + 2:-4] in fn:
                     print(fileName[i][fileName[i].find('KE') + 2:-4])
                     print('music21 is parsing:', fn, 'Is this a directory', os.path.isdir(os.path.join(inputpath, fn)))
-                    s = converter.parse(os.path.join(inputpath, fn))
+                    s = bypass_outputing_transposed_file(inputpath, fn)
+                    #s = converter.parse(os.path.join(inputpath, fn))
                     s.insert(0, sChords)
                     k = s.analyze('AardenEssen')
                     if k.mode == 'minor':
