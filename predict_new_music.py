@@ -78,7 +78,7 @@ def bypass_outputing_transposed_file(path, filename):
     transposed_interval = interval.Interval(k.tonic, pitch.Pitch(original_key))
     print('debug')
     s_transposed = s_ori.transpose(transposed_interval)
-    s_transposed.show()
+    # s_transposed.show()
     return s_transposed
 
 def get_input_encoding(inputpath, encoding_path, type=''):
@@ -269,7 +269,7 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 
 
 def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
-    # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
+    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
     if not os.path.isdir(os.path.join(inputpath, 'encodings')):
         os.mkdir(os.path.join(inputpath, 'encodings'))
