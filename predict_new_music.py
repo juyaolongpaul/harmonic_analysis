@@ -68,18 +68,21 @@ def bypass_outputing_transposed_file(path, filename):
     :param filename:
     :return:
     """
-    origin_file_name = filename[filename.find('KE') + 2:]
-    try:
-        s_ori = converter.parse(os.path.join(path, origin_file_name))
-    except:
-        s_ori = converter.parse(os.path.join(path, origin_file_name[:-4] + '.musicxml'))
-    k = s_ori.analyze('AardenEssen')
-    original_key = parse_key_info(filename)
-    transposed_interval = interval.Interval(k.tonic, pitch.Pitch(original_key))
-    print('debug')
-    s_transposed = s_ori.transpose(transposed_interval)
-    # s_transposed.show()
-    return s_transposed
+    if filename.find('KE') != -1:
+        origin_file_name = filename[filename.find('KE') + 2:]
+        try:
+            s_ori = converter.parse(os.path.join(path, origin_file_name))
+        except:
+            s_ori = converter.parse(os.path.join(path, origin_file_name[:-4] + '.musicxml'))
+        k = s_ori.analyze('AardenEssen')
+        original_key = parse_key_info(filename)
+        transposed_interval = interval.Interval(k.tonic, pitch.Pitch(original_key))
+        print('debug')
+        s_transposed = s_ori.transpose(transposed_interval)
+        # s_transposed.show()
+        return s_transposed
+    else:
+        return converter.parse(os.path.join(path, filename))
 
 def get_input_encoding(inputpath, encoding_path, type=''):
     input_dim = 12
