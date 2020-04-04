@@ -964,10 +964,10 @@ def count_correct_slices(rule_set, predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, g
         for each_figure in ['3', '5', '8']:
             if each_figure in predict_FB:
                 predict_FB.remove(each_figure)
-    for each_figure in ['3', '5', '8']:
-        if each_figure not in gt_FB_implied:  # this means these intervals can still be implied since GT does not have it
-            if each_figure in predict_FB_implied:
-                predict_FB_implied.remove(each_figure)
+    # for each_figure in ['3', '5', '8']:
+    #     if each_figure not in gt_FB_implied:  # this means these intervals can still be implied since GT does not have it
+    #         if each_figure in predict_FB_implied:
+    #             predict_FB_implied.remove(each_figure)
     if predict_FB_PC == gt_FB_PC or predict_FB == gt_FB:
         correct_num += 1
         correct_num_implied += 1
