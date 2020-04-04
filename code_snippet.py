@@ -1,6 +1,9 @@
 # this file offers code realizing certain functions
 import os
 from music21 import *
+from scipy import stats
+import numpy as np
+from collections import Counter
 def count_pickup_measure_NO():
     for fn in os.listdir(r'C:\Users\juyao\Documents\Github\harmonic_analysis\Bach_chorale_FB\FB_source\musicXML_master'):
         if 'FB_align' not in fn: continue
@@ -66,6 +69,10 @@ def compare_against_sam():
     a_counter = 0
     a_counter_correct_FB = 0
     a_counter_correct_IR = 0
+    FB_accuracy = []
+    IR_accuracy = []
+    FB_error = []
+    IR_error = []
     for fn in os.listdir(path_GT):
         f_FB = open(os.path.join(path_FB, fn[:-4] + '_FB_lyric_chordify_FB.txt'))
         f_IR = open(os.path.join(path_IR, fn[:-4] + '_FB_lyric_chordify_IR.txt'))
@@ -73,6 +80,12 @@ def compare_against_sam():
         FB_results = f_FB.readlines()
         IR_results = f_IR.readlines()
         GT_results = f_GT.readlines()
+        for i, elem in enumerate(FB_results):
+            if 'maj7' in elem:
+                FB_results[i] = FB_results[i].replace('maj', 'M')
+        for i, elem in enumerate(IR_results):
+            if 'maj7' in elem:
+                IR_results[i] = IR_results[i].replace('maj', 'M')
         if not len(FB_results) == len(IR_results) and len(FB_results) == len(GT_results):
             print('does not align!')
         counter = len(IR_results)
@@ -82,14 +95,32 @@ def compare_against_sam():
             if each_GT_label == FB_results[i]:
                 counter_correct_FB += 1
                 a_counter_correct_FB += 1
+            else:
+                FB_error.append((each_GT_label+':'+FB_results[i]).replace('\n', ''))
             if each_GT_label == IR_results[i]:
                 counter_correct_IR += 1
                 a_counter_correct_IR += 1
+            else:
+                IR_error.append((each_GT_label+':'+IR_results[i]).replace('\n', ''))
         print('FB accuracy for', fn, 'is', counter_correct_FB / counter)
+        FB_accuracy.append((counter_correct_FB / counter) * 100)
         print('IR accuracy for', fn, 'is', counter_correct_IR / counter)
+        IR_accuracy.append((counter_correct_IR / counter) * 100)
         a_counter += counter
-    print('Overall FB accuracy for is', a_counter_correct_FB / a_counter)
-    print('Overall IR accuracy for is', a_counter_correct_IR / a_counter)
+    print('FB errors', Counter(FB_error), 'total count is', len(FB_error))
+    c = Counter(FB_error)
+    s = sum(c.values())
+    for elem, count in c.items():
+        print(elem, count / s)
+    print('IR errors', Counter(IR_error), 'total count is', len(IR_error))
+    c = Counter(IR_error)
+    s = sum(c.values())
+    for elem, count in c.items():
+        print(elem, count / s)
+    print('Overall FB accuracy for is', np.mean(FB_accuracy), '%', '±', stats.sem(FB_accuracy), '%')
+    print('Overall FB accuracy for is', np.mean(IR_accuracy), '%', '±', stats.sem(IR_accuracy), '%')
+    print('Overall FB accuracy for is', np.mean(FB_accuracy), '%', '±', np.std(FB_accuracy), '%')
+    print('Overall FB accuracy for is', np.mean(IR_accuracy), '%', '±', np.std(IR_accuracy), '%')
 
 
 def compare_chord_labels():
