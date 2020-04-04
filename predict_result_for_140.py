@@ -55,7 +55,7 @@ from sklearn.metrics import accuracy_score
 from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
 from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures
-
+from scipy import stats
 c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
 
 
@@ -1421,41 +1421,41 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
             frame_acc_RB.append((a_counter_correct_RB / a_counter) * 100)
             frame_acc_RB_implied.append((a_counter_correct_RB_implied / a_counter) * 100)
             f_all.close()
-            print(np.mean(cvscores), np.std(cvscores))
+            print(np.mean(cvscores), stats.sem(cvscores))
             print(MODEL_NAME, file=cv_log)
-            print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
-            print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
-            print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
-            print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
-            print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
-            print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
-            print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
-            print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
-            print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+            print('valid accuracy:', np.mean(cvscores), '%', '±', stats.sem(cvscores), '%', file=cv_log)
+            print('valid precision:', np.mean(pre), '%', '±', stats.sem(pre), '%', file=cv_log)
+            print('valid recall:', np.mean(rec), '%', '±', stats.sem(rec), '%', file=cv_log)
+            print('valid f1:', np.mean(f1), '%', '±', stats.sem(f1), '%', file=cv_log)
+            print('valid acc (validate previous):', np.mean(acc), '%', '±', stats.sem(acc), '%', file=cv_log)
+            print('valid tp number:', np.mean(tp), '±', stats.sem(tp), file=cv_log)
+            print('valid fp number:', np.mean(fp), '±', stats.sem(fp), file=cv_log)
+            print('valid fn number:', np.mean(fn), '±', stats.sem(fn), file=cv_log)
+            print('valid tn number:', np.mean(tn), '±', stats.sem(tn), file=cv_log)
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%',  'Frame acc:', frame_acc[i], 'Frame acc implied:', frame_acc_implied[i], '%', file=cv_log)
                 print('Test f1:', i, f1_test[i], '%', 'Frame acc RB:', frame_acc_RB[i], 'Frame acc RB implied:',
                       frame_acc_RB_implied[i], '%', file=cv_log)
-            print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
-            print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
-            print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
-            print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
-            print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', )
+            print('Test accuracy:', np.mean(cvscores_test), '%', '±', stats.sem(cvscores_test), '%', file=cv_log)
+            print('Test precision:', np.mean(pre_test), '%', '±', stats.sem(pre_test), '%', file=cv_log)
+            print('Test recall:', np.mean(rec_test), '%', '±', stats.sem(rec_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', )
             print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
-                  np.std(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+                  stats.sem(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
             print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
-                  np.std(cvscores_percentage_of_NCT_per_slice), '%')
-            print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
-            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%', file=cv_log)
-            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', np.std(frame_acc_implied), '%')
+                  stats.sem(cvscores_percentage_of_NCT_per_slice), '%')
+            print('Test acc:', np.mean(acc_test), '%', '±', stats.sem(acc_test), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%')
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', stats.sem(frame_acc_implied), '%', file=cv_log)
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', stats.sem(frame_acc_implied), '%')
 
-            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', np.std(frame_acc_RB), '%', file=cv_log)
-            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', np.std(frame_acc_RB), '%')
-            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%',
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', stats.sem(frame_acc_RB), '%', file=cv_log)
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', stats.sem(frame_acc_RB), '%')
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', stats.sem(frame_acc_RB_implied), '%',
                   file=cv_log)
-            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', np.std(frame_acc_RB_implied), '%')
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', stats.sem(frame_acc_RB_implied), '%')
             # statistical analysis
             a_predict_FB_RB_implied_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_implied_all))
             a_gt_FB_all_implied_flat = list(itertools.chain.from_iterable(a_gt_FB_implied_all))
@@ -1552,50 +1552,50 @@ def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_i
     sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100) if error_counts != 0 else 0
     empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100) if error_counts != 0 else 0
     ML_rule_err.append((ML_count - ML_count_right) / error_counts * 100) if error_counts != 0 else 0
-    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%;', 'percentage is:',
-          np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;')
-    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', np.std(NCT_bass_acc), '%', 'percentage is:',
-          np.mean(NCT_bass_percentage), '%', '±', np.std(NCT_bass_percentage), '%;', file=cv_log)
-    print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:',
-          np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;')
-    print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', np.std(NCT_upper_acc), '%', 'percentage is:',
-          np.mean(NCT_upper_percentage), '%', '±', np.std(NCT_upper_percentage), '%;', file=cv_log)
-    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc),
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', stats.sem(NCT_bass_acc), '%;', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', stats.sem(NCT_bass_percentage), '%;')
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', stats.sem(NCT_bass_acc), '%', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', stats.sem(NCT_bass_percentage), '%;', file=cv_log)
+    print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', stats.sem(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', stats.sem(NCT_upper_percentage), '%;')
+    print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', stats.sem(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', stats.sem(NCT_upper_percentage), '%;', file=cv_log)
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', stats.sem(FB_already_labeled_acc),
           '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±',
-          np.std(FB_already_labeled_percentage), '%;')
-    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', np.std(FB_already_labeled_acc),
-          'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', np.std(FB_already_labeled_percentage),
+          stats.sem(FB_already_labeled_percentage), '%;')
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', stats.sem(FB_already_labeled_acc),
+          'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', stats.sem(FB_already_labeled_percentage),
           '%;', file=cv_log)
-    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc),
-          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;')
-    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', np.std(sixteenth_note_acc),
-          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', np.std(sixteenth_note_percentage), '%;',
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', stats.sem(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', stats.sem(sixteenth_note_percentage), '%;')
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', stats.sem(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', stats.sem(sixteenth_note_percentage), '%;',
           file=cv_log)
-    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:',
-          np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;')
-    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', np.std(empty_FB_acc), 'percentage is:',
-          np.mean(empty_FB_percentage), '%', '±', np.std(empty_FB_percentage), '%;', file=cv_log)
-    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', np.std(ML_rule_acc), 'percentage is:',
-          np.mean(ML_rule_percentage), '%', '±', np.std(ML_rule_percentage), '%;')
-    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', np.std(ML_rule_acc), 'percentage is:',
-          np.mean(ML_rule_percentage), '%', '±', np.std(ML_rule_percentage), '%;', file=cv_log)
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', stats.sem(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', stats.sem(empty_FB_percentage), '%;')
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', stats.sem(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', stats.sem(empty_FB_percentage), '%;', file=cv_log)
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', stats.sem(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', stats.sem(ML_rule_percentage), '%;')
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', stats.sem(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', stats.sem(ML_rule_percentage), '%;', file=cv_log)
     print('Here is the breakdown of different types of errors, among all errors:')
     print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
-    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err))
-    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', np.std(NCT_bass_err), file=cv_log)
-    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err))
-    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', np.std(NCT_upper_err), file=cv_log)
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', stats.sem(NCT_bass_err))
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', stats.sem(NCT_bass_err), file=cv_log)
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', stats.sem(NCT_upper_err))
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', stats.sem(NCT_upper_err), file=cv_log)
     print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
-          np.std(FB_already_labeled_err), file=cv_log)
+          stats.sem(FB_already_labeled_err), file=cv_log)
     print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
-          np.std(FB_already_labeled_err))
-    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err))
-    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', np.std(sixteenth_note_err),
+          stats.sem(FB_already_labeled_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', stats.sem(sixteenth_note_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', stats.sem(sixteenth_note_err),
           file=cv_log)
-    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err))
-    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', np.std(empty_FB_err), file=cv_log)
-    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', np.std(ML_rule_err))
-    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', np.std(ML_rule_err), file=cv_log)
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', stats.sem(empty_FB_err))
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', stats.sem(empty_FB_err), file=cv_log)
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', stats.sem(ML_rule_err))
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', stats.sem(ML_rule_err), file=cv_log)
     print('----------------------------------------------------------------------')
 
 
@@ -2383,21 +2383,21 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         counts = Counter(error_list)
         print(counts, file=f_all)
         f_all.close()
-    print(np.mean(cvscores), np.std(cvscores))
+    print(np.mean(cvscores), stats.sem(cvscores))
     print(MODEL_NAME, file=cv_log)
     if modelID != 'SVM' and modelID != 'DT':
         model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
-    print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+    print('valid accuracy:', np.mean(cvscores), '%', '±', stats.sem(cvscores), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
-        print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
-        print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
-        print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
-        print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
-        print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
-        print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
-        print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
-        print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+        print('valid precision:', np.mean(pre), '%', '±', stats.sem(pre), '%', file=cv_log)
+        print('valid recall:', np.mean(rec), '%', '±', stats.sem(rec), '%', file=cv_log)
+        print('valid f1:', np.mean(f1), '%', '±', stats.sem(f1), '%', file=cv_log)
+        print('valid acc (validate previous):', np.mean(acc), '%', '±', stats.sem(acc), '%', file=cv_log)
+        print('valid tp number:', np.mean(tp), '±', stats.sem(tp), file=cv_log)
+        print('valid fp number:', np.mean(fp), '±', stats.sem(fp), file=cv_log)
+        print('valid fn number:', np.mean(fn), '±', stats.sem(fn), file=cv_log)
+        print('valid tn number:', np.mean(tn), '±', stats.sem(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i], 'Chord tone gt acc:', chord_tone_acc_gt[i], 'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], '% of agreements:', percentage_of_agreements_for_chord_inferral_algorithms[i], 'Voting acc:', chord_acc_vote[i], 'Nat acc:', chord_acc_nat[i], 'Nat acc spot checking:', chord_acc_nat_spot_checking[i], file=cv_log)
@@ -2411,43 +2411,43 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
         else:
             for i in range(len(cvscores_test)):
                 print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
-    print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+    print('Test accuracy:', np.mean(cvscores_test), '%', '±', stats.sem(cvscores_test), '%', file=cv_log)
     if outputtype.find("CL") != -1 and predict == 'Y':
-        print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
+        print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
-        print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
-        print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
-        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
-        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%',)
-        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±', np.std(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+        print('Test precision:', np.mean(pre_test), '%', '±', stats.sem(pre_test), '%', file=cv_log)
+        print('Test recall:', np.mean(rec_test), '%', '±', stats.sem(rec_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%',)
+        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±', stats.sem(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
         print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
-              np.std(cvscores_percentage_of_NCT_per_slice), '%')
-        print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
-        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
+              stats.sem(cvscores_percentage_of_NCT_per_slice), '%')
+        print('Test acc:', np.mean(acc_test), '%', '±', stats.sem(acc_test), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', stats.sem(frame_acc_2), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', stats.sem(frame_acc_2), '%')
         if predict == 'Y':
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
-            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
-            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
-            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%', file=cv_log)
-            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%', file=cv_log)
-            print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', np.std(direct_harmonic_analysis_acc), '%', file=cv_log)
-            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
-            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', np.std(chord_acc_vote), '%', file=cv_log)
-            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', np.std(chord_acc_nat), '%', file=cv_log)
-            print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±', np.std(chord_acc_nat_spot_checking), '%', file=cv_log)
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
-            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%')
-            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%')
-            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%')
-            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%')
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', stats.sem(chord_acc), '%', file=cv_log)
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', stats.sem(chord_acc_gt), '%', file=cv_log)
+            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', stats.sem(chord_tone_acc), '%', file=cv_log)
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', stats.sem(chord_tone_acc_gt), '%', file=cv_log)
+            print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', stats.sem(direct_harmonic_analysis_acc), '%', file=cv_log)
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', stats.sem(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
+            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', stats.sem(chord_acc_vote), '%', file=cv_log)
+            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', stats.sem(chord_acc_nat), '%', file=cv_log)
+            print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±', stats.sem(chord_acc_nat_spot_checking), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%')
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', stats.sem(chord_acc), '%')
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', stats.sem(chord_acc_gt), '%')
+            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', stats.sem(chord_tone_acc), '%')
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', stats.sem(chord_tone_acc_gt), '%')
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±',
-                  np.std(direct_harmonic_analysis_acc), '%')
-            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%')
-            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', np.std(chord_acc_vote), '%')
-            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', np.std(chord_acc_nat), '%')
+                  stats.sem(direct_harmonic_analysis_acc), '%')
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', stats.sem(percentage_of_agreements_for_chord_inferral_algorithms), '%')
+            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', stats.sem(chord_acc_vote), '%')
+            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', stats.sem(chord_acc_nat), '%')
             print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±',
-                  np.std(chord_acc_nat_spot_checking), '%')
+                  stats.sem(chord_acc_nat_spot_checking), '%')
     cv_log.close()
 
 if __name__ == "__main__":
