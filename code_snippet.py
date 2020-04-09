@@ -1,9 +1,14 @@
 # this file offers code realizing certain functions
 import os
 from music21 import *
+from sequence_alignment import AffineNeedlemanWunsch
 from scipy import stats
 import numpy as np
 from collections import Counter
+import json
+import pandas as pd
+
+
 def count_pickup_measure_NO():
     for fn in os.listdir(r'C:\Users\juyao\Documents\Github\harmonic_analysis\Bach_chorale_FB\FB_source\musicXML_master'):
         if 'FB_align' not in fn: continue
@@ -123,28 +128,68 @@ def compare_against_sam():
     print('Overall FB accuracy for is', np.mean(IR_accuracy), '%', '±', np.std(IR_accuracy), '%')
 
 
-def compare_chord_labels():
-    input_path_array = []
-    inputpath_alignment = os.path.join(os.getcwd(), 'new_music', 'New_alignment', 'predicted_result', 'original_key')
-    inputpath_revised = os.path.join(os.getcwd(), 'new_music', 'New_revised', 'predicted_result', 'original_key')
-    input_path_array.append(inputpath_alignment)
-    input_path_array.append(inputpath_revised)
-    for folder in os.listdir(input_path_array[0]):
-        if os.path.isdir(os.path.join(input_path_array[0], folder)):
-            for fn in os.listdir(os.path.join(input_path_array[0], folder)):
-                if fn[-3:] == 'txt':
-                    f1 = open(os.path.join(input_path_array[0], folder, fn))
-                    f2 = open(os.path.join(input_path_array[1], folder, fn))
-                    result1 = f1.readlines()
-                    result2 = f2.readlines()
-                    number_of_differences = 0
-                    for id, each_result in enumerate(result1):
-                        if each_result != result2[id]:
-                            number_of_differences += 1
-                    print('% of difference for', fn, 'is:', number_of_differences/len(result1))
+def parse_filename(f):
+    f = f.replace('.musi', '').rsplit('_', 3)
+    filename, stage, a, b = f
+    return filename, stage
 
+
+def get_index(fn, stage, keyword):
+    with open(os.path.join(inputpath, fn.replace(stage, keyword))) as f:
+        json_dict1 = json.loads(f.read())
+        index = list(json_dict1.keys())
+        index = [float(value) for value in index]
+    return index
+
+
+def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
+    for fn in os.listdir(inputpath):
+        if not os.path.isdir(os.path.join(inputpath, fn)):
+            if fn[-3:] == 'txt':
+                # f1 = open(os.path.join(input_path_array[0], fn))
+                # try:
+                #     f2 = open(os.path.join(input_path_array[1], fn))
+                # except:
+                #     f2 = open(os.path.join(input_path_array[1], fn.replace(keyword1, keyword2)))
+                # json_dict1 = json.loads(f1)
+                # json_dict2 = json.loads(f1)
+                filename, stage = parse_filename(fn.strip())
+                index1 = get_index(fn, stage, keyword1)
+                index2 = get_index(fn, stage, keyword2)
+                index3 = get_index(fn, stage, keyword3)
+                index4 = get_index(fn, stage, keyword4)
+                shared_index = index1
+                shared_index = list(sorted(set(shared_index + index2)))
+                shared_index = list(sorted(set(shared_index + index3)))
+                shared_index = list(sorted(set(shared_index + index4)))
+                # should make a dictionary here
+                df = pd.DataFrame(shared_index)
+                df.fillna(method='ffill', inplace=True)
+                # result1 = f1.read().splitlines()
+                # result2 = f2.read().splitlines()
+                # number_of_differences = 0
+                # if len(result1) != len(result2):
+                #     print('-------------------------------------------')
+                #     print('dimensions for', fn, 'is different!', 'f1 is', len(result1), 'f2 is', len(result2))
+                #     print(AffineNeedlemanWunsch(result1, result2))
+                #     break
+                #     # s1 = converter.parse(os.path.join(os.getcwd(), 'new_music', 'New_alignment', fn.replace('musi_chord_labels.txt', 'musicxml')))
+                #     # s2 = converter.parse(os.path.join(os.getcwd(), 'new_music', 'New_corrected', fn.replace('musi_chord_labels.txt', 'musicxml').replace('revised', 'corrected')))
+                #     # s1_chordify = s1.chordify()
+                #     # s2_chordify = s2.chordify()
+                #     # print('music dimensions for f1 is', len(s1_chordify.recurse().getElementsByClass('Chord')), 'f2 is', len(s2_chordify.recurse().getElementsByClass('Chord')))
+                # else:
+                #     for id, each_result in enumerate(result1):
+                #         if id < len(result2):
+                #             if each_result != result2[id]:
+                #                 number_of_differences += 1
+                #
+                # print('% of difference for', fn, 'is:', number_of_differences/len(result1))
+                # if len(result1) != len(result2):
+                #     print('-------------------------------------------')
 
 if __name__ == "__main__":
-    compare_against_sam()
+    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result', 'original_key')
+    compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     #count_pickup_measure_NO()
 

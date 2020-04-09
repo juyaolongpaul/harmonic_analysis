@@ -11,6 +11,7 @@ from predict_result_for_140 import find_tranposed_interval
 from predict_result_for_140 import transpose_chord
 from predict_result_for_140 import get_FB_and_FB_PC
 from FB2lyrics import translate_FB_into_chords, add_chord
+import json
 
 def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
     counter = 0
@@ -382,6 +383,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                     f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
                                                                                                        :-4]) + '_chord_labels.txt',
                                  'w')
+                    dictionary = {}
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                         thisChord.closedPosition(forceOctave=4, inPlace=True)
                         sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
@@ -454,8 +456,11 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         transposed_result = transpose_chord(transposed_interval, chord)
                         if previous_transposed_result != transposed_result:
                             add_chord(sChords_new.recurse().getElementsByClass('Chord')[j], transposed_result)  # get rid of - bug
-                        print(transposed_result, file=f_ori)
+                        # print(transposed_result, file=f_ori)
+                        dictionary.update({thisChord.offset + sChords.measure(thisChord.measureNumber).offset:transposed_result})
                         previous_transposed_result = transposed_result
+                    json_dict = json.dumps(dictionary)
+                    f_ori.write(json_dict)
                     f_ori.close()
                     f_transposed.close()
                     s.write('musicxml',
