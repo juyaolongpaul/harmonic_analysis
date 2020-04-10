@@ -7,6 +7,9 @@ import numpy as np
 from collections import Counter
 import json
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.set()
 
 
 def count_pickup_measure_NO():
@@ -136,10 +139,11 @@ def parse_filename(f):
 
 def get_index(fn, stage, keyword):
     with open(os.path.join(inputpath, fn.replace(stage, keyword))) as f:
-        json_dict1 = json.loads(f.read())
-        index = list(json_dict1.keys())
+        json_dict = json.loads(f.read())
+        json_dict = {float(k):v for k, v in json_dict.items()}
+        index = list(json_dict.keys())
         index = [float(value) for value in index]
-    return index
+    return index, json_dict
 
 
 def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
@@ -154,17 +158,32 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 # json_dict1 = json.loads(f1)
                 # json_dict2 = json.loads(f1)
                 filename, stage = parse_filename(fn.strip())
-                index1 = get_index(fn, stage, keyword1)
-                index2 = get_index(fn, stage, keyword2)
-                index3 = get_index(fn, stage, keyword3)
-                index4 = get_index(fn, stage, keyword4)
+                index1, dict1= get_index(fn, stage, keyword1)
+                index2, dict2= get_index(fn, stage, keyword2)
+                index3, dict3= get_index(fn, stage, keyword3)
+                index4, dict4= get_index(fn, stage, keyword4)
                 shared_index = index1
                 shared_index = list(sorted(set(shared_index + index2)))
                 shared_index = list(sorted(set(shared_index + index3)))
                 shared_index = list(sorted(set(shared_index + index4)))
+                whole_dict = {'shared_index':shared_index}
+                whole_dict.update({keyword1:dict1})
+                whole_dict.update({keyword2: dict2})
+                whole_dict.update({keyword3: dict3})
+                whole_dict.update({keyword4: dict4})
                 # should make a dictionary here
-                df = pd.DataFrame(shared_index)
+                df = pd.DataFrame(whole_dict, index=whole_dict['shared_index'])
                 df.fillna(method='ffill', inplace=True)
+                # df.cc.astype('category').cat.codes
+
+                df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
+                #
+                print(df)
+                df['code'] = pd.factorize(df['chord_labels'])[0]
+                print(df)
+                plt.figure(figsize=(25, 6))
+                sns.lineplot(x='shared_index', y='code', hue='stage', data=df)
+                plt.show()
                 # result1 = f1.read().splitlines()
                 # result2 = f2.read().splitlines()
                 # number_of_differences = 0
@@ -189,7 +208,7 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 #     print('-------------------------------------------')
 
 if __name__ == "__main__":
-    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result', 'original_key')
+    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
     compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     #count_pickup_measure_NO()
 
