@@ -384,6 +384,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                                                                                                        :-4]) + '_chord_labels.txt',
                                  'w')
                     dictionary = {}
+                    dictionary_transposed = {}
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                         thisChord.closedPosition(forceOctave=4, inPlace=True)
                         sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
@@ -396,14 +397,14 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         if j == 0:
                             thisChord.addLyric(
                                 ('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]]))
-                            print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                            # print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]])
                             thisChord.addLyric(
                                 ('DH (ML):', chord_name[predict_y_direct_harmonic_analysis[a_counter]]))
                         else:
                             thisChord.addLyric(
                                 (chord_name[predict_y_chord_tone[a_counter]]))  # Output chords in the transposed key
                             thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]])
-                            print(chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                            # print(chord_name[predict_y_chord_tone[a_counter]])
                         all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
                             chord_name[predict_y_direct_harmonic_analysis[a_counter]]))] = all_answers_per_chorale[j].get(
                             unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
@@ -458,9 +459,15 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                             add_chord(sChords_new.recurse().getElementsByClass('Chord')[j], transposed_result)  # get rid of - bug
                         # print(transposed_result, file=f_ori)
                         dictionary.update({thisChord.offset + sChords.measure(thisChord.measureNumber).offset:transposed_result})
+                        dictionary_transposed.update(
+                            {thisChord.offset + sChords.measure(thisChord.measureNumber).offset: chord})
                         previous_transposed_result = transposed_result
-                    json_dict = json.dumps(dictionary)
-                    f_ori.write(json_dict)
+                    try:
+                        json_dict = json.dumps(dictionary)
+                        f_ori.write(json_dict)
+                        f_transposed.write(json.dumps(dictionary_transposed))
+                    except:
+                        print('skip', fn)
                     f_ori.close()
                     f_transposed.close()
                     s.write('musicxml',
