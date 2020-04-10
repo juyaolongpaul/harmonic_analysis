@@ -174,16 +174,33 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 # should make a dictionary here
                 df = pd.DataFrame(whole_dict, index=whole_dict['shared_index'])
                 df.fillna(method='ffill', inplace=True)
-                # df.cc.astype('category').cat.codes
-
-                df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
-                #
-                print(df)
-                df['code'] = pd.factorize(df['chord_labels'])[0]
-                print(df)
-                plt.figure(figsize=(25, 6))
-                sns.lineplot(x='shared_index', y='code', hue='stage', data=df)
+                orders = ['omr_corrected', 'corrected_revised', 'revised_aligned']
+                df['omr_corrected'] = (df['omr'] != df['corrected'])
+                df['corrected_revised'] = (df['corrected'] != df['revised'])
+                df['revised_aligned'] = (df['revised'] != df['aligned'])
+                df = df.melt(id_vars=['shared_index'], value_vars=orders, var_name='comparison',
+                             value_name='changed')
+                df = df.astype({'changed': 'float64'})
+                sns.relplot(
+                    x='shared_index',
+                    y='changed',
+                    row='comparison',
+                    kind='line',
+                    height=1.5,
+                    aspect=15.0,
+                    data=df
+                )
                 plt.show()
+                # df.cc.astype('category').cat.codes
+                ############## Output results as chord label integers
+                # df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
+                # #
+                # print(df)
+                # df['code'] = pd.factorize(df['chord_labels'])[0]
+                # print(df)
+                # plt.figure(figsize=(25, 6))
+                # sns.lineplot(x='shared_index', y='code', hue='stage', data=df)
+                # plt.show()
                 # result1 = f1.read().splitlines()
                 # result2 = f2.read().splitlines()
                 # number_of_differences = 0
