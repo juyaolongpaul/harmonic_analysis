@@ -458,9 +458,10 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         if previous_transposed_result != transposed_result:
                             add_chord(sChords_new.recurse().getElementsByClass('Chord')[j], transposed_result)  # get rid of - bug
                         # print(transposed_result, file=f_ori)
-                        dictionary.update({thisChord.offset + sChords.measure(thisChord.measureNumber).offset:transposed_result})
+                        print(type(float(thisChord.offset)), float(thisChord.offset), type(float(sChords.measure(thisChord.measureNumber).offset)), float(sChords.measure(thisChord.measureNumber).offset))
+                        dictionary.update({float(thisChord.offset) + float(sChords.measure(thisChord.measureNumber).offset):transposed_result})
                         dictionary_transposed.update(
-                            {thisChord.offset + sChords.measure(thisChord.measureNumber).offset: chord})
+                            {float(thisChord.offset) + float(sChords.measure(thisChord.measureNumber).offset):chord})
                         previous_transposed_result = transposed_result
                     try:
                         json_dict = json.dumps(dictionary)
@@ -468,6 +469,11 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         f_transposed.write(json.dumps(dictionary_transposed))
                     except:
                         print('skip', fn)
+                        # print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary.items()]))
+                        print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary.items()]), file=f_ori)
+                        print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary_transposed.items()]), file=f_transposed)
+                        # print(dictionary, file=f_ori)
+                        # print(dictionary_transposed, file=f_transposed)
                     f_ori.close()
                     f_transposed.close()
                     s.write('musicxml',
@@ -492,7 +498,7 @@ if __name__ == "__main__":
                                 '3layer300DNNwindow_size1_2training_data1timestep0Bach_o_FBNCT_pitch_classpitch_class_with_bass3meter_NewOnset_New_annotation_12keys__training79_cv_1.hdf5')
 
 
-    inputpath = os.path.join(os.getcwd(), 'new_music', 'New')
+    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_debug')
     if not os.path.isdir(inputpath):
         os.mkdir(os.path.join(os.getcwd(), 'new_music'))
         os.mkdir(inputpath)

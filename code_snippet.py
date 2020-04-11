@@ -138,7 +138,11 @@ def parse_filename(f):
 
 
 def get_index(fn, stage, keyword):
-    with open(os.path.join(inputpath, fn.replace(stage, keyword))) as f:
+    if '2_op13_1_' in fn and keyword != 'omr':
+        replace = fn.replace(stage, keyword).replace('C', 'a_ori')
+    else:
+        replace = fn.replace(stage, keyword)
+    with open(os.path.join(inputpath, replace)) as f:
         json_dict = json.loads(f.read())
         json_dict = {float(k):v for k, v in json_dict.items()}
         index = list(json_dict.keys())
@@ -149,7 +153,10 @@ def get_index(fn, stage, keyword):
 def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
     for fn in os.listdir(inputpath):
         if not os.path.isdir(os.path.join(inputpath, fn)):
-            if fn[-3:] == 'txt':
+            if fn[-3:] == 'txt' and 'omr' in fn:
+                # if 'op81_2' not in fn:
+                #     continue
+                print(fn)
                 # f1 = open(os.path.join(input_path_array[0], fn))
                 # try:
                 #     f2 = open(os.path.join(input_path_array[1], fn))
@@ -158,10 +165,30 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 # json_dict1 = json.loads(f1)
                 # json_dict2 = json.loads(f1)
                 filename, stage = parse_filename(fn.strip())
-                index1, dict1= get_index(fn, stage, keyword1)
-                index2, dict2= get_index(fn, stage, keyword2)
-                index3, dict3= get_index(fn, stage, keyword3)
-                index4, dict4= get_index(fn, stage, keyword4)
+                try:
+                    get_index(fn, stage, keyword1)
+                    index1, dict1 = get_index(fn, stage, keyword1)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword2)
+                    index2, dict2 = get_index(fn, stage, keyword2)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword3)
+                    index3, dict3 = get_index(fn, stage, keyword3)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword4)
+                    index4, dict4 = get_index(fn, stage, keyword4)
+                except:
+                    continue
+                # index1, dict1= get_index(fn, stage, keyword1)
+                # index2, dict2= get_index(fn, stage, keyword2)
+                # index3, dict3= get_index(fn, stage, keyword3)
+                # index4, dict4= get_index(fn, stage, keyword4)
                 shared_index = index1
                 shared_index = list(sorted(set(shared_index + index2)))
                 shared_index = list(sorted(set(shared_index + index3)))
@@ -178,6 +205,10 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 df['omr_corrected'] = (df['omr'] != df['corrected'])
                 df['corrected_revised'] = (df['corrected'] != df['revised'])
                 df['revised_aligned'] = (df['revised'] != df['aligned'])
+                diff = df['omr_corrected'].mean()
+                diff2 = df['corrected_revised'].mean()
+                diff3 = df['revised_aligned'].mean()
+                df2 = df
                 df = df.melt(id_vars=['shared_index'], value_vars=orders, var_name='comparison',
                              value_name='changed')
                 df = df.astype({'changed': 'float64'})
@@ -190,7 +221,8 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                     aspect=15.0,
                     data=df
                 )
-                plt.show()
+                # plt.show()
+                print('comparison', diff, diff2, diff3)
                 # df.cc.astype('category').cat.codes
                 ############## Output results as chord label integers
                 # df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
