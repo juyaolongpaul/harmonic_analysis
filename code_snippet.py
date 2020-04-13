@@ -10,6 +10,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 sns.set()
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 
 
 def count_pickup_measure_NO():
@@ -154,7 +156,7 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
     for fn in os.listdir(inputpath):
         if not os.path.isdir(os.path.join(inputpath, fn)):
             if fn[-3:] == 'txt' and 'omr' in fn:
-                # if 'op81_2' not in fn:
+                # if 'op44ii_3' not in fn:
                 #     continue
                 print(fn)
                 # f1 = open(os.path.join(input_path_array[0], fn))
@@ -200,7 +202,9 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 whole_dict.update({keyword4: dict4})
                 # should make a dictionary here
                 df = pd.DataFrame(whole_dict, index=whole_dict['shared_index'])
+                # print(df)
                 df.fillna(method='ffill', inplace=True)
+                # print(df)
                 orders = ['omr_corrected', 'corrected_revised', 'revised_aligned']
                 df['omr_corrected'] = (df['omr'] != df['corrected'])
                 df['corrected_revised'] = (df['corrected'] != df['revised'])
@@ -209,6 +213,7 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 diff2 = df['corrected_revised'].mean()
                 diff3 = df['revised_aligned'].mean()
                 df2 = df
+
                 df = df.melt(id_vars=['shared_index'], value_vars=orders, var_name='comparison',
                              value_name='changed')
                 df = df.astype({'changed': 'float64'})
@@ -221,7 +226,8 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                     aspect=15.0,
                     data=df
                 )
-                # plt.show()
+                plt.title(fn)
+                plt.show()
                 print('comparison', diff, diff2, diff3)
                 # df.cc.astype('category').cat.codes
                 ############## Output results as chord label integers
