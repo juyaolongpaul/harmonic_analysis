@@ -11,6 +11,8 @@ from predict_result_for_140 import find_tranposed_interval
 from predict_result_for_140 import transpose_chord
 from predict_result_for_140 import get_FB_and_FB_PC
 from FB2lyrics import translate_FB_into_chords, add_chord
+import json
+
 
 def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
     counter = 0
@@ -38,6 +40,46 @@ def generate_ML_matrix(path, windowsize, augmentation, sign='N'):
         fn_all.append(fn)
     fn_all.sort()
     print(fn_all)
+    for fn in fn_all:
+        encoding = np.loadtxt(os.path.join(path, fn))
+        encoding_window = adding_window_one_hot(encoding, windowsize)
+        if counter == 0:
+            encoding_all = list(encoding_window)
+            encoding_all = np.array(encoding_all)
+        else:
+            encoding_all = np.concatenate((encoding_all, encoding_window))
+        counter += 1
+    print('finished')
+    return encoding_all, fn_all
+
+
+def generate_ML_matrix_one_file(filename, path, windowsize, augmentation, sign='N'):
+    counter = 0
+    fn_all = []  # Unify the order
+    for fn in os.listdir(path):
+        if filename not in fn: continue
+        if sign == 'N':  # eliminate pitch class only encoding
+            if fn.find('_pitch_class') != -1 or fn.find('_chord_tone') != -1:
+                continue
+        elif sign == 'Y':  # only want pitch class only encoding
+            if fn.find('_pitch_class') == -1:
+                continue
+        elif sign == 'C':  # only want chord tone as input to train the chord inferral algorithm
+            if fn.find('_chord_tone') == -1:
+                continue
+        if augmentation == 'N':
+            if fn.find('CKE') == -1 and fn.find('C_oriKE') == -1 and fn.find('aKE') == -1 and fn.find(
+                    'a_oriKE') == -1:  # we cannot find key of c, skip
+                continue
+        else:
+            if fn.find('ori') == -1:
+                continue
+        # elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
+        #     if fn.find('_ori') == -1:
+        #         continue
+        fn_all.append(fn)
+    fn_all.sort()
+    print('getting encodings for', fn_all)
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
         encoding_window = adding_window_one_hot(encoding, windowsize)
@@ -271,15 +313,15 @@ def predict_new_music_FB(modelpath_FB, inputpath):
                                                                                             :-4]) + 'chord.xml')
 
 
-def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
-    transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
+def predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
+    # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
-    if not os.path.isdir(os.path.join(inputpath, 'encodings')):
-        os.mkdir(os.path.join(inputpath, 'encodings'))
-    get_input_encoding(inputpath, encoding_path)  # generate input encodings
-    xx, fileName = generate_ML_matrix(encoding_path, 1, 'N')
-    xx_no_window, fileName_fake = generate_ML_matrix(encoding_path, 0, 'N')
-    xx_only_pitch, fileName_fake= generate_ML_matrix(encoding_path, 0, 'N', 'Y')
+    # if not os.path.isdir(os.path.join(inputpath, 'encodings')):
+    #     os.mkdir(os.path.join(inputpath, 'encodings'))
+    # get_input_encoding(inputpath, encoding_path)  # generate input encodings
+    xx, fileName = generate_ML_matrix_one_file(filename, encoding_path, 1, 'N')
+    xx_no_window, fileName_fake = generate_ML_matrix_one_file(filename, encoding_path, 0, 'N')
+    xx_only_pitch, fileName_fake= generate_ML_matrix_one_file(filename, encoding_path, 0, 'N', 'Y')
     xx_chord_tone = list(xx_only_pitch)
     model = load_model(modelpath_NCT)  # we need to assemble x now
     model_chord_tone = load_model(modelpath_CL)
@@ -382,7 +424,12 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                     f_ori = open(os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fn[
                                                                                                        :-4]) + '_chord_labels.txt',
                                  'w')
+                    dictionary = {}
+                    dictionary_transposed = {}
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        if j == len(xx_only_pitch):
+                            print('this file does not align!', fn, file=f_info)
+                            break
                         thisChord.closedPosition(forceOctave=4, inPlace=True)
                         sChords_new.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
                         x = xx_only_pitch[a_counter]
@@ -394,14 +441,14 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         if j == 0:
                             thisChord.addLyric(
                                 ('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]]))
-                            print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                            # print('NCT + CL (ML):', chord_name[predict_y_chord_tone[a_counter]])
                             thisChord.addLyric(
                                 ('DH (ML):', chord_name[predict_y_direct_harmonic_analysis[a_counter]]))
                         else:
                             thisChord.addLyric(
                                 (chord_name[predict_y_chord_tone[a_counter]]))  # Output chords in the transposed key
                             thisChord.addLyric(chord_name[predict_y_direct_harmonic_analysis[a_counter]])
-                            print(chord_name[predict_y_chord_tone[a_counter]], file=f_transposed)
+                            # print(chord_name[predict_y_chord_tone[a_counter]])
                         all_answers_per_chorale[j][unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
                             chord_name[predict_y_direct_harmonic_analysis[a_counter]]))] = all_answers_per_chorale[j].get(
                             unify_GTChord_and_inferred_chord(translate_chord_name_into_music21(
@@ -414,6 +461,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         a_counter += 1
                     previous_transposed_result = ''
                     for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                        if j == len(chord_label_list): break
                         if (chord_label_list[j] == 'un-determined' or chord_label_list[j].find(
                                 'interval') != -1):  # sometimes the last
                             # chord is un-determined because there are only two tones!
@@ -454,8 +502,23 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                         transposed_result = transpose_chord(transposed_interval, chord)
                         if previous_transposed_result != transposed_result:
                             add_chord(sChords_new.recurse().getElementsByClass('Chord')[j], transposed_result)  # get rid of - bug
-                        print(transposed_result, file=f_ori)
+                        # print(transposed_result, file=f_ori)
+                        # print(type(float(thisChord.offset)), float(thisChord.offset), type(float(sChords.measure(thisChord.measureNumber).offset)), float(sChords.measure(thisChord.measureNumber).offset))
+                        dictionary.update({float(thisChord.offset) + float(sChords.measure(thisChord.measureNumber).offset):transposed_result})
+                        dictionary_transposed.update(
+                            {float(thisChord.offset) + float(sChords.measure(thisChord.measureNumber).offset):chord})
                         previous_transposed_result = transposed_result
+                    try:
+                        json_dict = json.dumps(dictionary)
+                        f_ori.write(json_dict)
+                        f_transposed.write(json.dumps(dictionary_transposed))
+                    except:
+                        print('skip', fn)
+                        # print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary.items()]))
+                        print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary.items()]), file=f_ori)
+                        print('{%s}' % ', '.join(['"%s": "%s"' % (k, v) for k, v in dictionary_transposed.items()]), file=f_transposed)
+                        # print(dictionary, file=f_ori)
+                        # print(dictionary_transposed, file=f_transposed)
                     f_ori.close()
                     f_transposed.close()
                     s.write('musicxml',
@@ -465,6 +528,7 @@ def predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach
                     sNew.write('musicxml',
                                fp=os.path.join(inputpath, 'predicted_result', 'original_key', key_info, fileName[i][
                                                                                                         :-4]) + '.xml')
+
 
 
 if __name__ == "__main__":
@@ -484,7 +548,15 @@ if __name__ == "__main__":
     if not os.path.isdir(inputpath):
         os.mkdir(os.path.join(os.getcwd(), 'new_music'))
         os.mkdir(inputpath)
-    predict_new_music(modelpath_NCT, modelpath_CL, modelpath_DH, inputpath)
+    f_info = open('info.txt', 'w')
+    for fn in os.listdir(inputpath):
+        if 'transposed' in fn: continue
+        if '.musicxml' not in fn: continue
+        # if '4_op44ii_1_revised' not in fn: continue
+        filename, file_extension = os.path.splitext(fn)
+        print(filename)
+        predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_DH, inputpath)
+    f_info.close()
     # predict_new_music_FB(modelpath_FB, inputpath)
     # inputpath = os.path.join(os.getcwd(), 'new_muisc', 'Praetorius')
     # predict_new_music(modelpath_NCT, modelpath_CL, inputpath)

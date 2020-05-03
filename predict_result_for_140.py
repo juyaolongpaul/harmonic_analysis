@@ -649,15 +649,23 @@ def infer_chord_label3(j, thisChord, chord_label_list, chord_tone_list):
             if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
                 break
         jj = jj + j + 1
-        common_tone1 = list(
-            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
-                harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+        try:
+            common_tone1 = list(
+                set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                    harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+        except:
+            chord_label_list[j] = chord_label_list[jj]
+            return
         if chord_label_list[jj] == 'un-determined': # Edge case: 187, the last slice is un-determined
             common_tone2 = []
         else:
-            common_tone2 = list(
-            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
-                harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+            try:
+                common_tone2 = list(
+                set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                    harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+            except:
+                chord_label_list[j] = chord_label_list[j - 1]
+                return
         if len(common_tone1) == len(harmony.ChordSymbol(chord_label_list[j]).pitchClasses) and len(
                 harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses) > len(
             harmony.ChordSymbol(chord_label_list[j]).pitchClasses):

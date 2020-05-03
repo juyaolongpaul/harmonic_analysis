@@ -1,9 +1,19 @@
 # this file offers code realizing certain functions
 import os
 from music21 import *
+from sequence_alignment import AffineNeedlemanWunsch
 from scipy import stats
 import numpy as np
 from collections import Counter
+import json
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.set()
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+
+
 def count_pickup_measure_NO():
     for fn in os.listdir(r'C:\Users\juyao\Documents\Github\harmonic_analysis\Bach_chorale_FB\FB_source\musicXML_master'):
         if 'FB_align' not in fn: continue
@@ -123,28 +133,137 @@ def compare_against_sam():
     print('Overall FB accuracy for is', np.mean(IR_accuracy), '%', '±', np.std(IR_accuracy), '%')
 
 
-def compare_chord_labels():
-    input_path_array = []
-    inputpath_alignment = os.path.join(os.getcwd(), 'new_music', 'New_alignment', 'predicted_result', 'original_key')
-    inputpath_revised = os.path.join(os.getcwd(), 'new_music', 'New_revised', 'predicted_result', 'original_key')
-    input_path_array.append(inputpath_alignment)
-    input_path_array.append(inputpath_revised)
-    for folder in os.listdir(input_path_array[0]):
-        if os.path.isdir(os.path.join(input_path_array[0], folder)):
-            for fn in os.listdir(os.path.join(input_path_array[0], folder)):
-                if fn[-3:] == 'txt':
-                    f1 = open(os.path.join(input_path_array[0], folder, fn))
-                    f2 = open(os.path.join(input_path_array[1], folder, fn))
-                    result1 = f1.readlines()
-                    result2 = f2.readlines()
-                    number_of_differences = 0
-                    for id, each_result in enumerate(result1):
-                        if each_result != result2[id]:
-                            number_of_differences += 1
-                    print('% of difference for', fn, 'is:', number_of_differences/len(result1))
+def parse_filename(f):
+    f = f.replace('.musi', '').rsplit('_', 3)
+    filename, stage, a, b = f
+    return filename, stage
 
+
+def get_index(fn, stage, keyword):
+    if '2_op13_1_' in fn and keyword != 'omr':
+        replace = fn.replace(stage, keyword).replace('C', 'a_ori')
+    else:
+        replace = fn.replace(stage, keyword)
+    with open(os.path.join(inputpath, replace)) as f:
+        json_dict = json.loads(f.read())
+        json_dict = {float(k):v for k, v in json_dict.items()}
+        index = list(json_dict.keys())
+        index = [float(value) for value in index]
+    return index, json_dict
+
+
+def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
+    for fn in os.listdir(inputpath):
+        if not os.path.isdir(os.path.join(inputpath, fn)):
+            if fn[-3:] == 'txt' and 'omr' in fn:
+                # if 'op44ii_3' not in fn:
+                #     continue
+                print(fn)
+                # f1 = open(os.path.join(input_path_array[0], fn))
+                # try:
+                #     f2 = open(os.path.join(input_path_array[1], fn))
+                # except:
+                #     f2 = open(os.path.join(input_path_array[1], fn.replace(keyword1, keyword2)))
+                # json_dict1 = json.loads(f1)
+                # json_dict2 = json.loads(f1)
+                filename, stage = parse_filename(fn.strip())
+                try:
+                    get_index(fn, stage, keyword1)
+                    index1, dict1 = get_index(fn, stage, keyword1)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword2)
+                    index2, dict2 = get_index(fn, stage, keyword2)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword3)
+                    index3, dict3 = get_index(fn, stage, keyword3)
+                except:
+                    continue
+                try:
+                    get_index(fn, stage, keyword4)
+                    index4, dict4 = get_index(fn, stage, keyword4)
+                except:
+                    continue
+                # index1, dict1= get_index(fn, stage, keyword1)
+                # index2, dict2= get_index(fn, stage, keyword2)
+                # index3, dict3= get_index(fn, stage, keyword3)
+                # index4, dict4= get_index(fn, stage, keyword4)
+                shared_index = index1
+                shared_index = list(sorted(set(shared_index + index2)))
+                shared_index = list(sorted(set(shared_index + index3)))
+                shared_index = list(sorted(set(shared_index + index4)))
+                whole_dict = {'shared_index':shared_index}
+                whole_dict.update({keyword1:dict1})
+                whole_dict.update({keyword2: dict2})
+                whole_dict.update({keyword3: dict3})
+                whole_dict.update({keyword4: dict4})
+                # should make a dictionary here
+                df = pd.DataFrame(whole_dict, index=whole_dict['shared_index'])
+                # print(df)
+                df.fillna(method='ffill', inplace=True)
+                # print(df)
+                orders = ['omr_corrected', 'corrected_revised', 'revised_aligned']
+                df['omr_corrected'] = (df['omr'] != df['corrected'])
+                df['corrected_revised'] = (df['corrected'] != df['revised'])
+                df['revised_aligned'] = (df['revised'] != df['aligned'])
+                diff = df['omr_corrected'].mean()
+                diff2 = df['corrected_revised'].mean()
+                diff3 = df['revised_aligned'].mean()
+                df2 = df
+
+                df = df.melt(id_vars=['shared_index'], value_vars=orders, var_name='comparison',
+                             value_name='changed')
+                df = df.astype({'changed': 'float64'})
+                sns.relplot(
+                    x='shared_index',
+                    y='changed',
+                    row='comparison',
+                    kind='line',
+                    height=1.5,
+                    aspect=15.0,
+                    data=df
+                )
+                plt.title(fn)
+                plt.show()
+                print('comparison', diff, diff2, diff3)
+                # df.cc.astype('category').cat.codes
+                ############## Output results as chord label integers
+                # df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
+                # #
+                # print(df)
+                # df['code'] = pd.factorize(df['chord_labels'])[0]
+                # print(df)
+                # plt.figure(figsize=(25, 6))
+                # sns.lineplot(x='shared_index', y='code', hue='stage', data=df)
+                # plt.show()
+                # result1 = f1.read().splitlines()
+                # result2 = f2.read().splitlines()
+                # number_of_differences = 0
+                # if len(result1) != len(result2):
+                #     print('-------------------------------------------')
+                #     print('dimensions for', fn, 'is different!', 'f1 is', len(result1), 'f2 is', len(result2))
+                #     print(AffineNeedlemanWunsch(result1, result2))
+                #     break
+                #     # s1 = converter.parse(os.path.join(os.getcwd(), 'new_music', 'New_alignment', fn.replace('musi_chord_labels.txt', 'musicxml')))
+                #     # s2 = converter.parse(os.path.join(os.getcwd(), 'new_music', 'New_corrected', fn.replace('musi_chord_labels.txt', 'musicxml').replace('revised', 'corrected')))
+                #     # s1_chordify = s1.chordify()
+                #     # s2_chordify = s2.chordify()
+                #     # print('music dimensions for f1 is', len(s1_chordify.recurse().getElementsByClass('Chord')), 'f2 is', len(s2_chordify.recurse().getElementsByClass('Chord')))
+                # else:
+                #     for id, each_result in enumerate(result1):
+                #         if id < len(result2):
+                #             if each_result != result2[id]:
+                #                 number_of_differences += 1
+                #
+                # print('% of difference for', fn, 'is:', number_of_differences/len(result1))
+                # if len(result1) != len(result2):
+                #     print('-------------------------------------------')
 
 if __name__ == "__main__":
-    compare_against_sam()
+    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
+    compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     #count_pickup_measure_NO()
 
