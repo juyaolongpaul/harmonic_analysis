@@ -764,6 +764,10 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
         if 'FB_align' in filename: continue
+        # if not any(each_ID in filename for each_ID in
+        #        ['16.06', '506', '248.05', '447', '113.08', '488', '244.44', '244.40', '248.33', '140.07']):
+        #     # exclude the ones that do not align with Sam
+        #         continue  # exclude all the interlude chorales
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
         #     continue
         print(filename)

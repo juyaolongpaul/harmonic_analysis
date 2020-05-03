@@ -22,7 +22,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -36,7 +36,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class_with_bass_scale_new_data')
+                        type=str, default='pitch_class')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=1)
@@ -72,6 +72,9 @@ def main():
     parser.add_argument('-ru', '--rule',
                         help='specify which rules you wanna use (default: %(default))',
                         type=list, default=['NCT bass', 'NCT upper voices', 'FB already labeled', '16th (or shorter) note slice ignored'])
+    parser.add_argument('-semi', '--semitone',
+                        help='specify whether you want to replace pitch class with intervals or not (default: %(default))',
+                        type=str, default='Y')
     args = parser.parse_args()
     f1 = '.xml'
     f2 = '.txt'
@@ -98,16 +101,16 @@ def main():
                                                                  counter, counterMin, input, f1, input, f2,
                                                                  args.source,
                                                                  args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+                                                                 args.cross_validation, args.version, args.output, args.input, args.semitone)  # generate training and testing data, return the sequence of test id
     #   # only execute this when the CV matrices are complete
     #
     # # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
     # #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
     # #                                  args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
-    train_and_predict_FB(['NCT bass', 'NCT upper voices', 'FB already labeled', '16th (or shorter) note slice ignored'], args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+    train_and_predict_FB(['NCT bass', 'NCT upper voices', 'FB already labeled'], args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                      args.cross_validation, args.pitch, args.ratio, input, input, args.balanced,
-                                     args.output, args.input, args.predict, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
+                                     args.output, args.input, args.predict, args.semitone, ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447']) # Evaluate on the reserved chorales, where the 4th ones and onward are the ones missing FB a lot
     # this gives us 124 training chorales: 143-12 interlude chorales - 7 chorales with both missing figures and the first three where music21 has issues. Look into 297!
     #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":

@@ -1411,7 +1411,7 @@ def add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_tota
 
 def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output,
                   f2, sign, augmentation, pitch, data_id, portion, outputtype, data_id_total,
-                  inputtype):
+                  inputtype, semitone):
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
     fn_total_all = []  # this save all file ID, including training, validation and test data
@@ -1453,7 +1453,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                                       inputtype, s_no_chordify, outputtype, fn, pitch,
                                                       chorale_x, chorale_x_12, chorale_x_only_pitch_class,
                                                       chorale_x_only_meter,
-                                                      chorale_x_only_newOnset, keys, music21, counter, countermin, sign)
+                                                      chorale_x_only_newOnset, keys, music21, counter, countermin, sign, semitone)
         # generate encoding for output
         slice_counter = 0
         yy = []  # output encoding for the whole piece
@@ -1476,6 +1476,8 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                                     any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
                 # explicitly labeled in FB
                         FB_sonority[sonority.pitch.pitchClass] = 1
+            if semitone == 'Y':
+                FB_sonority = convert_pitch_class_into_semitones(FB_sonority, bass, pitch_class_four_voice, 'Y')
             # for each_figure in fig_collapsed:
             #     if each_figure == '' or '_' in each_figure:
             #         continue
@@ -1490,8 +1492,8 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
             else:
                 yy = np.vstack((yy, FB_sonority))
         print('slices of output: ', slice_counter, "slices of input", slice_input)
-        # if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
-        #     input('fix this or delete this')
+        if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
+            print('fix this or delete this')
         file_name_y = os.path.join('.', 'data_for_ML', sign,
                                    sign + '_y_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21,
                                    fn[:-4] + '.txt')
@@ -1504,9 +1506,30 @@ def fill_in_one_hot_PC(voice, voice_one_hot):
     return voice_one_hot
 
 
+def convert_pitch_class_into_semitones(ori_pitch_class, bass, pitch_class_four_voice, output='N'):
+    """
+    Function to convert pitch class to the number of semitones based on bass
+    :param newOnset:
+    :param bass:
+    :param pitch_class_four_voice:
+    :return:
+    """
+    new = [0] * len(ori_pitch_class)
+    for i in range(len(ori_pitch_class)):
+        if bass.isRest == False:
+            if i == bass.pitch.pitchClass: continue # skip bass
+        if ori_pitch_class[i] == 1:
+            if bass.isRest == False:
+                new[(i + len(ori_pitch_class) - bass.pitch.pitchClass) % 12] = 1
+    if bass.isRest == False:
+        if bass.pitch.pitchClass in pitch_class_four_voice[:-1] and output == 'N': # the pitch class of bass is doubled
+            new[0] = 1
+
+    return new
+
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
-                            chorale_x_only_newOnset, keys, music21, counter, countermin, sign):
+                            chorale_x_only_newOnset, keys, music21, counter, countermin, sign, semitone):
     key = s.analyze('AardenEssen')
     previous_NCT_sign = [''] * 100
     concert_pitch = contain_concert_pitch(s)
@@ -1522,11 +1545,19 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
 
                 pitchClass = fill_in_pitch_class_with_octave(thisChord.pitches)
                 only_pitch_class = list(pitchClass)
-            elif pitch == 'pitch_class' or pitch == 'pitch_class_7':
+            elif pitch == 'pitch_class' or pitch == 'pitch_class_7' or 'pitch_class_scale' in pitch:
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
                                                                              thisChord, inputtype, s, sChords,
                                                                              i)
                 # only_pitch_class = list(pitchClass)
+                if semitone == 'Y': # we need to convert pitch classes into No. of semitones above the bass
+                    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+                    #print('debug')
+                    only_pitch_class = convert_pitch_class_into_semitones(only_pitch_class, bass, pitch_class_four_voice)
+                    newOnset = convert_pitch_class_into_semitones(newOnset, bass,
+                                                                          pitch_class_four_voice)
+                    pitchClass = only_pitch_class + newOnset
             elif 'pitch_class_with_bass' in pitch:
                 only_pitch_class, pitchClass, newOnset = fill_in_pitch_class(pitchClass, thisChord.pitchClasses,
                                                                              thisChord, inputtype, s, sChords,
@@ -1544,24 +1575,27 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                     soprano_one_hot = fill_in_one_hot_PC(pitch_four_voice[-4], [0] * inputdim)
                     pitchClass = bass_one_hot + tenor_one_hot + alto_one_hot + soprano_one_hot + pitchClass
 
-                if 'scale' in pitch:  # currently make it local to only FB features for simplicity
-                    key_scale = [0] * inputdim
-                    for pitches in key.pitches:
-                        key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
-                    pitchClass = key_scale + pitchClass
-                if 'NCT' in pitch:
-                    #print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
-                    this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice, pitch_class_four_voice, previous_NCT_sign, concert_pitch, chordify_voice)
-                    NCT = [0] * inputdim
-                    for each_pitch_class in pitch_class_four_voice:
-                        if each_pitch_class not in this_pitch_class_list_only_CT: # this means it is a NCT
-                            NCT[each_pitch_class] = 1
-                    pitchClass = NCT + pitchClass
-                    previous_NCT_sign = NCT_sign
+
             elif pitch == 'pitch_class_4_voices' or pitch == 'pitch_class_4_voices_7':
                 pitchClass, = fill_in_pitch_class_4_voices(thisChord.pitchClasses, thisChord,
                                                            s,
                                                            inputtype, i, sChords)
+            if 'scale' in pitch:  # currently make it local to only FB features for simplicity
+                key_scale = [0] * inputdim
+                for pitches in key.pitches:
+                    key_scale[pitches.pitchClass] = 1  # let the machine know the key scale
+                pitchClass = key_scale + pitchClass
+            if 'NCT' in pitch:
+                # print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
+                this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice,
+                                                                        pitch_class_four_voice, previous_NCT_sign,
+                                                                        concert_pitch, chordify_voice)
+                NCT = [0] * inputdim
+                for each_pitch_class in pitch_class_four_voice:
+                    if each_pitch_class not in this_pitch_class_list_only_CT:  # this means it is a NCT
+                        NCT[each_pitch_class] = 1
+                pitchClass = NCT + pitchClass
+                previous_NCT_sign = NCT_sign
             if pitch.find('pitch') != -1 and pitch.find('7') != -1:  # Use generic pitch, could be
                 # just pitch, pitch_class or pitch_class in 4 voices. Append 7 in the end
                 pitchClass_12 = list(pitchClass)  # pitchClass saves the original
@@ -1839,12 +1873,12 @@ def get_id(id_sum, num_of_chorale, times):
 def generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,
                                                                  sign, augmentation, pitch, ratio, cv, version,
-                                                                 outputtype, inputtype):
+                                                                 outputtype, inputtype, semitone):
     print('Step 4: Translate all the data into machine-learning-friendly encodings')
     id_sum = find_id_FB(output)
     generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                   output, f2, sign, augmentation, pitch, id_sum, 'train', outputtype, id_sum,
-                  inputtype)
+                  inputtype, semitone)
 
 def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,

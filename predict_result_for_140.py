@@ -46,7 +46,7 @@ from imblearn.over_sampling import RandomOverSampler
 #from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
 from get_input_and_output import determine_middle_name, find_id, find_id_FB, get_id, determine_middle_name2
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from test_musicxml_gt import translate_chord_name_into_music21
 from keras_self_attention import SeqSelfAttention
@@ -247,7 +247,23 @@ def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
     return FB, FB_index, chord_tone
 
 
-def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, type=''):
+def convert_semitones_into_pitch_class(y, bass):
+    """
+
+    :param y:
+    :param bass:
+    :param pitch_class_four_voice:
+    :return:
+    """
+    new = [0] * len(y)
+    for i in range(len(y)):
+        if y[i] == 1:
+            new[(i + bass.pitch.pitchClass) % len(y)] = 1
+    return new
+
+
+
+def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, semitone, type=''):
     """
     'Type' specifies if I want to strip away figures using RB approach
     :param x:
@@ -257,6 +273,10 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
     :param s:
     :return:
     """
+    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    bass = get_bass_note(thisChord, this_pitch_list, this_pitch_class_list, 'Y')
+    if semitone == 'Y':
+        y = convert_semitones_into_pitch_class(y, bass)  # convert semitone back to
     contain_continuo = contain_continuo_voice(s)
     if contain_continuo:
         upper_voice = list(this_pitch_class_list[:-2])
@@ -264,7 +284,6 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
     else:
         upper_voice = list(this_pitch_class_list[:-1])
         upper_voice_actual_note = list(this_pitch_list[:-1])
-    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
     # if thisChord.measureNumber == 8 or thisChord.measureNumber == 9 or thisChord.measureNumber == 10:
     #     print('debug')
     five_three_six_four = 0  # track 53-64 motion
@@ -285,7 +304,6 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
         return actual_FB, []
     FB = []
     FB_index = []
-    bass = get_bass_note(thisChord, this_pitch_list, this_pitch_class_list, 'Y')
     if outputtype.find('_pitch_class') != -1:
         for i, item in enumerate(y):
             if int(item) == 1:
@@ -829,7 +847,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
         return model
     elif modelID == "SVM":
         if outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
-            model = SVC(verbose=True, kernel='linear')
+            model = LinearSVC(verbose=True)
             train_yy_int = np.asarray(onehot_decode(train_yy))
             valid_yy_int = np.asarray(onehot_decode(valid_yy))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
@@ -838,7 +856,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             model.fit(train_xx_SVM, train_yy_int_SVM)
             return model
         elif outputtype.find("NCT") != -1:  # we need to do multilabel classification
-            model = OneVsRestClassifier(SVC(verbose=True, kernel='linear'))
+            model = OneVsRestClassifier(LinearSVC(verbose=True))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
             train_yy_SVM = np.concatenate((train_yy, valid_yy))
             print('new training set', train_xx_SVM.shape, train_yy_SVM.shape)
@@ -1009,7 +1027,7 @@ def output_FB_to_score(FB, FB_PC, sChords, j, correct_mark=''):
 
 def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
-                                     inputtype, predict, exclude=[]):
+                                     inputtype, predict, semitone, exclude=[]):
     print('Training and testing the machine learning models')
     id_sum = find_id_FB(input, exclude)
     num_of_chorale = len(id_sum)
@@ -1304,13 +1322,13 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
                         else:
                             x = test_xx_only_pitch[a_counter][
                                 realdimension * windowsize:realdimension * (windowsize + 1)]
-                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(rule_set, x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)  # Get the resulting PC and FB
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(rule_set, x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice, semitone)  # Get the resulting PC and FB
                     if gt_FB == ['3', '8', '5']:
                         print('debug')
                     # if j == 25 and '248.53' in fileName[i]:
                     #     print('debug')
-                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(rule_set, x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice)
-                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(rule_set, x, one_hot_PC_filler(pitch_class_four_voice), sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, 'RB')
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(rule_set, x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice, semitone)
+                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(rule_set, x, x, sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, semitone, 'RB')
                     if predict_FB_RB == ['5', '8', '4'] and '248.53' in fileName[i]:
                         print('debug')
                     if predict_FB_RB == ['8', '7', '3'] and '30.06' in fileName[i]:
