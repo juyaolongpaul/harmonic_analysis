@@ -1467,7 +1467,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
             intervals = []
             pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
             bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-            for i, sonority in enumerate(thisChord._notes):
+            for ii, sonority in enumerate(thisChord._notes):
                 if sonority.isRest == False and bass is not False:
                     aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
                     colllapsed_interval = colllapse_interval(aInterval.name[1:])
@@ -1477,6 +1477,9 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                 # explicitly labeled in FB
                         FB_sonority[sonority.pitch.pitchClass] = 1
             if semitone == 'Y':
+                # print(FB_sonority)
+                if i == 62:
+                    print('debug')
                 FB_sonority = convert_pitch_class_into_semitones(FB_sonority, bass, pitch_class_four_voice, 'Y')
             # for each_figure in fig_collapsed:
             #     if each_figure == '' or '_' in each_figure:
@@ -1517,7 +1520,8 @@ def convert_pitch_class_into_semitones(ori_pitch_class, bass, pitch_class_four_v
     new = [0] * len(ori_pitch_class)
     for i in range(len(ori_pitch_class)):
         if bass.isRest == False:
-            if i == bass.pitch.pitchClass: continue # skip bass
+            if output == 'N':
+                if i == bass.pitch.pitchClass: continue # skip bass
         if ori_pitch_class[i] == 1:
             if bass.isRest == False:
                 new[(i + len(ori_pitch_class) - bass.pitch.pitchClass) % 12] = 1

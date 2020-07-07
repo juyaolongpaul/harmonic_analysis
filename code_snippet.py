@@ -1,7 +1,6 @@
 # this file offers code realizing certain functions
 import os
 from music21 import *
-from sequence_alignment import AffineNeedlemanWunsch
 from scipy import stats
 import numpy as np
 from collections import Counter
@@ -33,24 +32,30 @@ def count_pickup_measure_NO():
     # this one counts the number of pick up measures and output them
 
 
-def put_chords_into_files(sChord, f):
+def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
     for i, thisChord in enumerate(sChord.recurse().getElementsByClass('Chord')):
         chord_label = thisChord.lyrics[-1].text
-        chord_label = chord_label.replace('?', '').replace('!', '')
+        if replace == 'Y':
+            chord_label = chord_label.replace('?', '').replace('!', '')
         if i == 0 and (chord_label == ' ' or chord_label == ''):
             input('the first chord is empty!')
         elif chord_label == ' ' or chord_label == '':
             if not previous_chord == ' ' or previous_chord == '':
-                print(previous_chord, file=f)
+                if f != []:
+                    print(previous_chord, file=f)
+                a_chord_label.append(previous_chord)
             # else:
             #     print('debug')
         else:
-            print(chord_label, file=f)
+            if f != []:
+                print(chord_label, file=f)
+            a_chord_label.append(chord_label)
         # if i>0:
         #     if len(previous_chord) == 0:
         #         print('debug')
         if chord_label != ' ' and chord_label != '':
             previous_chord = chord_label
+    return a_chord_label
 
 
 def extract_chord_labels():
