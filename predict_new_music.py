@@ -316,8 +316,8 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 def predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
     # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
-    # if not os.path.isdir(os.path.join(inputpath, 'encodings')):
-    #     os.mkdir(os.path.join(inputpath, 'encodings'))
+    if not os.path.isdir(os.path.join(inputpath, 'encodings')):
+        os.mkdir(os.path.join(inputpath, 'encodings'))
     # get_input_encoding(inputpath, encoding_path)  # generate input encodings
     xx, fileName = generate_ML_matrix_one_file(filename, encoding_path, 1, 'N')
     xx_no_window, fileName_fake = generate_ML_matrix_one_file(filename, encoding_path, 0, 'N')
@@ -549,6 +549,11 @@ if __name__ == "__main__":
         os.mkdir(os.path.join(os.getcwd(), 'new_music'))
         os.mkdir(inputpath)
     f_info = open('info.txt', 'w')
+    transpose_polyphony(inputpath, inputpath, 'N', onlyC='Y')  # tranpose to 12 keys
+    encoding_path = os.path.join(inputpath, 'encodings')
+    if not os.path.isdir(os.path.join(inputpath, 'encodings')):
+        os.mkdir(os.path.join(inputpath, 'encodings'))
+    get_input_encoding(inputpath, encoding_path)  # generate input encodings
     for fn in os.listdir(inputpath):
         if 'transposed' in fn: continue
         if '.musicxml' not in fn: continue

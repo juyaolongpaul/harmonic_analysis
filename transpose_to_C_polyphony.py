@@ -4,7 +4,7 @@ import re
 from transpose_to_C_chords import get_displacement
 
 
-def transpose_into_12_keys(fn, filename, source, input, format):
+def transpose_into_12_keys(fn, filename, source, input, format, onlyC='N'):
     """
     Modular function that translates one file into 12 keys
     :return:
@@ -25,8 +25,9 @@ def transpose_into_12_keys(fn, filename, source, input, format):
             i = interval.Interval(k.tonic, pitch.Pitch(c2[displacement - key_transpose]))
             key_name = c2[(displacement - key_transpose) % len(c2)].upper()
         print(i)
-        # if key_name != 'C' and key_name != 'a':
-        #     continue  # TODO: only the transposition only works for C major or A minor, for other keys, I need to do F## processing!
+        if onlyC == 'Y':
+            if key_name != 'C' and key_name != 'a':
+                continue  # TODO: only the transposition only works for C major or A minor, for other keys, I need to do F## processing!
         if i.directedName == 'P1' or i.directedName == 'd2':  # account for pitch spelling
             key_name += '_ori'
         if os.path.exists(os.path.join(input, 'transposed_') + 'KB' + key_name + 'KE' + filename + format):
@@ -38,7 +39,7 @@ def transpose_into_12_keys(fn, filename, source, input, format):
             sNew.write('musicxml', os.path.join(input, 'transposed_') + 'KB' + key_name + 'KE' + filename + format)  # convert krn into xml
 
 
-def transpose_polyphony(source, input, bach='Y'):
+def transpose_polyphony(source, input, bach='Y', onlyC='N'):
     """
     This function is translating for chord labeling
     :param source:
@@ -74,7 +75,7 @@ def transpose_polyphony(source, input, bach='Y'):
                 continue
         print(os.path.join(input, 'transposed_') + id_id[0] + format)
         if fn[-3:] == 'krn' or fn[-3:] == 'mid' or fn[-3:] == 'xml':  # we want to transpose krn file into musicxml file
-            transpose_into_12_keys(fn, id_id[0], source, input, format)
+            transpose_into_12_keys(fn, id_id[0], source, input, format, onlyC)
 
 
 def transpose_polyphony_FB(source, input):

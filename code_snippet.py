@@ -153,10 +153,15 @@ def get_index(fn, stage, keyword):
 
 
 def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
+    a_diff1 = []
+    a_diff2 = []
+    a_diff3 = []
     for fn in os.listdir(inputpath):
         if not os.path.isdir(os.path.join(inputpath, fn)):
             if fn[-3:] == 'txt' and 'omr' in fn:
-                # if 'op44ii_3' not in fn:
+                # if 'op44iii_1' in fn or 'op44iii_2' in fn:
+                #     continue
+                # if 'op44iii_2' not in fn:
                 #     continue
                 print(fn)
                 # f1 = open(os.path.join(input_path_array[0], fn))
@@ -227,8 +232,14 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                     data=df
                 )
                 plt.title(fn)
-                plt.show()
+                # plt.show()
                 print('comparison', diff, diff2, diff3)
+                a_diff1.append(diff * 100)
+                a_diff2.append(diff2 * 100)
+                a_diff3.append(diff3 * 100)
+    print('difference between OMR and CORRECTED:', np.median(a_diff1), '%', '±', np.std(a_diff1), '%', sorted(a_diff1)[0], sorted(a_diff1)[-1])
+    print('difference between CORRECTED and REVISED:', np.median(a_diff2), '%', '±', np.std(a_diff2), '%', sorted(a_diff2)[0], sorted(a_diff2)[-1])
+    print('difference between REVISED and ALIGNED:', np.median(a_diff3), '%', '±', np.std(a_diff3), '%', sorted(a_diff3)[0], sorted(a_diff3)[-1])
                 # df.cc.astype('category').cat.codes
                 ############## Output results as chord label integers
                 # df = df.melt(id_vars=['shared_index'], var_name='stage', value_name='chord_labels')
