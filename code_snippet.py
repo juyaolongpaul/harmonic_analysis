@@ -278,8 +278,24 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 # if len(result1) != len(result2):
                 #     print('-------------------------------------------')
 
-if __name__ == "__main__":
-    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
-    compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
-    #count_pickup_measure_NO()
+def print_this_plot():
+    from matplotlib.ticker import PercentFormatter
+    import matplotlib.pyplot as plt
+    from matplotlib.pyplot import figure
+    plt.rcParams.update({'font.size': 40})
+    figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
+    counter_fre =  {'M': 0.5161290322580645, 'm': 0.24308399081194448, '7': 0.08149405772495756, 'o': 0.05702586637371417, 'm7': 0.05293118945371018, 'M7': 0.01927494257465295, '/o7': 0.018775591730750024, 'o7': 0.008788574852691501, '+': 0.0024967542195146308}
+    plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+    plt.ylabel('Percentage (%)')
+    plt.xlabel('Chord Qualities')
+    plt.xticks(rotation='vertical')
+    plt.figure(figsize=(20, 5))
+    plt.show()
 
+
+if __name__ == "__main__":
+    # inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
+    # compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
+    # #count_pickup_measure_NO()
+    print_this_plot()

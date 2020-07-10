@@ -775,16 +775,17 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     a_suspension = [] # record of all the suspensions indicated by FB
     a_discrepancy = []
     # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
+    No_of_files = 0
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        if '33.06' not in filename and '3.06' not in filename: continue
+        # if '13.06' not in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
             if 'lyric' not in filename: continue
-        if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '129.05', '167.05', '171.06', '24.06', '248.09', '248.23', '248.42', '248.64', '76.07']):
-            if '124.06' not in filename: # don't exclude this one!
+        if any(each_ID in filename for each_ID in ['100.06', '105.06', '113.01', '129.05', '167.05', '171.06', '24.06', '248.09', '248.23', '248.42', '248.64', '76.07' ,'8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447']):
+            if '124.06' not in filename and '38.06' not in filename and '168.06' not in filename and '108.06' not in filename: # don't exclude this one!
                 continue  # exclude all the interlude chorales
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
@@ -796,6 +797,9 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         #         continue  # exclude all the interlude chorales
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
         #     continue
+        No_of_files += 1
+        # if No_of_files > 40: continue
+        print(No_of_files)
         print(filename)
         print(filename, file=f_sus)
         suspension_ptr = []  # list that records all the suspensions
@@ -914,30 +918,35 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
             a_chord_quality.append(each_chord[2:])
         else:
             a_chord_quality.append(each_chord[1:])
-    # calculate the discrepancies
-    # get suspensions (specified above)
-
-    # summary
     print_distribution_plot('Multiple Interpretations', a_chord_label_final_only_multiple_interpretations,a_chord_label_FB)
     print_distribution_plot('Chord Categories', a_chord_label_final_flat, a_chord_label_FB)
     print_distribution_plot('Chord Qualities', a_chord_quality, a_chord_label_FB)
     print_distribution_plot('Suspensions', a_suspension, a_chord_label_FB)
     print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB)
     print('there are altogether', len(a_chord_label_FB_pure), 'onset slices and there are', len(a_chord_label_final_flat), 'chord labels')
-    # print('there are', len(a_chord_label_final_only_multiple_interpretations), 'has two chord labels, and the distributino is', Counter(a_chord_label_final_only_multiple_interpretations))
-    # print('there are', len(Counter(a_chord_label_final_flat)), 'chord categories', 'and the distribution of them is:', Counter(a_chord_label_final_flat))
-    # print('there are', len(Counter(a_chord_quality)), 'chord qualities',
-    #       'and the distribution is:', Counter(a_chord_quality))
-    # print('there are', len(Counter(a_suspension)), 'suspensions',
-    #       'and the distribution is:', Counter(a_suspension))
-    # print('there are', len(Counter(a_discrepancy)), 'discrepancies',
-    #       'and the distribution is:', Counter(a_discrepancy))
-
     print('debug')
 
+
 def print_distribution_plot(word, unit, total_NO_slice):
+    unit_dict = Counter(unit)
+    if word == 'Suspensions':
+        unit_dict['4–3'] = unit_dict['4']
+        del unit_dict['4']
+        unit_dict['7–6'] = unit_dict['7']
+        del unit_dict['7']
+        unit_dict['9–8'] = unit_dict['2']
+        del unit_dict['2']
+        unit_dict['6–5'] = unit_dict['6']
+        del unit_dict['6']
+        unit_dict['64–53'] = unit_dict['64']
+        del unit_dict['64']
+    elif word == 'Chord Qualities':
+        unit_dict['M'] = unit_dict['']
+        del unit_dict['']
+
+    top_N = 20
     if word != 'Discrepancies':
-        print('there is', sum(Counter(unit).values()), sum(Counter(unit).values())/len(total_NO_slice) * 100, '%', word)
+        print('there is', sum(unit_dict.values()), sum(unit_dict.values())/len(total_NO_slice) * 100, '%', word)
     else:
         slice_with_discrepancies = 0
         for ID, each in enumerate(total_NO_slice):
@@ -945,10 +954,12 @@ def print_distribution_plot(word, unit, total_NO_slice):
                 if ID > 0 and each != total_NO_slice[ID - 1]:  # does  not count copied chord labels
                     slice_with_discrepancies += 1
         print('there is', slice_with_discrepancies, slice_with_discrepancies / len(total_NO_slice) * 100, '%', word)
-    counter = dict(Counter(unit).most_common())# sort the dic
+    counter = dict(unit_dict.most_common())# sort the dic
     counter_fre = turn_number_into_percentage(counter) # I want percentage of each class
-    print('there are', len(counter_fre), word, 'and the distribution of them is:', counter_fre)
-    plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
+    counter_fre_top_N = take_top_N(counter_fre, top_N)
+
+    print('there are', len(counter_fre), word, 'and the distribution of them is:', counter_fre_top_N)
+    plt.bar(list(counter_fre_top_N.keys()), counter_fre_top_N.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
     plt.xlabel(word)
@@ -961,6 +972,20 @@ def turn_number_into_percentage(c):
     for elem, count in c.items():
         cc[elem] = count / s
     return cc
+
+
+def take_top_N(dictionary, num):
+    """
+    Only output the first N categories, and for the rest it is collapsed into "other"
+    :param dict:
+    :return:
+    """
+    top_dict = dict(itertools.islice(dictionary.items(),num))
+    other_frequency = sum(dict(list(dictionary.items())[num:]).values())
+    if len(dictionary) > num:
+        top_dict['other'] = other_frequency
+    return top_dict
+
 
 if __name__ == '__main__':
     want_IR = True
