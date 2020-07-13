@@ -224,7 +224,7 @@ def is_legal_chord(chord_label):
                              'major triad',
                              'minor triad',
                              'diminished triad',
-                             'augmented triad', '-interval class 3', '-interval class 4', '-interval class 5']
+                             'augmented triad', '-interval class 3', '-interval class 4']
     try:
         chord_name = chord_label.pitchedCommonName
     except:
@@ -236,9 +236,9 @@ def is_legal_chord(chord_label):
     elif chord_name.find('-interval class 4') != -1:
         chord_name = chord_name.replace('-interval class 4', '')
         flag = 1
-    elif chord_name.find('-interval class 5') != -1:
-        chord_name = chord_name.replace('-interval class 5', '')
-        flag = 1
+    # elif chord_name.find('-interval class 5') != -1:
+    #     chord_name = chord_name.replace('-interval class 5', '')
+    #     flag = 1
     chord_name = re.sub(r'\d', '', chord_name)  # remove all the octave information
     if any(each in chord_name for each in allowed_chord_quality):
         if harmony.chordSymbolFigureFromChord(chord_label).find(
@@ -365,7 +365,20 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
                 if each_figure in ['n', '#', 'b'] and '3' in intervals: # this is an exception
                     mark += ''
                 else:
-                    mark += '?!'
+                    mark += '?!' # add the note indicated by FB as chord tone
+                    key = s.analyze('AardenEssen')
+                    all_key_pitches = key.pitches
+                    for each_key_pitch in all_key_pitches:
+                        aInterval = interval.Interval(noteStart=bass, noteEnd=each_key_pitch)
+                        collapsed_fig = colllapse_interval(aInterval.name[1:])
+                        if collapsed_fig == each_figure:
+                            chord_pitch.append(each_key_pitch)
+                        elif len(each_figure) == 2 and each_figure[1] == collapsed_fig: # the figure has accidentals
+                            if each_figure[0] == 'b':
+                                chord_pitch.append(each_key_pitch.transpose('d1'))
+                            elif each_figure [0] == '#':
+                                chord_pitch.append(each_key_pitch.transpose('a1'))
+
                     a_discrepancy.append('?!' + each_figure)
         return chord_pitch, mark
     else:
@@ -536,7 +549,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
             for pitch in thisChord.pitchNames:
                 chord_pitch.append(pitch)
             chord_label = chord.Chord(chord_pitch)
-            allowed_chord_quality = ['major triad', 'minor triad', '-interval class 5', '-interval class 4', '-interval class 3']
+            allowed_chord_quality = ['major triad', 'minor triad', '-interval class 4', '-interval class 3']
             if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
                 if bass.pitch.pitchClass == chord_label._cache['root'].pitchClass and thisChord.beat % 1 == 0:
                     if chord_label.pitchedCommonName.find('-major triad') != -1:
@@ -549,8 +562,8 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
                         elif chord_label.pitchedCommonName.find('-interval class 4') != -1:
                             # four semitones apart, a major third interval
                             chord_name = chord_label.pitchedCommonName.replace('-interval class 4', '')
-                        elif chord_label.pitchedCommonName.find('-interval class 5') != -1:
-                            chord_name = chord_label.pitchedCommonName.replace('-interval class 5', '') # missing third will be assumed as major triad, which is not perfect
+                        # elif chord_label.pitchedCommonName.find('-interval class 5') != -1:
+                        #     chord_name = chord_label.pitchedCommonName.replace('-interval class 5', '') # missing third will be assumed as major triad, which is not perfect
                     add_chord(thisChord, chord_name)
                 else:
                     thisChord.addLyric(' ')
@@ -779,7 +792,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        # if '13.06' not in filename: continue
+        if '37.06' not in filename or '133.06' in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -928,6 +941,13 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
 
 
 def print_distribution_plot(word, unit, total_NO_slice):
+    if word == 'Multiple Interpretations':  # in this case, we want to collapse "D, D7" and "D7, D" into one category
+        # print('debug')
+        for i, each_item in enumerate(unit):
+            elements = each_item.split(',')
+            for ii, each_chord in enumerate(elements):
+                elements[ii] = elements[ii].replace(' ', '')
+            unit[i] = ','.join(sorted(elements))
     unit_dict = Counter(unit)
     if word == 'Suspensions':
         unit_dict['4–3'] = unit_dict['4']
@@ -943,7 +963,6 @@ def print_distribution_plot(word, unit, total_NO_slice):
     elif word == 'Chord Qualities':
         unit_dict['M'] = unit_dict['']
         del unit_dict['']
-
     top_N = 20
     if word != 'Discrepancies':
         print('there is', sum(unit_dict.values()), sum(unit_dict.values())/len(total_NO_slice) * 100, '%', word)
@@ -958,7 +977,7 @@ def print_distribution_plot(word, unit, total_NO_slice):
     counter_fre = turn_number_into_percentage(counter) # I want percentage of each class
     counter_fre_top_N = take_top_N(counter_fre, top_N)
 
-    print('there are', len(counter_fre), word, 'and the distribution of them is:', counter_fre_top_N)
+    print('there are', len(counter_fre), word, 'and the distribution of them is:', counter_fre_top_N, 'and the full one is:', counter_fre)
     plt.bar(list(counter_fre_top_N.keys()), counter_fre_top_N.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
