@@ -378,6 +378,11 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
                                 chord_pitch.append(each_key_pitch.transpose('d1'))
                             elif each_figure [0] == '#':
                                 chord_pitch.append(each_key_pitch.transpose('a1'))
+                            elif each_figure [0] == 'n':
+                                    if each_key_pitch.accidental.modifier == '-':
+                                        chord_pitch.append(each_key_pitch.transpose('a1'))
+                                    elif each_key_pitch.accidental.modifier == '#':
+                                        chord_pitch.append(each_key_pitch.transpose('d1'))
 
                     a_discrepancy.append('?!' + each_figure)
         return chord_pitch, mark
@@ -792,7 +797,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        if '37.06' not in filename or '133.06' in filename: continue
+        if '10.07a' not in filename or '133.06' in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
