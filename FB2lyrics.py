@@ -379,6 +379,7 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
                             elif each_figure [0] == '#':
                                 chord_pitch.append(each_key_pitch.transpose('a1'))
                             elif each_figure [0] == 'n':
+                                if each_key_pitch.accidental is not None:
                                     if each_key_pitch.accidental.modifier == '-':
                                         chord_pitch.append(each_key_pitch.transpose('a1'))
                                     elif each_key_pitch.accidental.modifier == '#':
@@ -536,19 +537,21 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
     if fig != ['_']:  # no underline for this slice
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+        if bass.name == 'rest': # no need to translate in this case
+            return suspension_ptr, a_suspension
         a_suspension = suspension_processing(fig, thisChord, bass, sChord, fig_collapsed, ptr, s, a_suspension, suspension_ptr)
         # TODO: see if there is bass suspension
-        for note_number, each_note in enumerate(
-                s.parts[-1].measure(thisChord.measureNumber).getElementsByClass(note.Note)):  # go through bass voice
-            if each_note.beat == thisChord.beat:  # found the potential bass suspension note
-                previous_note, previous_bass = get_previous_note(note_number, thisChord, s, -1, sChord)
-                next_note, next_bass = get_next_note(note_number, thisChord, s, -1, sChord)
-                if previous_note != False and next_note != False and previous_note.pitch.pitchClass == each_note.pitch.pitchClass \
-                    and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2) \
-                        and sChord.recurse().getElementsByClass('Chord')[ptr + 1].orderedPitchClasses in thisChord.orderedPitchClasses:
-                            thisChord.style.color = 'red'  # bass suspension is labelled as red
-                            suspension_ptr.append(ptr + 1)  # TODO: cannot address bass suspension with decoration
-                            input('bass suspension?')
+        # for note_number, each_note in enumerate(
+        #         s.parts[-1].measure(thisChord.measureNumber).getElementsByClass(note.Note)):  # go through bass voice
+        #     if each_note.beat == thisChord.beat:  # found the potential bass suspension note
+        #         previous_note, previous_bass = get_previous_note(note_number, thisChord, s, -1, sChord)
+        #         next_note, next_bass = get_next_note(note_number, thisChord, s, -1, sChord)
+        #         if previous_note != False and next_note != False and previous_note.pitch.pitchClass == each_note.pitch.pitchClass \
+        #             and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2) \
+        #                 and sChord.recurse().getElementsByClass('Chord')[ptr + 1].orderedPitchClasses in thisChord.orderedPitchClasses:
+        #                     thisChord.style.color = 'red'  # bass suspension is labelled as red
+        #                     suspension_ptr.append(ptr + 1)  # TODO: cannot address bass suspension with decoration
+        #                     input('bass suspension?')
                 # determine bass suspension
         if fig == []:  # No figures, meaning it can have a root position triad
             for pitch in thisChord.pitchNames:
@@ -797,7 +800,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        if '10.07a' not in filename or '133.06' in filename: continue
+        # if '76.07' not in filename or '133.06' in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -876,6 +879,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
                 c.closedPosition(forceOctave=4, inPlace=True)
                 pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(c, s)
                 bass = get_bass_note(c, pitch_four_voice, pitch_class_four_voice, 'Y')
+                if bass.name == 'rest': continue
                 intervals = []  # store all the exhaustive FB
                 for sonority in pitch_four_voice:
                     if hasattr(sonority, 'pitch') and bass.name != 'rest':
@@ -937,7 +941,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         else:
             a_chord_quality.append(each_chord[1:])
     print_distribution_plot('Multiple Interpretations', a_chord_label_final_only_multiple_interpretations,a_chord_label_FB)
-    print_distribution_plot('Chord Categories', a_chord_label_final_flat, a_chord_label_FB)
+    print_distribution_plot('Chord Types', a_chord_label_final_flat, a_chord_label_FB)
     print_distribution_plot('Chord Qualities', a_chord_quality, a_chord_label_FB)
     print_distribution_plot('Suspensions', a_suspension, a_chord_label_FB)
     print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB)

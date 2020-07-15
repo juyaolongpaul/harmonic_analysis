@@ -33,6 +33,7 @@ def count_pickup_measure_NO():
 
 
 def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
+    previous_chord = ''
     for i, thisChord in enumerate(sChord.recurse().getElementsByClass('Chord')):
         chord_label = thisChord.lyrics[-1].text
         if replace == 'Y':
@@ -282,15 +283,15 @@ def print_this_plot():
     from matplotlib.ticker import PercentFormatter
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import figure
-    plt.rcParams.update({'font.size': 40})
-    figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
-    counter_fre =  {'M': 0.5013361328497805, 'm': 0.23935865623210537, '7': 0.09486543233441497, 'm7': 0.056976522237068145, 'o': 0.05525863714449322, '/o7': 0.02051918305020042, 'M7': 0.019755678564611568, 'o7': 0.009352929948463448, '+': 0.002385951517465165}
+    # plt.rcParams.update({'font.size': 40})
+    # figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
+    counter_fre =  {'D,D7': 0.045077105575326216, 'A,A7': 0.03558718861209965, 'E,E7': 0.033214709371293, 'D7,F#o': 0.02491103202846975, 'F#,F#7': 0.022538552787663108, 'G,G7': 0.020166073546856466, 'B,B7': 0.020166073546856466, 'E7,G#o': 0.018979833926453145, 'Bo,G7': 0.0166073546856465, 'B7,D#o': 0.0166073546856465, 'F,F7': 0.013048635824436536, 'D,F#m': 0.013048635824436536, 'Dm,Dm7': 0.013048635824436536, 'C,C7': 0.011862396204033215, 'C7,Eo': 0.010676156583629894, 'A#o,F#7': 0.010676156583629894, 'C#,C#7': 0.010676156583629894, 'A7,C#o': 0.009489916963226572, 'A/o7,Ao': 0.009489916963226572, 'Am,Am7': 0.009489916963226572}
     plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
-    plt.xlabel('Chord Qualities')
+    plt.xlabel('Multiple Interpretations')
     plt.xticks(rotation='vertical')
-    plt.figure(figsize=(20, 5))
+    # plt.figure(figsize=(20, 5))
     plt.show()
 
 
@@ -307,4 +308,4 @@ if __name__ == "__main__":
     # inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
     # compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     # #count_pickup_measure_NO()
-    debug()
+    print_this_plot()
