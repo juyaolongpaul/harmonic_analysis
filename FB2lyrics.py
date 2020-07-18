@@ -315,7 +315,7 @@ def is_legal_chord(chord_label):
 
 
 
-def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
+def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condition='N'):
     """
     Function to determine which sonorities are chord tones or not based on the given FB
     :param pitchNames:
@@ -327,6 +327,7 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
     # For now label (2) as ??, for (3), look at the next slice, and the FB should be there, if not, output ?!
     # So far, we collapse both figured bass and intervals, which means 9 and 2 are interchangable, etc.
     chord_pitch = []
+    discrepancies = []
     #print('current fig is', fig)
     if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
@@ -358,6 +359,7 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
             else: # sonority not in the FB
                 mark += '??'
                 a_discrepancy.append('??' + colllapsed_interval)
+                discrepancies.append('??' + colllapsed_interval)
         for each_figure in fig_collapsed:
             if each_figure == '' or '_' in each_figure:
                 continue
@@ -386,8 +388,16 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, condition='N'):
                                         chord_pitch.append(each_key_pitch.transpose('d1'))
 
                     a_discrepancy.append('?!' + each_figure)
+                    discrepancies.append('?!' + each_figure)
+        if mark == '':
+            thisChord.addLyric(' ')
+        else:
+            discrepancies = list(dict.fromkeys(discrepancies))
+            thisChord.addLyric(str(discrepancies).strip('[]'))
+            a_slice_discrepancy.append(str(discrepancies).strip('[]'))
         return chord_pitch, mark
     else:
+        thisChord.addLyric(' ')
         for each_pitch in thisChord.pitchNames:
             chord_pitch.append(each_pitch)
         return chord_pitch, ''
@@ -400,11 +410,14 @@ def add_chord(thisChord, chordname):
     :param chordname:
     :return:
     """
-    if chordname[-1] == '-':  # This is the bug music21 has: for chords with flats, it will fail to add as lyrics
-        thisChord.addLyric(chordname + '*')  # adding a casual sign (then remove it) to avoid this bug
-        thisChord.lyrics[-1].text = thisChord.lyrics[-1].text.replace('*', '')
-    else:
-        thisChord.addLyric(chordname)
+    if thisChord.lyrics[-1].text.replace('?', '').replace('!', '') != chordname.replace('?', '').replace('!', ''):
+        # we don't want duplicated chord labels!
+        if chordname[-1] == '-':  # This is the bug music21 has: for chords with flats, it will fail to add as lyrics
+            thisChord.addLyric(chordname + '*')  # adding a casual sign (then remove it) to avoid this bug
+            thisChord.lyrics[-1].text = thisChord.lyrics[-1].text.replace('*', '')
+        else:
+            thisChord.addLyric(chordname.replace('?', '').replace('!', ''))  # get rid of all the ? and !
+            # since it is already indicated with the figure
 
 
 def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_ptr, sus_type, a_suspension):
@@ -435,7 +448,7 @@ def replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, 
     if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass or int(
             thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
         # same bass or different basses but same beat (362 mm.2 last)
-        next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, [],
+        next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, [], [],
                                                      'Y')  ## TODO: shouldn't we give the actual FB to this function?
         ## TODO: should we also consider the mark for the next chord in some ways?
         next_chord_label = chord.Chord(next_chord_pitch)
@@ -449,7 +462,7 @@ def replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, 
         if pitch_four_voice[-1].beams.beamsList[0].type == 'start' and pitch_four_voice_next[-1].beams.beamsList[
             0].type == 'stop':
             next_chord_pitch, next_mark = get_chord_tone(  # TODO: factorize this section of code
-                sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, [],
+                sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, [], [],
                 'Y')  ## TODO: shouldn't we give the actual FB to this function?
             ## TODO: should we also consider the mark for the next chord in some ways?
             next_chord_label = chord.Chord(next_chord_pitch)
@@ -518,7 +531,7 @@ def suspension_processing(fig, thisChord, bass, sChord, fig_collapsed, ptr, s, a
 
 
 
-def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_suspension, a_discrepancy, suspension_ptr=[]):
+def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_suspension, a_discrepancy, a_slice_discrepancy, suspension_ptr=[]):
     """
 
     :param fig:
@@ -531,10 +544,14 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
     if space_needed > 0:
         for i in range(space_needed):
             thisChord.addLyric(' ')  # beautify formatting
+    while len(thisChord.lyrics) > 3:  # make sure no extra space is added
+        print(thisChord.lyrics)
+        if thisChord.lyrics[-1].text == ' ':
+            del thisChord.lyrics[-1]
     chord_pitch = []
     if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
-    if fig != ['_']:  # no underline for this slice
+    if '_' not in fig:  # no underline for this slice
         pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
         bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
         if bass.name == 'rest': # no need to translate in this case
@@ -554,6 +571,7 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
         #                     input('bass suspension?')
                 # determine bass suspension
         if fig == []:  # No figures, meaning it can have a root position triad
+            thisChord.addLyric(' ') # empty line for discrepancy
             for pitch in thisChord.pitchNames:
                 chord_pitch.append(pitch)
             chord_label = chord.Chord(chord_pitch)
@@ -579,25 +597,33 @@ def translate_FB_into_chords(fig, thisChord, ptr, sChord, s, number_of_space, a_
                 thisChord.addLyric(' ')
         else:  # there is FB
             # look at the figure bass and see which notes are included
-            chord_pitch, mark = get_chord_tone(thisChord, fig, s, a_discrepancy)
+            chord_pitch, mark = get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy)
             chord_label = chord.Chord(chord_pitch)
             # if chord_label.pitchClasses != []:  # making sure there is no empty chord
             chord_name = is_legal_chord(chord_label)
             if chord_name:  # this slice contains a legal chord
                 add_chord(thisChord, mark + chord_name)
             else:
-
-
-                if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1: # there is a next slice, but only consider it
+                if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1 and thisChord.style.color != 'pink': # there is a next slice, but only consider it
                     # when it remains the same bass
+                    # if this is a suspension, don't replace the chord since it will be done later on anyways
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                     pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
                         sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
                     if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
                         replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr, mark, s)
-                else: # the last chord of the chorale, and it is not a legal chord
-                    add_chord(thisChord, '?' + mark)
+                # else: # the last chord of the chorale, and it is not a legal chord
+                #     add_chord(thisChord, '?' + mark)
+            # consider the sonority, if there is a discrepancy
+            if '??' in mark or '?!' in mark: # in this case we need to translate based on the sonority
+                chord_label = chord.Chord(thisChord._notes)
+                # if chord_label.pitchClasses != []:  # making sure there is no empty chord
+                chord_name = is_legal_chord(chord_label)
+                if chord_name:  # this slice contains a legal chord
+                    add_chord(thisChord, chord_name)
+
     else:  # this slice is only the continuation line, should adopt the chord from the last slice
+        thisChord.addLyric(' ')  # this is the line for the discrepancy
         if any(char.isalpha() for char in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text) \
                 and 'b' not in sChord.recurse().getElementsByClass('Chord')[ptr - 1].lyrics[-1].text:
             # making sure it is chord label not FB, but edge case does exist (b7 maybe?)
@@ -784,23 +810,18 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 break
 
 
-def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
+def lyrics_to_chordify(path, no_instrument, translate_chord='Y'):
     a_chord_label_FB = []  # record of all the chord labels by figured bass
-    a_chord_label_IR = []  # record of all the chord labels by the intervallic representation
-    a_chord_label_FB_pure = []  # record of all the chord labels by figured bass with no ?? and ?!
-    a_chord_label_IR_pure = []  # record of all the chord labels by the intervallic representation with no ?? and ?!
-    a_chord_label_final = [] # record of all possible chord interpretations for each slice
     a_FB = [] # record of all FB figures
-    a_IR = [] # record of all IR figures
-    a_sign = [] # record of all the discrepancies between figured bass and the sonority.
     a_suspension = [] # record of all the suspensions indicated by FB
     a_discrepancy = []
+    a_slice_discrepancy = []
     # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
     No_of_files = 0
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        # if '76.07' not in filename or '133.06' in filename: continue
+        # if '33.06' not in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -819,7 +840,7 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
         #     continue
         No_of_files += 1
-        # if No_of_files > 40: continue
+        # if No_of_files > 3: continue
         print(No_of_files)
         print(filename)
         print(filename, file=f_sus)
@@ -845,111 +866,69 @@ def lyrics_to_chordify(want_IR, path, no_instrument, translate_chord='Y'):
         align_FB_with_slice(bassline, sChords, MIDI)
         if translate_chord == 'Y':
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                # if i == 70:
+                #     print('debug')
                 fig = get_FB(sChords, i)
                 if fig != []:
                     print(fig)
-                if fig == ['7', '5', '3']:
+                if fig == ['9', '6']:
                     print('debug')
+                    print(thisChord.lyrics)
 
                 a_FB.append(fig)
-                suspension_ptr, a_suspension = translate_FB_into_chords(fig, thisChord, i, sChords, s, 3, a_suspension, a_discrepancy, suspension_ptr)
+                suspension_ptr, a_suspension = translate_FB_into_chords(fig, thisChord, i, sChords, s, 3, a_suspension, a_discrepancy, a_slice_discrepancy, suspension_ptr)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
                 # octave apart will be collapsed!
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                # if i == 69:
+                #     print('debug')
             # replace the suspension slices with the chord labels where it is resolved
                 if thisChord.style.color == 'pink':  # the suspensions
                     for j in range(i, suspension_ptr[ptr]):
                         if any(char.isalpha() for char in
                             sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text) \
                         and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text:
-                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text\
-                                = sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text
-                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
-                                sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('?', '')
-                            sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text = \
-                                sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text.replace('!', '')
+                            for label1 in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-2:]:
+                                if label1.text[0].isalpha() and label1.text[0].isupper() and label1.text != sChords.recurse().getElementsByClass('Chord')[j].lyrics[-2].text \
+                                    and label1.text != sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text:
+                                    add_chord(sChords.recurse().getElementsByClass('Chord')[j],
+                                              label1.text)
                     ptr += 1
         else:
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
         k = s.analyze('AardenEssen')
-        if want_IR and translate_chord == "Y":
-            IR = s.chordify()
-            for j, c in enumerate(IR.recurse().getElementsByClass('Chord')):
-                c.closedPosition(forceOctave=4, inPlace=True)
-                pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(c, s)
-                bass = get_bass_note(c, pitch_four_voice, pitch_class_four_voice, 'Y')
-                if bass.name == 'rest': continue
-                intervals = []  # store all the exhaustive FB
-                for sonority in pitch_four_voice:
-                    if hasattr(sonority, 'pitch') and bass.name != 'rest':
-                        intervals = get_actual_figures(bass, sonority, intervals, k)
-
-                for i, line in enumerate(intervals):
-                    c.addLyric(line)
-                # c.annotateIntervals()
-            IR2 = s.chordify()  # this is used because annotateIntervals only works properly if I collapse octaves, but for suspension, I need the uncollapsed version,
-            # so I need to create a new chordify voice
-            for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):
-                for each_line in IR.recurse().getElementsByClass('Chord')[j].lyrics:
-                    add_chord(c, each_line.text)  # copy lyrics to this voice
-            for j, c in enumerate(IR2.recurse().getElementsByClass('Chord')):  # identifying suspension needs full figures
-                fig = get_FB(IR2, j)
-                if fig != []:
-                    print(fig)
-                if fig == ['6', '5', '4']:
-                    print('debug')
-                a_IR.append(fig)
-                translate_FB_into_chords(fig, c, j, IR2, s, 4, [], []) # I don't need to calculate suspension in IR voice!
-                c.closedPosition(forceOctave=4, inPlace=True)
-                c.lyrics[-1].text = c.lyrics[-1].text.replace('?!', '')  # TODO: look into why this happens later! Some root position chords has this unnecessary ?! sign
-            s.insert(0, sChords)
-            s.insert(0, IR2)
-        else:
-            s.insert(0, sChords)
+        s.insert(0, sChords)
         if translate_chord == 'Y':
-            s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify' + '.xml'))
+            s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_FB' + '.xml'))
         else:
             s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
         # obtain chord labels
-        voice_FB = s.parts[-2]
-        voice_IR = s.parts[-1]
+        voice_FB = s.parts[-1]
         a_chord_label_FB = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
-        a_chord_label_IR = put_chords_into_files(voice_IR, a_chord_label_IR, replace='N')
-        a_chord_label_FB_pure = [each.replace('?', '').replace('!', '') for each in a_chord_label_FB]
-        a_chord_label_IR_pure = [each.replace('?', '').replace('!', '') for each in a_chord_label_IR]
-    # get the final chord interpretations
-    for ID, figures in enumerate(a_FB):
-        if figures != [] and figures != ['_']:
-            if a_chord_label_FB_pure[ID] != a_chord_label_IR_pure[ID]: # these two labels are multiple interpretations
-                a_chord_label_final.append([a_chord_label_FB_pure[ID], a_chord_label_IR_pure[ID]])
-            else:
-                a_chord_label_final.append([a_chord_label_FB_pure[ID]])
-        else:
-            a_chord_label_final.append([a_chord_label_FB_pure[ID]])
     a_chord_label_final_only_multiple_interpretations = []
-    for each in a_chord_label_final:
+    for each in a_chord_label_FB:
         if len(each) > 1:
             a_chord_label_final_only_multiple_interpretations.append(','.join(each))
-    a_chord_label_final_flat = list(itertools.chain.from_iterable(a_chord_label_final))
+    a_chord_label_FB_flat = list(itertools.chain.from_iterable(a_chord_label_FB))
     # get chord quality
     a_chord_quality = []
-    for each_chord in a_chord_label_final_flat:
+    for each_chord in a_chord_label_FB_flat:
         if '#' in each_chord or '-' in each_chord:
             a_chord_quality.append(each_chord[2:])
         else:
             a_chord_quality.append(each_chord[1:])
     print_distribution_plot('Multiple Interpretations', a_chord_label_final_only_multiple_interpretations,a_chord_label_FB)
-    print_distribution_plot('Chord Types', a_chord_label_final_flat, a_chord_label_FB)
+    print_distribution_plot('Chord Types', a_chord_label_FB_flat, a_chord_label_FB)
     print_distribution_plot('Chord Qualities', a_chord_quality, a_chord_label_FB)
     print_distribution_plot('Suspensions', a_suspension, a_chord_label_FB)
-    print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB)
-    print('there are altogether', len(a_chord_label_FB_pure), 'onset slices and there are', len(a_chord_label_final_flat), 'chord labels')
+    print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB, a_slice_discrepancy)
+    print('there are altogether', len(a_chord_label_FB), 'onset slices and there are', len(a_chord_label_FB_flat), 'chord labels')
     print('debug')
 
 
-def print_distribution_plot(word, unit, total_NO_slice):
+def print_distribution_plot(word, unit, total_NO_slice, a_slice_discrepancy=[]):
     if word == 'Multiple Interpretations':  # in this case, we want to collapse "D, D7" and "D7, D" into one category
         # print('debug')
         for i, each_item in enumerate(unit):
@@ -976,11 +955,7 @@ def print_distribution_plot(word, unit, total_NO_slice):
     if word != 'Discrepancies':
         print('there is', sum(unit_dict.values()), sum(unit_dict.values())/len(total_NO_slice) * 100, '%', word)
     else:
-        slice_with_discrepancies = 0
-        for ID, each in enumerate(total_NO_slice):
-            if '??' in each or '?!' in each:
-                if ID > 0 and each != total_NO_slice[ID - 1]:  # does  not count copied chord labels
-                    slice_with_discrepancies += 1
+        slice_with_discrepancies = len(a_slice_discrepancy)
         print('there is', slice_with_discrepancies, slice_with_discrepancies / len(total_NO_slice) * 100, '%', word)
     counter = dict(unit_dict.most_common())# sort the dic
     counter_fre = turn_number_into_percentage(counter) # I want percentage of each class
@@ -1016,11 +991,10 @@ def take_top_N(dictionary, num):
 
 
 if __name__ == '__main__':
-    want_IR = True
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     no_instrument = False
     # extract_FB_as_lyrics(path, no_instrument)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     # lyrics_to_chordify(want_IR, path, no_instrument, 'N') # generate only FB as lyrics without translating as chords
-    lyrics_to_chordify(want_IR, path, no_instrument)
+    lyrics_to_chordify(path, no_instrument)
 

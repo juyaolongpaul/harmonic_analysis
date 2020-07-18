@@ -328,7 +328,10 @@ def get_FB(sChords, ptr):
     :return:
     """
     fig = []
-    for each_line in sChords.recurse().getElementsByClass('Chord')[ptr].lyrics:
+    for i, each_line in enumerate(sChords.recurse().getElementsByClass('Chord')[ptr].lyrics):
+        if each_line.text == ' ' or each_line.text == '':
+            sChords.recurse().getElementsByClass('Chord')[ptr].lyrics.pop(i)
+            continue
         fig.append(each_line.text)
     if fig == [' ']:
         fig = []

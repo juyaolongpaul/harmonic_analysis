@@ -33,15 +33,18 @@ def count_pickup_measure_NO():
 
 
 def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
-    previous_chord = ''
+    previous_chord = []
     for i, thisChord in enumerate(sChord.recurse().getElementsByClass('Chord')):
-        chord_label = thisChord.lyrics[-1].text
-        if replace == 'Y':
-            chord_label = chord_label.replace('?', '').replace('!', '')
-        if i == 0 and (chord_label == ' ' or chord_label == ''):
-            input('the first chord is empty!')
-        elif chord_label == ' ' or chord_label == '':
-            if not previous_chord == ' ' or previous_chord == '':
+        # obtain all the chord labels
+        chord_label = []
+        for j, label in enumerate(thisChord.lyrics):
+            if len(label.text) > 0:
+                if label.text[0].isalpha() and label.text[0].isupper(): # this is a chord label
+                    chord_label.append(label.text)
+        if i == 0 and (len(chord_label) == 0):
+            print('the first chord is empty!')
+        elif len(chord_label) == 0:
+            if not previous_chord == []:
                 if f != []:
                     print(previous_chord, file=f)
                 a_chord_label.append(previous_chord)
@@ -51,10 +54,7 @@ def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
             if f != []:
                 print(chord_label, file=f)
             a_chord_label.append(chord_label)
-        # if i>0:
-        #     if len(previous_chord) == 0:
-        #         print('debug')
-        if chord_label != ' ' and chord_label != '':
+        if chord_label != []:
             previous_chord = chord_label
     return a_chord_label
 
@@ -285,11 +285,11 @@ def print_this_plot():
     from matplotlib.pyplot import figure
     # plt.rcParams.update({'font.size': 40})
     # figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
-    counter_fre =  {'D,D7': 0.045077105575326216, 'A,A7': 0.03558718861209965, 'E,E7': 0.033214709371293, 'D7,F#o': 0.02491103202846975, 'F#,F#7': 0.022538552787663108, 'G,G7': 0.020166073546856466, 'B,B7': 0.020166073546856466, 'E7,G#o': 0.018979833926453145, 'Bo,G7': 0.0166073546856465, 'B7,D#o': 0.0166073546856465, 'F,F7': 0.013048635824436536, 'D,F#m': 0.013048635824436536, 'Dm,Dm7': 0.013048635824436536, 'C,C7': 0.011862396204033215, 'C7,Eo': 0.010676156583629894, 'A#o,F#7': 0.010676156583629894, 'C#,C#7': 0.010676156583629894, 'A7,C#o': 0.009489916963226572, 'A/o7,Ao': 0.009489916963226572, 'Am,Am7': 0.009489916963226572}
+    counter_fre =  {'D': 0.08068833652007648, 'G': 0.07093690248565966, 'A': 0.06558317399617591, 'C': 0.05554493307839388, 'E': 0.052390057361376675, 'F': 0.051338432122370936, 'B-': 0.04378585086042065, 'Bm': 0.037093690248565965, 'Gm': 0.03518164435946463, 'Am': 0.03479923518164436, 'Em': 0.033747609942638625, 'Cm': 0.027055449330783937, 'Dm': 0.025143403441682602, 'F#m': 0.023422562141491396, 'E-': 0.02198852772466539, 'B': 0.018164435946462717, 'F#': 0.017495219885277247, 'D7': 0.01644359464627151, 'A7': 0.013862332695984704, 'E7': 0.013575525812619503, 'other': 0.2617590822179731}
     plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
-    plt.xlabel('Multiple Interpretations')
+    plt.xlabel('Chord Types')
     plt.xticks(rotation='vertical')
     # plt.figure(figsize=(20, 5))
     plt.show()
