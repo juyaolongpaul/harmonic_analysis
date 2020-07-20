@@ -962,6 +962,15 @@ def print_distribution_plot(word, unit, total_NO_slice, a_slice_discrepancy=[]):
     counter_fre_top_N = take_top_N(counter_fre, top_N)
 
     print('there are', len(counter_fre), word, 'and the distribution of them is:', counter_fre_top_N, 'and the full one is:', counter_fre)
+    if word == 'Multiple Interpretations':
+        num_of_three_interpretation = 0
+        for each_label in unit:
+            multiple = each_label.split(',')
+            if len(multiple) == 3:
+                num_of_three_interpretation += 1
+        print('there are', num_of_three_interpretation, 'three interpretations', num_of_three_interpretation/len(total_NO_slice) * 100, '%')
+        print('there are', sum(unit_dict.values()) - num_of_three_interpretation, 'two interpretations',
+              (sum(unit_dict.values()) - num_of_three_interpretation) / len(total_NO_slice) * 100, '%')
     plt.bar(list(counter_fre_top_N.keys()), counter_fre_top_N.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
