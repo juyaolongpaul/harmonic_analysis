@@ -288,9 +288,13 @@ def is_legal_chord(chord_label):
                                                                           'M7'))  # remove 'add' part
             elif harmony.chordSymbolFigureFromChord(chord_label).find(
                     'add') != -1:  # contains "add" which does not work for harmony.ChordSymbol, at 095
-                chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[
-                                                            :harmony.chordSymbolFigureFromChord(chord_label).find(
-                                                                'add')])  # remove 'add' part
+                if 'half-diminished seventh chord' not in chord_name:
+                    chord_name = re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[
+                                                                :harmony.chordSymbolFigureFromChord(chord_label).find(
+                                                                    'add')])  # remove 'add' part
+                else:
+                    chord_name = chord_name.replace('-half-diminished seventh chord',
+                                                    '/o7')  # translate to support
             # elif harmony.chordSymbolFigureFromChord(chord_label).find('power') != -1: # assume power alone as major triad
             #     chord_label_list.append(
             #         re.sub(r'/[A-Ga-g][b#-]*', '', harmony.chordSymbolFigureFromChord(chord_label)[
@@ -322,10 +326,22 @@ def translate_FB_into_PC(all_key_pitches, bass, each_figure, chord_pitch):
             break
         elif len(each_figure) == 2 and each_figure[1] == collapsed_fig:  # the figure has accidentals
             if each_figure[0] == 'b':
-                chord_pitch.append(each_key_pitch.transpose('d1').name)
+                if each_key_pitch.accidental is not None:
+                    if each_key_pitch.accidental.modifier != '-':  # this note is not flatten in the signature
+                        chord_pitch.append(each_key_pitch.transpose('d1').name)
+                    else:  # otherwise, this note is already flatten, we don't need to flat it again
+                        chord_pitch.append(each_key_pitch)
+                else: # this not is natural in the key scale, but FB wants to flatten it
+                    chord_pitch.append(each_key_pitch.transpose('d1').name)
                 break
             elif each_figure[0] == '#':
-                chord_pitch.append(each_key_pitch.transpose('a1').name)
+                if each_key_pitch.accidental is not None:
+                    if each_key_pitch.accidental.modifier != '#':
+                        chord_pitch.append(each_key_pitch.transpose('a1').name)
+                    else:
+                        chord_pitch.append(each_key_pitch)
+                else: # this not is natural in the key scale, but FB wants to sharpen it
+                    chord_pitch.append(each_key_pitch.transpose('a1').name)
                 break
             elif each_figure[0] == 'n':
                 if each_key_pitch.accidental is not None:
@@ -335,8 +351,8 @@ def translate_FB_into_PC(all_key_pitches, bass, each_figure, chord_pitch):
                     elif each_key_pitch.accidental.modifier == '#':
                         chord_pitch.append(each_key_pitch.transpose('d1').name)
                         break
-
-
+                else:
+                    chord_pitch.append(each_key_pitch)
 
 
 def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condition='N'):
@@ -403,14 +419,17 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
         implied_fig_collapsed_no_accidental = list(fig_collapsed_no_accidental)
         # the one above is used when "42" becomes "642", and we don't want to add a "5"  to it
         if implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig:
-            implied_fig_collapsed.append('4')
-            implied_fig_collapsed_no_accidental.append('4')
+            if '4' not in implied_fig_collapsed_no_accidental:
+                implied_fig_collapsed.append('4')
+                implied_fig_collapsed_no_accidental.append('4')
         if implied_fig_collapsed_no_accidental == ['4', '3'] or implied_fig_collapsed_no_accidental == ['4', '2'] or (implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig):
-            implied_fig_collapsed.append('6')
-            implied_fig_collapsed_no_accidental.append('6')
+            if '6' not in implied_fig_collapsed_no_accidental:
+                implied_fig_collapsed.append('6')
+                implied_fig_collapsed_no_accidental.append('6')
         if '6' not in implied_fig_collapsed_no_accidental:
-            implied_fig_collapsed.append('5')
-            implied_fig_collapsed_no_accidental.append('5')
+            if '5' not in implied_fig_collapsed_no_accidental:
+                implied_fig_collapsed.append('5')
+                implied_fig_collapsed_no_accidental.append('5')
         if '4' not in implied_fig_collapsed_no_accidental and ('2' not in implied_fig_collapsed_no_accidental or '9' in fig):
             if '3' not in implied_fig_collapsed_no_accidental:  # don't want to add "3" when there is already "#" and alike
                 implied_fig_collapsed.append('3')
@@ -897,12 +916,13 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     a_suspension = [] # record of all the suspensions indicated by FB
     a_discrepancy = []
     a_slice_discrepancy = []
+    f_all_chords = open(os.path.join(path, 'all_chords.txt'), 'w')
     # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
     No_of_files = 0
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        # if '102.07' not in filename: continue
+        # if '145.05' not in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -925,6 +945,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         # if No_of_files > 3: continue
         print(No_of_files)
         print(filename)
+        print(filename, file=f_all_chords)
         print(filename, file=f_sus)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
@@ -953,7 +974,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 fig = get_FB(sChords, i)
                 if fig != []:
                     print(fig)
-                if fig == ['5', 'b']:
+                if fig == ['#']:
                     print('debug')
                     print(thisChord.lyrics)
 
@@ -993,7 +1014,8 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
         # obtain chord labels
         voice_FB = s.parts[-1]
-        a_chord_label_FB = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
+        a_chord_label_FB, all_chord_for_this_file = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
+        print(all_chord_for_this_file, file=f_all_chords)
     a_chord_label_final_only_multiple_interpretations = []
     for each in a_chord_label_FB:
         if len(each) > 1:
@@ -1013,7 +1035,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB, a_slice_discrepancy)
     print('there are altogether', len(a_chord_label_FB), 'onset slices and there are', len(a_chord_label_FB_flat), 'chord labels')
     # print('debug')
-
+    f_all_chords.close()
 
 def print_distribution_plot(word, unit, total_NO_slice, a_slice_discrepancy=[]):
     if word == 'Multiple Interpretations':  # in this case, we want to collapse "D, D7" and "D7, D" into one category
