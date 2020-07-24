@@ -356,6 +356,8 @@ def colllapse_interval(string):
                 string_2[i] = '2'  #  9 as 2,
             if each_figure.find('8') != -1:
                 string_2[i] = '1'  #  8 as 2,
+            if '_' in each_figure: # remove the continuation line attached to a figure
+                string_2[i] = string_2[i].replace('_', '')
         return string_2
 
 

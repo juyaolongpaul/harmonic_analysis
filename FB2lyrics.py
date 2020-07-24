@@ -468,10 +468,10 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
                 pass
             elif colllapsed_interval == '4' and fig_collapsed_no_accidental == ['2']:
                 pass
-            else: # sonority not in the FB
-                mark += '??'
-                a_discrepancy.append('??' + colllapsed_interval)
-                discrepancies.append('??' + colllapsed_interval)
+            # else: # sonority not in the FB
+            #     mark += '??'
+            #     a_discrepancy.append('??' + colllapsed_interval)
+            #     discrepancies.append('??' + colllapsed_interval)
         for each_figure in fig_collapsed:
             if each_figure == '' or '_' in each_figure:
                 continue
@@ -487,8 +487,9 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
             thisChord.addLyric(' ')
         else:
             discrepancies = list(dict.fromkeys(discrepancies))
-            thisChord.addLyric(str(discrepancies).strip('[]'))
-            a_slice_discrepancy.append(str(discrepancies).strip('[]'))
+            thisChord.addLyric(str(discrepancies).strip('[]').replace('?!', '')) # now we don't need to use ?! to note
+            # since we don't consider ?? anymore
+            a_slice_discrepancy.append(str(discrepancies).strip('[]').replace('?!', ''))
         return chord_pitch, mark
     else:
         thisChord.addLyric(' ')
@@ -1006,9 +1007,11 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
             if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
                 s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_A' + '.xml'))
             elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
-                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_A_prime' + '.xml'))
-            elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
+                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_B' + '.xml'))
+            elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == False:
                 s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_C' + '.xml'))
+            elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
+                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_D' + '.xml'))
         else:
             s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
