@@ -710,14 +710,19 @@ def translate_FB_into_chords(want_root_position_traid, want_suspension_NCT, want
             if chord_name:  # this slice contains a legal chord
                 add_chord(thisChord, mark + chord_name)
             else:
-                if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1 and thisChord.style.color != 'pink': # there is a next slice, but only consider it
+                if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1 and thisChord.style.color != 'pink' and \
+                    want_suspension_NCT == True: # there is a next slice, but only consider it
                     # when it remains the same bass
+                    # if we won't want suspension, we prefer 18th ways of labeling chord, then no replacing chords!
                     # if this is a suspension, don't replace the chord since it will be done later on anyways
                     pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
                     pitch_class_four_voice_next, pitch_four_voice_next = get_pitch_class_for_four_voice(
                         sChord.recurse().getElementsByClass('Chord')[ptr + 1], s)
                     if pitch_class_four_voice[-1] != -1 and pitch_class_four_voice_next[-1] != -1:  # both no rest
                         replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr, mark, s)
+                if want_suspension_NCT == False:  # we don't want suspension, adopt the 18th way of labelling chords
+                    # if the chord is not legal, output "?"
+                    thisChord.addLyric('?')
                 # else: # the last chord of the chorale, and it is not a legal chord
                 #     add_chord(thisChord, '?' + mark)
             # consider the sonority, if there is a discrepancy
@@ -1128,5 +1133,11 @@ if __name__ == '__main__':
     want_root_position_traid = True
     want_suspension_NCT = True
     want_discrepancies_chord_labels = True
-    lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument)
+    lyrics_to_chordify(False, False, False, path, no_instrument)
+    lyrics_to_chordify(True, False, False, path,
+                       no_instrument)
+    lyrics_to_chordify(True, True, False, path,
+                       no_instrument)
+    lyrics_to_chordify(True, True, True, path,
+                       no_instrument)
 
