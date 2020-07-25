@@ -355,6 +355,11 @@ def translate_FB_into_PC(all_key_pitches, bass, each_figure, chord_pitch):
                     chord_pitch.append(each_key_pitch)
 
 
+def add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, number):
+    if number not in implied_fig_collapsed_no_accidental:
+        implied_fig_collapsed.append(number)
+        implied_fig_collapsed_no_accidental.append(number)
+
 def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condition='N'):
     """
     Function to determine which sonorities are chord tones or not based on the given FB
@@ -418,22 +423,25 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
                 fig_collapsed_no_accidental.append(each_figure)
         implied_fig_collapsed_no_accidental = list(fig_collapsed_no_accidental)
         # the one above is used when "42" becomes "642", and we don't want to add a "5"  to it
+        # the following rules also incoporate the ones in Arnold (1931) pp. 263 table
         if implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig:
-            if '4' not in implied_fig_collapsed_no_accidental:
-                implied_fig_collapsed.append('4')
-                implied_fig_collapsed_no_accidental.append('4')
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '4')
         if implied_fig_collapsed_no_accidental == ['4', '3'] or implied_fig_collapsed_no_accidental == ['4', '2'] or (implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig):
-            if '6' not in implied_fig_collapsed_no_accidental:
-                implied_fig_collapsed.append('6')
-                implied_fig_collapsed_no_accidental.append('6')
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
         if '6' not in implied_fig_collapsed_no_accidental:
-            if '5' not in implied_fig_collapsed_no_accidental:
-                implied_fig_collapsed.append('5')
-                implied_fig_collapsed_no_accidental.append('5')
+            if fig_collapsed != ['#4']: # in this exception, 5 should not be added
+                add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '5')
         if '4' not in implied_fig_collapsed_no_accidental and ('2' not in implied_fig_collapsed_no_accidental or '9' in fig):
-            if '3' not in implied_fig_collapsed_no_accidental:  # don't want to add "3" when there is already "#" and alike
-                implied_fig_collapsed.append('3')
-                implied_fig_collapsed_no_accidental.append('3')
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '3')
+        if fig_collapsed == ['#4']: # if only #4, 6 and 2 need to be added
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '2')
+        if fig_collapsed == ['b5']:
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
+        if fig_collapsed == ['b6', '#4'] or fig_collapsed == ['#4', 'b6']:
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '2')
+        if fig_collapsed == ['2', '7'] or fig_collapsed == ['7', '2']:
+            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '4')
         # remove duplicated figures
         implied_fig_collapsed = list(dict.fromkeys(implied_fig_collapsed))
 
@@ -459,15 +467,15 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
             colllapsed_interval = colllapse_interval(aInterval.name[1:])
             intervals.append(colllapsed_interval)
             # TODO: there might be cases where we need to check whether there is a real 9, or just a 2. In this case we cannot check
-            if ('3' in colllapsed_interval and '4' not in fig_collapsed_no_accidental and ('2' not in fig_collapsed_no_accidental or '9' in fig)) or ('5' in colllapsed_interval and '6' not in fig_collapsed_no_accidental) or '1' in colllapsed_interval:
-                pass # now we don't reply on the surface to determine which figure is implied.
-                # It is directly down above based on figured bass
-            elif any(colllapsed_interval in each for each in fig_collapsed_no_accidental):
-                pass
-            elif colllapsed_interval == '6' and (fig_collapsed_no_accidental == ['4', '3'] or fig_collapsed_no_accidental == ['4', '2'] or fig_collapsed_no_accidental == ['2']):  # TODO: check if there is 246 case happen
-                pass
-            elif colllapsed_interval == '4' and fig_collapsed_no_accidental == ['2']:
-                pass
+            # if ('3' in colllapsed_interval and '4' not in fig_collapsed_no_accidental and ('2' not in fig_collapsed_no_accidental or '9' in fig)) or ('5' in colllapsed_interval and '6' not in fig_collapsed_no_accidental) or '1' in colllapsed_interval:
+            #     pass # now we don't reply on the surface to determine which figure is implied.
+            #     # It is directly down above based on figured bass
+            # elif any(colllapsed_interval in each for each in fig_collapsed_no_accidental):
+            #     pass
+            # elif colllapsed_interval == '6' and (fig_collapsed_no_accidental == ['4', '3'] or fig_collapsed_no_accidental == ['4', '2'] or fig_collapsed_no_accidental == ['2']):  # TODO: check if there is 246 case happen
+            #     pass
+            # elif colllapsed_interval == '4' and fig_collapsed_no_accidental == ['2']:
+            #     pass
             # else: # sonority not in the FB
             #     mark += '??'
             #     a_discrepancy.append('??' + colllapsed_interval)
@@ -923,7 +931,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        # if '145.05' not in filename: continue
+        if '33.06' not in filename or '133.06' in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -975,7 +983,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 fig = get_FB(sChords, i)
                 if fig != []:
                     print(fig)
-                if fig == ['#']:
+                if fig == ['4']:
                     print('debug')
                     print(thisChord.lyrics)
 
@@ -1118,7 +1126,7 @@ if __name__ == '__main__':
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     # lyrics_to_chordify(want_IR, path, no_instrument, 'N') # generate only FB as lyrics without translating as chords
     want_root_position_traid = True
-    want_suspension_NCT = False
-    want_discrepancies_chord_labels = False
+    want_suspension_NCT = True
+    want_discrepancies_chord_labels = True
     lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument)
 
