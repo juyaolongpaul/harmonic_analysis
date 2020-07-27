@@ -426,7 +426,9 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
         # the following rules also incoporate the ones in Arnold (1931) pp. 263 table
         if implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig:
             add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '4')
-        if implied_fig_collapsed_no_accidental == ['4', '3'] or implied_fig_collapsed_no_accidental == ['4', '2'] or (implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig):
+        if implied_fig_collapsed_no_accidental == ['4', '3'] or implied_fig_collapsed_no_accidental == ['3', '4'] \
+                or implied_fig_collapsed_no_accidental ==['4', '2'] or implied_fig_collapsed_no_accidental ==['2', '4']\
+                or (implied_fig_collapsed_no_accidental == ['2'] and '9' not in fig):
             add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
         if '6' not in implied_fig_collapsed_no_accidental:
             if fig_collapsed != ['#4']: # in this exception, 5 should not be added
@@ -436,8 +438,8 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
         if fig_collapsed == ['#4']: # if only #4, 6 and 2 need to be added
             add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
             add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '2')
-        if fig_collapsed == ['b5']:
-            add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
+        # if fig_collapsed == ['b5']:
+        #     add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '6')
         if fig_collapsed == ['b6', '#4'] or fig_collapsed == ['#4', 'b6']:
             add_implied_FB(implied_fig_collapsed_no_accidental, implied_fig_collapsed, '2')
         if fig_collapsed == ['2', '7'] or fig_collapsed == ['7', '2']:
@@ -489,15 +491,16 @@ def get_chord_tone(thisChord, fig, s, a_discrepancy, a_slice_discrepancy, condit
                 else:
                     mark += '?!' # add the note indicated by FB as chord tone
                     translate_FB_into_PC(all_key_pitches, bass, each_figure, chord_pitch)
-                    a_discrepancy.append('?!' + each_figure)
-                    discrepancies.append('?!' + each_figure)
+                    a_discrepancy.append(each_figure)
+                    # now we don't need to use ?! to note
+                    # since we don't consider ?? anymore, and there is only one type of discrepancies
+                    discrepancies.append(each_figure)
         if mark == '':
             thisChord.addLyric(' ')
         else:
             discrepancies = list(dict.fromkeys(discrepancies))
-            thisChord.addLyric(str(discrepancies).strip('[]').replace('?!', '')) # now we don't need to use ?! to note
-            # since we don't consider ?? anymore
-            a_slice_discrepancy.append(str(discrepancies).strip('[]').replace('?!', ''))
+            thisChord.addLyric(str(discrepancies).strip('[]'))
+            a_slice_discrepancy.append(str(discrepancies).strip('[]'))
         return chord_pitch, mark
     else:
         thisChord.addLyric(' ')
@@ -543,7 +546,9 @@ def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_p
                     a_suspension[-1] += sus_type
         else: # otherwise, it is only one suspension in this slice
             a_suspension.append(sus_type)
-        suspension_ptr.append(ptr + ptr2)
+        if ptr + ptr2 not in suspension_ptr: # without this the first 6-5 suspension at m. 6 in BWV 72.06
+            # will have two entries in this list
+            suspension_ptr.append(ptr + ptr2)
     return suspension_ptr, a_suspension
 
 
@@ -860,9 +865,9 @@ def align_FB_with_slice(bassline, sChords, MIDI):
         print('demoniator is', denominator_chorale, file=f_sus)
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         for each_bass in bassline.measure(thisChord.measureNumber).getElementsByClass(note.Note):
-            # TODO: bug found: thischord measure number does not increase if it steps into a pickup measure, the same happen for each voice, the pick up measure is not counted, so the pickup chordify slice is merged into the previous measure
-            # TODO: needs a solution!
-            if each_bass.beat == thisChord.beat:
+            # TODO: bug found: thischord measure number does not increase if it steps into a pickup measure, the same happen for each voice, the pick up measure is not counted (included), the data of this slice is lost in music21 (except for the onset slice material)
+            # TODO: if there is figure for this pick up measure, it is going to be missed
+            if each_bass.beat == thisChord.beat and any(each_bass.pitch.pitchClass == each_note.pitch.pitchClass for each_note in thisChord._notes): #
                 bassnote = each_bass
                 if bassnote.lyrics != []:
                     fig = decode_FB_from_lyrics(bassnote.lyrics)
@@ -933,10 +938,11 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     f_all_chords = open(os.path.join(path, 'all_chords.txt'), 'w')
     # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
     No_of_files = 0
+    # create folder structure
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
-        if '33.06' not in filename or '133.06' in filename: continue
+        # if '83.05' not in filename or '172.06' in filename: continue
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -947,7 +953,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        if '2_voice'  in filename: continue
+        # if '2_voice'  not in filename: continue
         if 'FB_align' in filename: continue
         # if not any(each_ID in filename for each_ID in
         #        ['16.06', '506', '248.05', '447', '113.08', '488', '244.44', '244.40', '248.33', '140.07']):
@@ -983,12 +989,12 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         align_FB_with_slice(bassline, sChords, MIDI)
         if translate_chord == 'Y':
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                # if i == 70:
-                #     print('debug')
+                if i == 39:
+                    print('debug')
                 fig = get_FB(sChords, i)
                 if fig != []:
                     print(fig)
-                if fig == ['4']:
+                if fig == ['b5']:
                     print('debug')
                     print(thisChord.lyrics)
 
@@ -1015,6 +1021,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         else:
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
+        # s.remove(s.parts[-1]) # remove the unnecessary continuo voice
         s.insert(0, sChords)
         if translate_chord == 'Y':
             if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
@@ -1127,17 +1134,17 @@ def take_top_N(dictionary, num):
 if __name__ == '__main__':
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     no_instrument = False
-    # extract_FB_as_lyrics(path, no_instrument)
+    extract_FB_as_lyrics(path, no_instrument)
         # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
     # lyrics_to_chordify(want_IR, path, no_instrument, 'N') # generate only FB as lyrics without translating as chords
-    want_root_position_traid = True
-    want_suspension_NCT = True
-    want_discrepancies_chord_labels = True
-    lyrics_to_chordify(False, False, False, path, no_instrument)
-    lyrics_to_chordify(True, False, False, path,
-                       no_instrument)
-    lyrics_to_chordify(True, True, False, path,
-                       no_instrument)
+    # want_root_position_traid = True
+    # want_suspension_NCT = True
+    # want_discrepancies_chord_labels = True
+    # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
+    # lyrics_to_chordify(True, False, False, path,
+    #                    no_instrument) # Algorithm B
+    # lyrics_to_chordify(True, True, False, path,
+    #                    no_instrument) # Algorithm C
     lyrics_to_chordify(True, True, True, path,
-                       no_instrument)
+                       no_instrument) # Algorithm D
 
