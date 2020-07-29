@@ -282,24 +282,56 @@ def compare_chord_labels(inputpath, keyword1, keyword2, keyword3, keyword4):
                 # if len(result1) != len(result2):
                 #     print('-------------------------------------------')
 
+def finding_chord_root(chord_name):
+    if '#' in chord_name or '-' in chord_name:
+        return chord_name[:2]
+    else:
+        return chord_name[0]
+
+
+def key_invariant_pairs(each_pair):
+        chord_root_1 = finding_chord_root(each_pair[0])
+        chord_quality_1 = each_pair[0][len(chord_root_1):]
+        if chord_quality_1 == '':
+            chord_quality_1 = 'M'
+        chord_root_2 = finding_chord_root(each_pair[1])
+        chord_quality_2 = each_pair[1][len(chord_root_2):]
+        if chord_quality_2 == '':
+            chord_quality_2 = 'M'
+        a_interval_1 = interval.Interval(noteStart=pitch.Pitch(chord_root_1), noteEnd=pitch.Pitch(chord_root_2))
+        number1 = abs(a_interval_1.semitones)
+        number2 = abs(a_interval_1.complement.semitones)
+        if number1 < number2:
+            if '-' in a_interval_1.directedSimpleName:
+                return ','.join([chord_quality_2, chord_quality_1, a_interval_1.directedSimpleName.replace('-', '')])
+            else:
+                return ','.join([chord_quality_1, chord_quality_2, a_interval_1.directedSimpleName])
+        else:
+            if '-' in a_interval_1.complement.directedSimpleName:
+                return ','.join([chord_quality_2, chord_quality_1, a_interval_1.complement.directedSimpleName.replace('-', '')])
+            else:
+                return ','.join([chord_quality_1, chord_quality_2, a_interval_1.complement.directedSimpleName])
+
+
 def print_this_plot():
     from matplotlib.ticker import PercentFormatter
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import figure
-    # plt.rcParams.update({'font.size': 40})
-    # figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
-    counter_fre =  {'D,D7': 0.052361396303901436, 'E,E7': 0.045174537987679675, 'A,A7': 0.045174537987679675, 'B,B7': 0.028747433264887063, 'D7,F#o': 0.026694045174537988, 'G,G7': 0.02566735112936345, 'F#,F#7': 0.024640657084188913, 'Bo,G7': 0.021560574948665298, 'C,C7': 0.019507186858316223, 'E7,G#o': 0.018480492813141684, 'Dm,Dm7': 0.017453798767967144, 'B7,D#o': 0.015400410677618069, 'D,F#m': 0.014373716632443531, 'F,F7': 0.012320328542094456, 'A7,C#o': 0.012320328542094456, 'Bm,G': 0.012320328542094456, 'A#o,F#7': 0.011293634496919919, 'C7,Eo': 0.01026694045174538, 'Em7,G': 0.009240246406570842, 'C#,C#7': 0.009240246406570842}
+    plt.rcParams.update({'font.size': 40})
+    figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
+    counter_fre =  {'M': 0.5113951644867222, 'm': 0.24900911613158938, '7': 0.07520808561236624, 'o': 0.0587594133967499, 'm7': 0.05648038049940547, '/o7': 0.023285770907649623, 'M7': 0.016845025762980578, 'o7': 0.006936187078874356, '+': 0.002080856123662307}
     plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
-    plt.xlabel('Multiple Interpretations')
+    plt.xlabel('Chord Qualities')
+    # plt.xlabel('Multiple Interpretations')
     plt.xticks(rotation='vertical')
     # plt.figure(figsize=(20, 5))
     plt.show()
 
 
 def debug():
-    unit = ['D7, F#o', 'B,B7', 'B7,B', 'C,Cm7', 'D,DM7', "DM7,D", 'A,A7', '            B, B7', 'A, A7','A7, A', 'F#o, D7']
+    unit = ['D7, F#o', 'B,B7', 'B7,B', 'C,Cm7', 'D,DM7', "DM7,D", 'A,A7', 'B, B7', 'A, A7','A7, A', 'F#o, D7']
     for i, each_item in enumerate(unit):
         elements = each_item.split(',')
         for ii, each_chord in enumerate(elements):
@@ -311,4 +343,5 @@ if __name__ == "__main__":
     # inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
     # compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     # #count_pickup_measure_NO()
-    print_this_plot()
+    # print_this_plot()
+    key_invariant_pairs()

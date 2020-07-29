@@ -7,7 +7,7 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 from collections import Counter
-from code_snippet import put_chords_into_files
+from code_snippet import put_chords_into_files, key_invariant_pairs
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note, get_FB, colllapse_interval, is_suspension, get_next_note, get_previous_note, contain_continuo_voice, remove_instrumental_voices, contain_chordify_voice
 from mido import MetaMessage, MidiFile
 
@@ -935,10 +935,27 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     a_suspension = [] # record of all the suspensions indicated by FB
     a_discrepancy = []
     a_slice_discrepancy = []
-    f_all_chords = open(os.path.join(path, 'all_chords.txt'), 'w')
     # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
     No_of_files = 0
     # create folder structure
+    if not os.path.isdir(os.path.join(path, 'BCMCL')):
+        os.mkdir(os.path.join(path, 'BCMCL'))
+    if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_A')):
+        os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_A'))
+    if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_B')):
+        os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_B'))
+    if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_C')):
+        os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_C'))
+    if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_D')):
+        os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_D'))
+    if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
+        f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_A_all_chords.txt'), 'w')
+    elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
+        f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_B_all_chords.txt'), 'w')
+    elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == False:
+        f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_C_all_chords.txt'), 'w')
+    elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
+        f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_D_all_chords.txt'), 'w')
     for filename in os.listdir(path):
         # if '124.06' not in filename: continue
         # if '11.06' not in filename: continue
@@ -953,7 +970,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         # if filename[:-4] + '_chordify' + filename[-4:] in os.listdir(path) and translate_chord == 'Y':
         #     continue  # don't need to translate the chord labels if already there
         if 'chordify' in filename: continue
-        # if '2_voice'  not in filename: continue
+        if '2_voice'  in filename: continue
         if 'FB_align' in filename: continue
         # if not any(each_ID in filename for each_ID in
         #        ['16.06', '506', '248.05', '447', '113.08', '488', '244.44', '244.40', '248.33', '140.07']):
@@ -962,7 +979,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
         #     continue
         No_of_files += 1
-        # if No_of_files > 3: continue
+        # if No_of_files > 5: continue
         print(No_of_files)
         print(filename)
         print(filename, file=f_all_chords)
@@ -997,7 +1014,6 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 if fig == ['b5']:
                     print('debug')
                     print(thisChord.lyrics)
-
                 a_FB.append(fig)
                 suspension_ptr, a_suspension = translate_FB_into_chords(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, fig, thisChord, i, sChords, s, 3, a_suspension, a_discrepancy, a_slice_discrepancy, suspension_ptr)
                 thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
@@ -1025,13 +1041,13 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         s.insert(0, sChords)
         if translate_chord == 'Y':
             if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
-                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_A' + '.xml'))
+                s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_A', filename[:-4] + '_' + 'chordify_algorithm_A' + '.xml'))
             elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
-                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_B' + '.xml'))
+                s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_B', filename[:-4] + '_' + 'chordify_algorithm_B' + '.xml'))
             elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == False:
-                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_C' + '.xml'))
+                s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_C', filename[:-4] + '_' + 'chordify_algorithm_C' + '.xml'))
             elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
-                s.write('musicxml', os.path.join(path, filename[:-4] + '_' + 'chordify_algorithm_D' + '.xml'))
+                s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_D', filename[:-4] + '_' + 'chordify_algorithm_D' + '.xml'))
         else:
             s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
@@ -1040,9 +1056,11 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         a_chord_label_FB, all_chord_for_this_file = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
         print(all_chord_for_this_file, file=f_all_chords)
     a_chord_label_final_only_multiple_interpretations = []
+    a_chord_label_final_only_multiple_interpretations_key_invariant = []
     for each in a_chord_label_FB:
         if len(each) > 1:
             a_chord_label_final_only_multiple_interpretations.append(','.join(each))
+            a_chord_label_final_only_multiple_interpretations_key_invariant.append(key_invariant_pairs(each))
     a_chord_label_FB_flat = list(itertools.chain.from_iterable(a_chord_label_FB))
     # get chord quality
     a_chord_quality = []
@@ -1052,10 +1070,12 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         else:
             a_chord_quality.append(each_chord[1:])
     print_distribution_plot('Multiple Interpretations', a_chord_label_final_only_multiple_interpretations,a_chord_label_FB)
+    print_distribution_plot('Labels Both Valid for a Chord', a_chord_label_final_only_multiple_interpretations_key_invariant,
+                            a_chord_label_FB)
     print_distribution_plot('Chord Types', a_chord_label_FB_flat, a_chord_label_FB)
     print_distribution_plot('Chord Qualities', a_chord_quality, a_chord_label_FB)
     print_distribution_plot('Suspensions', a_suspension, a_chord_label_FB)
-    print_distribution_plot('Discrepancies', a_discrepancy, a_chord_label_FB, a_slice_discrepancy)
+    print_distribution_plot('Discrepancies Between Figures and Surface', a_discrepancy, a_chord_label_FB, a_slice_discrepancy)
     print('there are altogether', len(a_chord_label_FB), 'onset slices and there are', len(a_chord_label_FB_flat), 'chord labels')
     # print('debug')
     f_all_chords.close()
@@ -1084,7 +1104,7 @@ def print_distribution_plot(word, unit, total_NO_slice, a_slice_discrepancy=[]):
         unit_dict['M'] = unit_dict['']
         del unit_dict['']
     top_N = 20
-    if word != 'Discrepancies':
+    if word != 'Discrepancies Between Figures and Surface':
         print('there is', sum(unit_dict.values()), sum(unit_dict.values())/len(total_NO_slice) * 100, '%', word)
     else:
         slice_with_discrepancies = len(a_slice_discrepancy)
@@ -1141,10 +1161,7 @@ if __name__ == '__main__':
     # want_suspension_NCT = True
     # want_discrepancies_chord_labels = True
     # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
-    # lyrics_to_chordify(True, False, False, path,
-    #                    no_instrument) # Algorithm B
-    # lyrics_to_chordify(True, True, False, path,
-    #                    no_instrument) # Algorithm C
-    lyrics_to_chordify(True, True, True, path,
-                       no_instrument) # Algorithm D
+    # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
+    # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
+    lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
 
