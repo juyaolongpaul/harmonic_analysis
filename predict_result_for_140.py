@@ -12,8 +12,13 @@ GPU command:
 '''
 from __future__ import print_function
 import numpy as np
+import copy
+import collections
+#import graphviz
 np.random.seed(1337)  # for reproducibility
 from keras import optimizers
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree as TREE
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 # from keras.utils.visualize_util import plot # draw fig
@@ -28,31 +33,63 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
 from keras.callbacks import TensorBoard
-from keras.preprocessing.sequence import TimeseriesGenerator
-import h5py
+import itertools
 import re
 import os
 import numpy as np
-import keras.callbacks as CB
-import sys
-import string
-import time
 #import SaveModelLog
 from get_input_and_output import get_chord_list, get_chord_line, calculate_freq
+from get_input_and_output import determine_NCT, fill_in_pitch_class, contain_concert_pitch, contain_chordify_voice, contain_continuo_voice
 from music21 import *
 from sklearn.metrics import confusion_matrix, classification_report
 from imblearn.over_sampling import RandomOverSampler
 #from DNN_no_window_cross_validation import divide_training_data
 from DNN_no_window import evaluate_f1score
-from get_input_and_output import determine_middle_name, find_id, get_id, determine_middle_name2
-from sklearn.svm import SVC
+from get_input_and_output import determine_middle_name, find_id, find_id_FB, get_id, determine_middle_name2
+from sklearn.svm import SVC, LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from test_musicxml_gt import translate_chord_name_into_music21
 from keras_self_attention import SeqSelfAttention
 from get_input_and_output import adding_window_one_hot
-from collections import defaultdict
 from sklearn.metrics import accuracy_score
-from random import shuffle
+from transpose_to_C_chords import transpose
+from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
+from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures
+from scipy import stats
+c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
+
+
+def find_tranposed_interval(fn):
+    """
+    Get the key info from the file name, transpose back to the original key
+    :param fn:
+    :return:
+    """
+    ptr = fn.find('KB')
+    if '-' not in fn and '#' not in fn:  # keys do not have accidentals
+        key_info = fn[ptr + 2]
+    else:
+        key_info = fn[ptr + 2: ptr + 4]
+    if key_info.isupper():  # major key
+        mode = 'major'
+    else:
+        mode = 'minor'
+    if mode == 'minor':
+        transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
+    else:
+        transposed_interval = interval.Interval(pitch.Pitch('C'), pitch.Pitch(key_info))
+    return transposed_interval, key_info
+
+
+def transpose_chord(transposed_interval, chord):
+    acc = re.compile(r'[#-]+')
+    id_id = acc.findall(chord)
+    if id_id != []:  # has flat or sharp
+        root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+        transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+    else:  # no flat or sharp, which means only the first element is the root
+        transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+    return transposed_result
 
 
 def format_sequence_data(inputdim, outputdim, batchsize, x, y):
@@ -82,6 +119,11 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
             if bach == 'Y':
                 p = re.compile(r'\d{3}')  # find 3 digit in the file name
                 id_id = p.findall(fn)
+            elif bach == 'FB':
+                p = re.compile(r'\d{1,3}[ab]*')
+                id_id = p.findall(fn)
+                if len(id_id) == 2:
+                    id_id[0] = id_id[0] + '.' + id_id[1]
             else:
                 id_id = []
                 id_id.append(os.path.splitext(fn)[0])
@@ -91,8 +133,15 @@ def get_predict_file_name(input, data_id, augmentation, bach='Y'):
                     if fn.find('CKE') != -1 or fn.find('C_oriKE') != -1 or fn.find('aKE') != -1 or fn.find('a_oriKE') != -1:  # only wants key c
                         filename.append(fn)
                 else:
-                    filename.append(fn)
-    filename.sort()
+                    if fn.find('ori') != -1:
+                        filename.append(fn)  # only include files that are in the original key
+    #filename.sort()
+    # filename2 = []  # making sure the sequence is the same of data_id!
+    # for i, each_id in enumerate(data_id):
+    #     for j, each_file in enumerate(filename):
+    #         if each_id in each_file:
+    #             filename2.append(each_file)
+
     for id, fn in enumerate(filename):
         length = 0
         s = converter.parse(os.path.join(input, fn))
@@ -180,6 +229,144 @@ def bootstrap_data(x, y, times):
         xx = np.vstack((xx, x))
         yy = np.vstack((yy, y))
     return xx, yy
+
+
+def add_FB_PC(FB, pitchclass, FB_index,chord_tone, i):
+    """
+    Modular function to add FB pitch class
+    :param FB:
+    :param pitchclass:
+    :param FB_index:
+    :param chord_tone:
+    :param i:
+    :return:
+    """
+    FB.append(pitchclass[i])
+    FB_index.append(i)
+    chord_tone[i] = 0
+    return FB, FB_index, chord_tone
+
+
+def convert_semitones_into_pitch_class(y, bass):
+    """
+
+    :param y:
+    :param bass:
+    :param pitch_class_four_voice:
+    :return:
+    """
+    new = [0] * len(y)
+    for i in range(len(y)):
+        if y[i] == 1:
+            new[(i + bass.pitch.pitchClass) % len(y)] = 1
+    return new
+
+
+
+def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_list, this_pitch_class_list, previous_bass, previous_FB_PC, previous_NCT_sign_FB, RB_reasons, concert_pitch, chordify_voice, semitone, type=''):
+    """
+    'Type' specifies if I want to strip away figures using RB approach
+    :param x:
+    :param y:
+    :param thisChord:
+    :param outputtype:
+    :param s:
+    :return:
+    """
+    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    bass = get_bass_note(thisChord, this_pitch_list, this_pitch_class_list, 'Y')
+    if semitone == 'Y':
+        y = convert_semitones_into_pitch_class(y, bass)  # convert semitone back to
+    contain_continuo = contain_continuo_voice(s)
+    if contain_continuo:
+        upper_voice = list(this_pitch_class_list[:-2])
+        upper_voice_actual_note = list(this_pitch_list[:-2])
+    else:
+        upper_voice = list(this_pitch_class_list[:-1])
+        upper_voice_actual_note = list(this_pitch_list[:-1])
+    # if thisChord.measureNumber == 8 or thisChord.measureNumber == 9 or thisChord.measureNumber == 10:
+    #     print('debug')
+    five_three_six_four = 0  # track 53-64 motion
+    if j > 0:
+        previousChord = sChords.recurse().getElementsByClass('Chord')[j - 1]
+        previous_pitch_class_four_voice, previous_pitch_four_voice = get_pitch_class_for_four_voice(previousChord, s)
+    else:
+        previous_pitch_class_four_voice = []
+    if type == 'RB':
+        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice)
+    pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+    chord_tone = list(x)
+    chord_tone = [int(round(x)) for x in chord_tone]
+    actual_FB = []
+    if list(y) == [0] * 12:
+        # thisChord.addLyric(' ')
+        # thisChord.addLyric(' ')  # to align
+        return actual_FB, []
+    FB = []
+    FB_index = []
+    if outputtype.find('_pitch_class') != -1:
+        for i, item in enumerate(y):
+            if int(item) == 1:
+                if bass.pitch.pitchClass == i and bass.pitch.pitchClass not in upper_voice:
+                    continue  # Do not need to output bass as FB pitch class, if this PC only appear in bass
+                if type == '':  # only CT will be left if RB
+                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
+                elif type == 'RB':
+                    if this_pitch_class_list_only_CT[-1] == -2: # if the bass is NCT, then predict no FB!
+                        RB_reasons= ['NCT bass'] * len(this_pitch_class_list)
+                        if 'NCT bass' in rule_set:
+                            break
+                    if thisChord.beat % 1 != 0 and thisChord.duration.quarterLength <= 0.25:  # if the current slice contains 16th notes off beat, prediction nothing too!
+                        RB_reasons = ['16th (or shorter) note slice ignored'] * len(this_pitch_class_list)
+                        if '16th (or shorter) note slice ignored' in rule_set:
+                            break
+                    if i in this_pitch_class_list_only_CT:  # if this one is a CT, output as FB in RB approach
+                        if previous_bass != -1:
+                            if bass.pitch.pitchClass == previous_bass.pitch.pitchClass \
+                                    and (pitchclass[i] in previous_FB_PC or i in previous_pitch_class_four_voice):
+                                # consider the fact that the same bass can have more than 2 slices with the same PC, none of them should be labelled
+                                # another rule: bass remaining the same, and the PC in the current slices does
+                                # not need to be labelled if already appeared in the previous slice
+                                # keep it simple, although this will lead to errors when suspensions like 9-8, where 8 is in the 9 slice, and then then -8 won't show, but oh well, we are not doing nested conditions
+                                print('no need to put this FB PC')
+                                RB_reasons[this_pitch_class_list_only_CT.index(i)] = 'FB already labeled'
+                                if 'FB already labeled' not in rule_set:  # if this rule is not specified, still output the figure
+                                    FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone,
+                                                                         i)
+                            else:
+                                FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
+                        else:
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index,chord_tone, i)
+                    elif i in this_pitch_class_list:
+                        if NCT_sign[this_pitch_class_list.index(i)] == 'NCT_suspension':  # still add this figure since it is SUS!
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
+                        if 'NCT upper voices' not in rule_set:
+                            FB, FB_index, chord_tone = add_FB_PC(FB, pitchclass, FB_index, chord_tone, i)
+                        # RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices: ' + NCT_sign[this_pitch_class_list.index(i)]
+                        RB_reasons[this_pitch_class_list.index(i)] = 'NCT upper voices'
+
+
+        # if FB != []:
+        #     thisChord.addLyric(FB)  # output the PC indicated by FB
+        # else:
+        #     thisChord.addLyric(' ')
+        # Output FB to the file too
+        pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+        bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+        for i, sonority in enumerate(upper_voice_actual_note):
+            if hasattr(sonority, 'pitch'):
+                if any(sonority.pitch.midi % 12 == each_FB_ptr for each_FB_ptr in FB_index):
+                    actual_FB = get_actual_figures(bass, sonority, actual_FB, key)
+        if type != 'RB':
+            return actual_FB, FB
+        else:
+            return actual_FB, FB, RB_reasons, NCT_sign
+
+
+def add_FB_result_to_score(thisChord, actual_FB):
+    for result in actual_FB:
+        thisChord.addLyric(result)
+    return thisChord
 
 
 def output_NCT_to_XML(x, y, thisChord, outputtype):
@@ -274,8 +461,8 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                              'incomplete dominant-seventh chord', 'dominant seventh chord',
                              'major triad',
                              'minor triad',
-                             'diminished triad']
-    if chord_tone != [0] * len(chord_tone):  # there must be a slice having at least one chord tone
+                             'diminished triad', 'minortriad']  # 4_op44ii_3_revised.musicxml has 'minortriad'
+    if chord_tone != [0] * len(chord_tone) and chord_label.pitchClasses != []:  # there must be a slice having at least one chord tone
         if any(each in chord_label.pitchedCommonName for each in allowed_chord_quality):
             # This is the chord we can output directly
             # https://python-forum.io/Thread-Ho-to-check-if-string-contains-substring-from-list
@@ -294,14 +481,24 @@ def infer_chord_label1(thisChord, chord_tone, chord_tone_list, chord_label_list)
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-incomplete dominant-seventh chord', '7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-major triad') != -1: #(e.g., E--major triad) in  279 slice 33
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-major triad', '')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minor triad') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-minor triad', 'm')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minortriad') != -1:
+                    chord_label_list.append(chord_label.pitchedCommonName.replace('-minortriad', 'm')) # translate to support
                 elif chord_label.pitchedCommonName.find('-dominant seventh chord') != -1: #(e.g., E--major triad) in  279 slice 33
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-dominant seventh chord', '7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-half-diminished seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-half-diminished seventh chord', '/o7')) # translate to support
                 elif chord_label.pitchedCommonName.find('-minor-seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-minor-seventh chord', 'm7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-minor seventh chord') != -1:
+                    chord_label_list.append(
+                        chord_label.pitchedCommonName.replace('-minor seventh chord', 'm7'))  # translate to support
                 elif chord_label.pitchedCommonName.find('-major-seventh chord') != -1:
                     chord_label_list.append(chord_label.pitchedCommonName.replace('-major-seventh chord', 'M7')) # translate to support
+                elif chord_label.pitchedCommonName.find('-major seventh chord') != -1:
+                    chord_label_list.append(
+                        chord_label.pitchedCommonName.replace('-major seventh chord', 'M7'))  # translate to support
                 else:
                     chord_label_list.append(chord_label.pitchedCommonName)  # Just in case the function cannot accept any names (e.g., E--major triad)
             else:
@@ -402,12 +599,15 @@ def infer_chord_label2(j, thisChord, chord_label_list, chord_tone_list):
             if len(common_tone1) == len(common_tone2): # if sharing the same number of pcs, choose the chord label whose root is the bass of the slice
                 slice_bass = thisChord.bass().pitchClass
                 chord_root_1 = harmony.ChordSymbol(chord_label_list[j - 1])._cache['root'].pitchClass
-                chord_root_2 = harmony.ChordSymbol(chord_label_list[jj])._cache['root'].pitchClass
-                if chord_root_1 == slice_bass:
-                    chord_label_list[j] = chord_label_list[j - 1]
-                elif chord_root_2 == slice_bass:
-                    chord_label_list[j] = chord_label_list[jj]
-                else:
+                try: # 5_op44iii_2_revised.musicxml has an error about this
+                    chord_root_2 = harmony.ChordSymbol(chord_label_list[jj])._cache['root'].pitchClass
+                    if chord_root_1 == slice_bass:
+                        chord_label_list[j] = chord_label_list[j - 1]
+                    elif chord_root_2 == slice_bass:
+                        chord_label_list[j] = chord_label_list[jj]
+                    else:
+                        chord_label_list[j] = chord_label_list[j - 1]
+                except:
                     chord_label_list[j] = chord_label_list[j - 1]
             elif len(common_tone1) > len(common_tone2):
                 chord_label_list[j] = chord_label_list[j - 1]
@@ -449,15 +649,23 @@ def infer_chord_label3(j, thisChord, chord_label_list, chord_tone_list):
             if itemitem != 'un-determined' and itemitem.find('interval') == -1:  # Find the next real chord
                 break
         jj = jj + j + 1
-        common_tone1 = list(
-            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
-                harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+        try:
+            common_tone1 = list(
+                set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                    harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses))
+        except:
+            chord_label_list[j] = chord_label_list[jj]
+            return
         if chord_label_list[jj] == 'un-determined': # Edge case: 187, the last slice is un-determined
             common_tone2 = []
         else:
-            common_tone2 = list(
-            set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
-                harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+            try:
+                common_tone2 = list(
+                set(harmony.ChordSymbol(chord_label_list[j]).pitchClasses).intersection(
+                    harmony.ChordSymbol(chord_label_list[jj]).pitchClasses))
+            except:
+                chord_label_list[j] = chord_label_list[j - 1]
+                return
         if len(common_tone1) == len(harmony.ChordSymbol(chord_label_list[j]).pitchClasses) and len(
                 harmony.ChordSymbol(chord_label_list[j - 1]).pitchClasses) > len(
             harmony.ChordSymbol(chord_label_list[j]).pitchClasses):
@@ -506,10 +714,10 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     #encoding_all = []
     fn_all = [] # Unify the order
     for fn in os.listdir(path):
-        if sign == 'N': # eliminate pitch class only encoding
+        if 'N' in sign: # eliminate pitch class only encoding
             if fn.find('_pitch_class') != -1 or fn.find('_chord_tone') != -1:
                 continue
-        elif sign == 'Y': # only want pitch class only encoding
+        elif 'Y' in sign : # only want pitch class only encoding
             if fn.find('_pitch_class') == -1:
                 continue
         elif sign == 'C': # only want chord tone as input to train the chord inferral algorithm
@@ -518,11 +726,18 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
         if augmentation == 'N':
             if fn.find('CKE') == -1 and fn.find('C_oriKE') == -1 and fn.find('aKE') == -1 and fn.find('a_oriKE') == -1: # we cannot find key of c, skip
                 continue
-        # elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
-        #     if fn.find('_ori') == -1:
-        #         continue
-        p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        elif portion == 'valid' or portion == 'test': # we want original key on valid and test set when augmenting
+            if fn.find('_ori') == -1:
+                continue
+        if 'FB' not in sign:
+            p = re.compile(r'\d{3}')  # find 3 digit in the file name
+        else:
+            p = re.compile(r'\d{1,3}[ab]*')
         id_id = p.findall(fn)
+        if 'FB' in sign and len(id_id) == 2:
+            id_id[0] = id_id[0] + '.' + id_id[1]
+        if id_id[0] == '137':
+            print('debug')
         if id_id[0] in id:
             fn_all.append(fn)
     print(fn_all)
@@ -531,7 +746,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     for fn in fn_all:
         encoding = np.loadtxt(os.path.join(path, fn))
         if path.find('_x_') != -1:  # we need to add windows
-            if model.find('SVM') != -1 or model.find('DNN') != -1:
+            if model.find('SVM') != -1 or model.find('DNN') != -1 or model.find('DT') != -1:
                 encoding_window = adding_window_one_hot(encoding, windowsize)
             elif ts != 0:
                 encoding_window = create_3D_data(encoding, ts)
@@ -550,7 +765,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
                 encoding_all = np.concatenate((encoding_all, encoding))
         counter += 1
     print(portion, 'finished')
-    return encoding_all
+    return encoding_all, fn_all
 
 
 def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign, FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx, valid_yy):
@@ -560,7 +775,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
     print('train_yy shape:', train_yy.shape)
     print('valid_xx shape:', valid_xx.shape)
     print('valid_yy shape:', valid_yy.shape)
-    if modelID.find('SVM') == -1:
+    if modelID.find('SVM') == -1 and modelID.find('DT') == -1:
         model = Sequential()
         # model.add(Embedding(36, 256, input_length=batch))
         if modelID.find('DNN') != -1:
@@ -640,7 +855,7 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
         return model
     elif modelID == "SVM":
         if outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
-            model = SVC(verbose=True, kernel='linear')
+            model = LinearSVC(verbose=True)
             train_yy_int = np.asarray(onehot_decode(train_yy))
             valid_yy_int = np.asarray(onehot_decode(valid_yy))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
@@ -649,12 +864,26 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             model.fit(train_xx_SVM, train_yy_int_SVM)
             return model
         elif outputtype.find("NCT") != -1:  # we need to do multilabel classification
-            model = OneVsRestClassifier(SVC(verbose=True, kernel='linear'))
+            model = OneVsRestClassifier(LinearSVC(verbose=True))
             train_xx_SVM = np.vstack((train_xx, valid_xx))
             train_yy_SVM = np.concatenate((train_yy, valid_yy))
             print('new training set', train_xx_SVM.shape, train_yy_SVM.shape)
             model.fit(train_xx_SVM, train_yy_SVM)
             return model
+    elif modelID == 'DT':  # we want to learn the rules and visualize the rules
+        if outputtype.find("NCT") != -1:
+            model = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+            train_xx_DT = np.vstack((train_xx, valid_xx))
+            train_yy_DT = np.concatenate((train_yy, valid_yy))
+            print('new training set', train_xx_DT.shape, train_yy_DT.shape)
+            model.fit(train_xx_DT, train_yy_DT)
+            # tree_FB = TREE.export_graphviz(model, feature_names= ["bass_" + pc for pc in c2] + c2 + ["real_attack_" + pc for pc in c2] + ['downbeat', 'onbeat', 'offbeat'], filled=True, rounded=True, leaves_parallel=True, out_file=None)
+            # graph = graphviz.Source(tree_FB, format="pdf")
+            # graph.render(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME), view=True)
+            return model
+        elif outputtype.find("CL") != -1 or MODEL_NAME.find('chord_tone') != -1:
+            input('DT for chord labeling has not been developed!')
+
 
 def unify_GTChord_and_inferred_chord(name):
     if name.find('M')!= -1 and name.find('M7') == -1:
@@ -664,7 +893,754 @@ def unify_GTChord_and_inferred_chord(name):
     return name[0] + name[1:]
 
 
-def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+def determine_potential_sus(fig_a, fig_b, FB, previous_FB, previous_bass, bass, ptr, s, sChord):
+    if fig_a not in FB:  # this applies whether 5 can be implied when there is 6 in the slice, for example
+        if fig_a not in previous_FB or previous_bass == -1 or previous_bass.name == 'rest' or bass.name == 'rest':
+            if fig_b in FB:
+                FB.remove(fig_b)
+        elif previous_bass.name != 'rest' and bass.name != 'rest':
+            pitch_class_four_voice, pitch_four_voice = \
+                get_pitch_class_for_four_voice(sChord.recurse().getElementsByClass('Chord')[ptr - 1], s)
+            for voice_number, sonority in enumerate(pitch_four_voice):  # Don't use thisChord._notes anymore since that
+                # has two problems: (1) note will be collapsed if doubled, (2) it ranks as pitch class, not the actual voice!
+                if pitch_class_four_voice[voice_number] != -1:
+                    aInterval = interval.Interval(noteStart=previous_bass, noteEnd=sonority)
+                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                    if fig_a == colllapsed_interval or int(fig_a) - int(colllapsed_interval) == 7:  # found the voice that has this figure, also consider 9 vs 2 problem
+                        if is_suspension(ptr - 1, 1, s, sChord, voice_number, fig_a) == False:  # TO do this, you need to uncollapse the voices
+                            if fig_b in FB:
+                                FB.remove(fig_b)
+                        else:
+                            sChord.recurse().getElementsByClass('Chord')[ptr - 1].style.color = 'pink'
+                            # At this point, 2-8 should be 9-8
+                            for i, each_FB in enumerate(previous_FB):
+                                if each_FB == '2':
+                                    previous_FB[i] = '9'
+                        # note that only 9-8, 6-5, and 4-3 suspensions are labelled in this case
+    return previous_FB, FB
+
+
+def remove_implied_FB(gt_FB, predict_FB, previous_gt_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord):
+    """
+
+    :param gt_FB:
+    :param predict_FB:
+    :param previous_gt_FB:
+    :param previous_predict_FB:
+    :param previous_bass:
+    :param bass:
+    :param ptr:
+    :param s:
+    :param sChord:
+    :return:
+    """
+    previous_gt_FB, gt_FB = determine_potential_sus('4', '3', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    previous_predict_FB, predict_FB = determine_potential_sus('4', '3', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    previous_gt_FB, gt_FB = determine_potential_sus('6', '5', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    previous_predict_FB, predict_FB = determine_potential_sus('6', '5', predict_FB, previous_predict_FB, previous_bass, bass, ptr, s, sChord)
+    if '2' not in previous_gt_FB:
+        previous_gt_FB, gt_FB = determine_potential_sus('9', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    elif '9' not in previous_gt_FB:
+        previous_gt_FB, gt_FB = determine_potential_sus('2', '8', gt_FB, previous_gt_FB, previous_bass, bass, ptr, s, sChord)
+    if '2' not in previous_predict_FB:
+        previous_predict_FB, predict_FB = determine_potential_sus('9', '8', predict_FB, previous_predict_FB,
+                                                                  previous_bass, bass, ptr, s, sChord,)
+    elif '9' not in previous_predict_FB:
+        previous_predict_FB, predict_FB = determine_potential_sus('2', '8', predict_FB, previous_predict_FB,
+                                                                  previous_bass, bass, ptr, s, sChord,)
+    # TODO: resolve this 9 vs 2 issue!
+    # Stop using because of the 8-7 problem
+    gt_FB = remove_6_and_4(gt_FB, previous_gt_FB, sChord, s, ptr)
+    predict_FB = remove_6_and_4(predict_FB, previous_predict_FB, sChord, s, ptr)
+    return previous_gt_FB, gt_FB, previous_predict_FB, predict_FB
+
+
+def remove_6_and_4(FB, previous_FB, sChord, s, ptr):
+    if '4' in FB and ('2' in FB or '3' in FB) and '7' not in previous_FB:
+        if '6' in FB and len(FB) == 3:
+            FB.remove('6')
+            if '2' in FB:  # also remove 4 when it is a 642 chord
+                FB.remove('4')
+        elif len(FB) == 2 and '2' in FB:  # it is a 42 chord (with no 6), and if 6 is in the sonority, it should be reduced into 2 as well
+            thisChord = sChord.recurse().getElementsByClass('Chord')[ptr]
+            k = s.analyze('AardenEssen')
+            pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+            bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+            intervals = []  # store all the exhaustive FB
+            # get all the intervals for the slice
+            for sonority in pitch_four_voice:
+                if hasattr(sonority, 'pitch'):
+                    intervals = get_actual_figures(bass, sonority, intervals, k)
+            if '6' in intervals and '2' in intervals and '4' in intervals and '7' not in intervals and '5' not in intervals and '3' not in intervals: # if this is a 42 label but is a 642 chord, then 4 can be implied
+                FB.remove('4')
+                #input('4 is removed from a 42 chord, check its functionality!')
+    return FB
+
+def count_correct_slices(rule_set, predict_FB_PC, gt_FB_PC, gt_FB, predict_FB, gt_FB_implied, predict_FB_implied, correct_num, correct_num_implied, correct_mark_all, sign=''):
+    """
+    The modular function that counts the correct slides of (implied) FB
+    :param correct_bit:
+    :param gt:
+    :param correct_num:
+    :param correct_num_implied:
+    :param thisChord:
+    :return:
+    """
+    if sign == 'RB' and 'No853' in rule_set:
+        for each_figure in ['3', '5', '8']:
+            if each_figure in predict_FB:
+                predict_FB.remove(each_figure)
+    # for each_figure in ['3', '5', '8']:
+    #     if each_figure not in gt_FB_implied:  # this means these intervals can still be implied since GT does not have it
+    #         if each_figure in predict_FB_implied:
+    #             predict_FB_implied.remove(each_figure)
+    if predict_FB_PC == gt_FB_PC or predict_FB == gt_FB:
+        correct_num += 1
+        correct_num_implied += 1
+        correct_mark_all.append('✓')
+    elif gt_FB_implied == predict_FB_implied:
+        correct_num_implied += 1
+        correct_mark_all.append('✓_')
+    else:
+        correct_mark_all.append('✘')
+    return correct_num, correct_num_implied, correct_mark_all
+
+
+def one_hot_PC_filler(list_number):
+    pitchclass = [0] * 12
+    for i in list_number:
+        pitchclass[i] = 1
+    return pitchclass
+
+
+
+
+def output_FB_to_score(FB, FB_PC, sChords, j, correct_mark=''):
+    thisChord = sChords.recurse().getElementsByClass('Chord')[j]
+    if FB_PC != []:  # output PC first
+        thisChord.addLyric(FB_PC)  # output the PC indicated by FB
+    else:
+        thisChord.addLyric(' ')
+    for each_FB in FB:
+        thisChord.addLyric(each_FB)
+    space_needed = 3 - len(FB)  # align the results
+    for i in range(space_needed):
+        thisChord.addLyric(' ') # beautify formatting
+    if correct_mark != '':
+        thisChord.addLyric(correct_mark)
+
+
+
+
+
+def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+                                     cv, pitch_class, ratio, input, output, balanced, outputtype,
+                                     inputtype, predict, semitone, exclude=[]):
+    print('Training and testing the machine learning models')
+    id_sum = find_id_FB(input, exclude)
+    num_of_chorale = len(id_sum)
+    train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
+    pre = []
+    pre_test = []
+    rec = []
+    rec_test = []
+    f1 = []
+    f1_test = []
+    acc = []
+    acc_test = []
+    cvscores = []
+    cvscores_test = []
+    tp = []
+    tn = []
+    fp = []
+    fn = []
+    frame_acc = []
+    frame_acc_implied = []
+    frame_acc_RB = []
+    frame_acc_RB_implied = []
+    frame_acc_2 = []
+    cvscores_percentage_of_NCT_per_slice = []
+    NCT_bass_acc = []
+    NCT_bass_percentage = []
+    NCT_upper_acc = []
+    NCT_upper_percentage = []
+    FB_already_labeled_acc = []
+    FB_already_labeled_percentage = []
+    sixteenth_note_acc = []
+    sixteenth_note_percentage = []
+    empty_FB_acc = []
+    empty_FB_percentage = []
+    NCT_bass_err = []
+    NCT_upper_err = []
+    FB_already_labeled_err = []
+    sixteenth_note_err = []
+    empty_FB_err = []
+    # ML copy of it
+    NCT_bass_acc_ML = []
+    NCT_bass_percentage_ML = []
+    NCT_upper_acc_ML = []
+    NCT_upper_percentage_ML = []
+    FB_already_labeled_acc_ML = []
+    FB_already_labeled_percentage_ML = []
+    sixteenth_note_acc_ML = []
+    sixteenth_note_percentage_ML = []
+    empty_FB_acc_ML = []
+    empty_FB_percentage_ML = []
+    ML_rule_acc = []
+    ML_rule_percentage = []
+    NCT_bass_err_ML = []
+    NCT_upper_err_ML = []
+    FB_already_labeled_err_ML = []
+    sixteenth_note_err_ML = []
+    empty_FB_err_ML = []
+    ML_rule_err = []
+    batch_size = 256
+    epochs = 500
+    if modelID == 'DNN':
+        patience = 50
+    else:
+        patience = 20
+    print('Loading data...')
+    extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+        train_num)
+    timestep = ts
+    HIDDEN_NODE = nodes
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                 + str(timestep) + extension + '_rule_' + str(len(rule_set))
+    print('Loading data...')
+    print('Build model...')
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
+        os.mkdir(os.path.join('.', 'ML_result', sign))
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
+        os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
+                           append=True, separator=';')
+    for times in range(cv):
+        # if times != 0 :
+        #     continue
+        MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                     + str(timestep) + extension  + '_cv_' + str(times + 1) + '_rule_' + str(len(rule_set))
+        FOLDER_NAME = 'MODEL'
+        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        # if exclude != []:
+        #     train_id.extend(test_id)
+        #     test_id = exclude # Swap the test id into the 39 ones
+        valid_yy, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+        valid_xx, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
+            train_xx, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+            train_yy, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+            train_xx = train_xx[
+                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+            train_yy = train_yy[:int(portion * train_yy.shape[0])]
+            print('training and predicting...')
+            model = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+                                   FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy,
+                                   valid_xx,
+                                   valid_yy)  # train the machine learning model
+        else:
+            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+        test_xx, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        test_xx_only_pitch, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                                os.path.join('.', 'data_for_ML', sign,
+                                                             sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                'FB_Y')
+        test_yy, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+
+        predict_y = model.predict(test_xx)  # Predict the probability for each bit of FB sonority
+        for i in predict_y:  # regulate the prediction
+            for j, item in enumerate(i):
+                if (item > 0.5):
+                    i[j] = 1
+                else:
+                    i[j] = 0
+        correct_num2 = 0
+        for i, item in enumerate(predict_y):
+            if np.array_equal(item, test_yy[
+                i]):  # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
+                correct_num2 += 1
+        frame_acc_2.append(((correct_num2 / predict_y.shape[0]) * 100))
+        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+            model, valid_xx, valid_yy, modelID)
+        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                        test_xx,
+                                                                                                        test_yy,
+                                                                                                        modelID)
+        num_of_NCT_slices = 0
+        for i, item in enumerate(test_yy):
+            if 1 in item:
+                num_of_NCT_slices += 1
+        cvscores_percentage_of_NCT_per_slice.append((num_of_NCT_slices / test_yy.shape[0]) * 100)
+        pre.append(precision * 100)
+        pre_test.append(precision_test * 100)
+        rec.append(recall * 100)
+        rec_test.append(recall_test * 100)
+        f1.append(f1score * 100)
+        f1_test.append(f1score_test * 100)
+        acc.append(accuracy * 100)
+        acc_test.append(accuracy_test * 100)
+        tp.append(true_positive)
+        fp.append(false_positive)
+        fn.append(false_negative)
+        tn.append(true_negative)
+        if predict == 'Y':
+            # prediction put into files
+            for i, each_file in enumerate(fileName):
+                fileName[i] = fileName[i][:-3] + 'xml'
+            numSalamiSlices = []
+            for id, FN in enumerate(fileName):
+                length = 0
+                s = converter.parse(os.path.join(input, FN))
+                sChords = s.chordify()
+                for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    length += 1
+                numSalamiSlices.append(length)
+            # fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
+            sum = 0
+            for i in range(len(numSalamiSlices)):
+                sum += numSalamiSlices[i]
+            # input(sum)
+            # input(predict_y.shape[0])
+
+            length = len(fileName)
+            a_counter = 0
+            a_counter_correct = 0
+            a_counter_correct_implied = 0
+            a_counter_correct_RB = 0
+            a_counter_correct_RB_implied = 0
+            a_all_RB_reasons = []  # RB reason across all pieces
+            a_all_ML_reasons = []
+            a_gt_FB_implied_all = []  # GT FB across all pieces
+            a_predict_FB_implied_all = []
+            a_predict_FB_RB_implied_all = []
+            a_intervals_all = []
+            a_correct_mark_all_RB = []
+            a_correct_mark_all_ML = []
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1) + '_rule_' + str(len(rule_set)))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1) + '_rule_' + str(len(rule_set))))
+            if times == 0:
+                f_all = open(os.path.join('.', 'predicted_result', sign,
+                                          outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                              windowsize + 1) + '_rule_' + str(len(rule_set)), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
+                             'w')  # create this file to track every type of mistakes
+            else:
+                f_all = open(os.path.join('.', 'predicted_result', sign,
+                                          outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                              windowsize + 1) + '_rule_' + str(len(rule_set)), 'ALTOGETHER_SUS_ME_3') + str(times) + '.txt',
+                             'a')  # create this file to track every type of mistakes
+            # the sequence of the filename should be the same with test_id!
+
+            for i in range(length):
+                print(fileName[i][:-4], file=f_all)
+                print(fileName[i])
+                # if '13.06' not in fileName[i]:
+                #     if '133.06' not in fileName[i]:
+                #         continue
+                # if '137.05' not in fileName[i]:
+                #     continue
+                num_salami_slice = numSalamiSlices[i]
+                correct_num = 0
+                correct_num_implied = 0
+                correct_num_RB = 0
+                correct_num_implied_RB = 0
+                gt_FB_all = []
+                gt_FB_PC_all = []
+                gt_FB_all_implied = []
+                predict_FB_all = []
+                predict_FB_PC_all = []
+                predict_FB_all_implied = []
+                predict_FB_RB_all = []
+                predict_FB_RB_PC_all = []
+                all_RB_reasons = []
+                all_ML_reasons = []
+                predict_FB_RB_all_implied = []
+                correct_mark_all = []
+                correct_mark_all_RB = []
+                intervals_all = []
+                s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                concert_pitch = contain_concert_pitch(s)
+                chordify_voice = contain_chordify_voice(s)
+                # s = remove_concert_pitch_voices(s)
+                s_no_chordify = converter.parse(os.path.join(input, fileName[i]))  # remove the last voice which will always be the chorify voice
+                # s_no_chordify = remove_concert_pitch_voices(s_no_chordify)
+                s_no_chordify.remove(s_no_chordify.parts[-1]) # remove the last voice which will always be the chorify voice
+                sChords = s_no_chordify.chordify()
+                sChords_RB = s_no_chordify.chordify()
+                k = s.analyze('AardenEssen')
+                previous_gt_FB = []
+                previous_predict_FB = []
+                previous_predict_FB_RB = []
+                previous_predict_FB_RB_PC = []
+                previous_bass = -1
+                previous_NCT_sign= [''] * 100  # a dummy first one
+
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    # print('measure', thisChord.measureNumber)
+                    # if '112.05' in fileName[i] and thisChord.measureNumber == 3:
+                    #     print('debug')
+                    # print('current slice number is', j)
+                    if j == 15:
+                        print('debug')
+                    pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                    NCT_sign = [''] * len(pitch_class_four_voice)
+                    bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+                    RB_reasons = [''] * len(pitch_class_four_voice)  # have reasons for each pitch!
+                    ML_reasons = [''] * len(pitch_class_four_voice)
+                    intervals = []  # store all the exhaustive FB
+                    # get all the intervals for the slice
+                    for sonority in pitch_four_voice:
+                        if hasattr(sonority, 'pitch'):
+                            intervals = get_actual_figures(bass, sonority, intervals, k, 'Y')
+                    #print('all the figures for this slice is', intervals)
+                    gt = test_yy[a_counter]
+                    prediction = predict_y[a_counter]
+                    correct_bit = 0
+                    correct_bit_RB = 0
+                    # for ii in range(len(gt)):
+                    #     if (gt[ii] == prediction[ii]):  # the label is correct
+                    #         correct_bit += 1
+                    #     if gt[ii] == one_hot_PC_filler(pitch_class_four_voice[:-1])[ii]:
+                    #         correct_bit_RB += 1
+                    dimension = test_xx_only_pitch.shape[1]
+
+                    realdimension = int(dimension / (2 * windowsize + 1))
+                    if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
+                        x = test_xx_only_pitch[a_counter][-1]  # no window if the matrix is 3D
+                    else:
+                        if windowsize < 0:
+                            x = test_xx_only_pitch[a_counter]
+                        else:
+                            x = test_xx_only_pitch[a_counter][
+                                realdimension * windowsize:realdimension * (windowsize + 1)]
+                    gt_FB, gt_FB_PC = get_FB_and_FB_PC(rule_set, x, gt, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice, semitone)  # Get the resulting PC and FB
+                    if gt_FB == ['3', '8', '5']:
+                        print('debug')
+                    # if j == 25 and '248.53' in fileName[i]:
+                    #     print('debug')
+                    predict_FB, predict_FB_PC = get_FB_and_FB_PC(rule_set, x, prediction, sChords, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, [], [], RB_reasons, concert_pitch, chordify_voice, semitone)
+                    predict_FB_RB, predict_FB_RB_PC, RB_reasons, NCT_sign = get_FB_and_FB_PC(rule_set, x, x, sChords_RB, j, outputtype, s, k, pitch_four_voice, pitch_class_four_voice, previous_bass, previous_predict_FB_RB_PC, previous_NCT_sign, RB_reasons, concert_pitch, chordify_voice, semitone, 'RB')
+                    if predict_FB_RB == ['5', '8', '4'] and '248.53' in fileName[i]:
+                        print('debug')
+                    if predict_FB_RB == ['8', '7', '3'] and '30.06' in fileName[i]:
+                        print('debug')
+                    previous_gt_FB, gt_FB_implied, previous_predict_FB, predict_FB_implied= remove_implied_FB(list(gt_FB), list(predict_FB), previous_gt_FB, previous_predict_FB, previous_bass, bass, j, s_no_chordify, sChords)  # here, all implied intervals are removed, but not printed to score. Suspension is not considered since it cannot be implied
+                    #print('previous_predict_FB_RB before', previous_predict_FB_RB)
+                    previous_fake_gt_FB, fake_gt_FB_implied, previous_predict_FB_RB, predict_FB_RB_implied = remove_implied_FB(list(gt_FB), list(predict_FB_RB), previous_gt_FB, previous_predict_FB_RB, previous_bass, bass, j, s_no_chordify, sChords_RB)
+                    #print('previous_predict_FB_RB after', previous_predict_FB_RB)
+                    correct_num, correct_num_implied, correct_mark_all = count_correct_slices(rule_set, predict_FB_PC,
+                                                                                              gt_FB_PC, gt_FB,
+                                                                                              predict_FB, gt_FB_implied,
+                                                                                              predict_FB_implied,
+                                                                                              correct_num,
+                                                                                              correct_num_implied,
+                                                                                              correct_mark_all)
+                    correct_num_RB, correct_num_implied_RB, correct_mark_all_RB = count_correct_slices(rule_set,
+                                                                                                       predict_FB_RB_PC,
+                                                                                                       gt_FB_PC, gt_FB,
+                                                                                                       predict_FB_RB,
+                                                                                                       gt_FB_implied,
+                                                                                                       predict_FB_RB_implied,
+                                                                                                       correct_num_RB,
+                                                                                                       correct_num_implied_RB,
+                                                                                                       correct_mark_all_RB,
+                                                                                                       'RB')
+                    # Save results
+
+                    gt_FB_all.append(gt_FB)
+                    gt_FB_PC_all.append(gt_FB_PC)
+                    gt_FB_all_implied.append(gt_FB_implied)
+                    predict_FB_all.append(predict_FB)
+                    predict_FB_PC_all.append(predict_FB_PC)
+                    predict_FB_all_implied.append(predict_FB_implied)
+                    predict_FB_RB_all.append(predict_FB_RB)
+                    predict_FB_RB_PC_all.append(predict_FB_RB_PC)
+                    predict_FB_RB_all_implied.append(predict_FB_RB_implied)
+                    all_RB_reasons.append(RB_reasons)
+                    a_all_RB_reasons.append(RB_reasons)
+                    intervals_all.append(intervals)
+                    a_intervals_all.append(intervals)
+                    # need to add ML reasons, same if the implied FB is the same, specify "ML rules" if different
+                    if predict_FB_implied == predict_FB_RB_implied:
+                        all_ML_reasons.append(RB_reasons)
+                        a_all_ML_reasons.append(RB_reasons)
+                    else:
+                        ML_reasons = ['ML rules'] * len(pitch_class_four_voice)
+                        all_ML_reasons.append(ML_reasons)
+                        a_all_ML_reasons.append(ML_reasons)
+                    if j != 0:
+                        gt_FB_all[j - 1] = previous_gt_FB
+                        predict_FB_all[j - 1] = previous_predict_FB
+                        predict_FB_RB_all[j - 1] = previous_predict_FB_RB
+                    previous_gt_FB = gt_FB
+                    previous_predict_FB = predict_FB
+                    previous_predict_FB_RB = predict_FB_RB
+                    previous_bass = bass
+                    previous_predict_FB_RB_PC = predict_FB_RB_PC
+                    previous_NCT_sign = NCT_sign
+
+
+                    thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    sChords_RB.recurse().getElementsByClass('Chord')[j].closedPosition(forceOctave=4, inPlace=True)
+                    a_counter += 1
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')): # output all the results to score
+                    output_FB_to_score(gt_FB_all[j], gt_FB_PC_all[j], sChords, j)
+                    output_FB_to_score(predict_FB_all[j], predict_FB_PC_all[j], sChords, j, correct_mark_all[j])
+                    output_FB_to_score(predict_FB_RB_all[j], predict_FB_RB_PC_all[j], sChords_RB, j, correct_mark_all_RB[j])
+                    if correct_mark_all_RB[j] == '✓_' or correct_mark_all_RB[j] == '✓':
+                        continue
+                    else:
+                        print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason', all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j])
+                        # print('Error at m.', thisChord.measureNumber, 'beat', thisChord.beat, 'reason',
+                        #       all_RB_reasons[j], 'GT FB', gt_FB_all[j], 'Pre FB', predict_FB_RB_all[j], file=f_all)
+                s.insert(0, sChords)
+                s.insert(0, sChords_RB)
+                a_counter_correct += correct_num
+                a_counter_correct_implied += correct_num_implied
+                a_counter_correct_RB += correct_num_RB
+                a_counter_correct_RB_implied += correct_num_implied_RB
+                a_predict_FB_RB_implied_all.append(predict_FB_RB_all_implied)  # add implied ones easy to compare
+                a_gt_FB_implied_all.append(gt_FB_all_implied)  # same with above
+                a_predict_FB_implied_all.append(predict_FB_all_implied)
+                a_correct_mark_all_RB.append(correct_mark_all_RB)
+                a_correct_mark_all_ML.append(correct_mark_all)
+                print(end='\n', file=f_all)
+
+
+                print('frame accucary: ' + str(correct_num / num_salami_slice), end='\n', file=f_all)
+                print('num of correct frame answers: ' + str(correct_num) + ' number of salami slices: ' + str(
+                    num_salami_slice),
+                      file=f_all)
+                print('frame accucary implied: ' + str(correct_num_implied / num_salami_slice), end='\n', file=f_all)
+                print('num of correct frame answers implied: ' + str(correct_num_implied) + ' number of salami slices: ' + str(
+                    num_salami_slice),
+                      file=f_all)
+                print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary implied: ' + str(a_counter_correct_implied / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary RB: ' + str(a_counter_correct_RB / a_counter), end='\n', file=f_all)
+                print('accumulative frame accucary implied RB: ' + str(a_counter_correct_RB_implied / a_counter), end='\n',
+                      file=f_all)
+                s.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign,
+                                        outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                            windowsize + 1) + '_rule_' + str(len(rule_set)), fileName[i][
+                                                             :-4]) + '.xml')
+            frame_acc.append((a_counter_correct / a_counter) * 100)
+            frame_acc_implied.append((a_counter_correct_implied / a_counter) * 100)
+            frame_acc_RB.append((a_counter_correct_RB / a_counter) * 100)
+            frame_acc_RB_implied.append((a_counter_correct_RB_implied / a_counter) * 100)
+            f_all.close()
+            print(np.mean(cvscores), stats.sem(cvscores))
+            print(MODEL_NAME, file=cv_log)
+            print('valid accuracy:', np.mean(cvscores), '%', '±', stats.sem(cvscores), '%', file=cv_log)
+            print('valid precision:', np.mean(pre), '%', '±', stats.sem(pre), '%', file=cv_log)
+            print('valid recall:', np.mean(rec), '%', '±', stats.sem(rec), '%', file=cv_log)
+            print('valid f1:', np.mean(f1), '%', '±', stats.sem(f1), '%', file=cv_log)
+            print('valid acc (validate previous):', np.mean(acc), '%', '±', stats.sem(acc), '%', file=cv_log)
+            print('valid tp number:', np.mean(tp), '±', stats.sem(tp), file=cv_log)
+            print('valid fp number:', np.mean(fp), '±', stats.sem(fp), file=cv_log)
+            print('valid fn number:', np.mean(fn), '±', stats.sem(fn), file=cv_log)
+            print('valid tn number:', np.mean(tn), '±', stats.sem(tn), file=cv_log)
+            for i in range(len(cvscores_test)):
+                print('Test f1:', i, f1_test[i], '%',  'Frame acc:', frame_acc[i], 'Frame acc implied:', frame_acc_implied[i], '%', file=cv_log)
+                print('Test f1:', i, f1_test[i], '%', 'Frame acc RB:', frame_acc_RB[i], 'Frame acc RB implied:',
+                      frame_acc_RB_implied[i], '%', file=cv_log)
+            print('Test accuracy:', np.mean(cvscores_test), '%', '±', stats.sem(cvscores_test), '%', file=cv_log)
+            print('Test precision:', np.mean(pre_test), '%', '±', stats.sem(pre_test), '%', file=cv_log)
+            print('Test recall:', np.mean(rec_test), '%', '±', stats.sem(rec_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', file=cv_log)
+            print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', )
+            print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
+                  stats.sem(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+            print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
+                  stats.sem(cvscores_percentage_of_NCT_per_slice), '%')
+            print('Test acc:', np.mean(acc_test), '%', '±', stats.sem(acc_test), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%')
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', stats.sem(frame_acc_implied), '%', file=cv_log)
+            print('Test frame acc implied:', np.mean(frame_acc_implied), '%', '±', stats.sem(frame_acc_implied), '%')
+
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', stats.sem(frame_acc_RB), '%', file=cv_log)
+            print('Test frame acc RB:', np.mean(frame_acc_RB), '%', '±', stats.sem(frame_acc_RB), '%')
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', stats.sem(frame_acc_RB_implied), '%',
+                  file=cv_log)
+            print('Test frame acc RB implied:', np.mean(frame_acc_RB_implied), '%', '±', stats.sem(frame_acc_RB_implied), '%')
+            # statistical analysis
+            a_predict_FB_RB_implied_all_flat = list(itertools.chain.from_iterable(a_predict_FB_RB_implied_all))
+            a_gt_FB_all_implied_flat = list(itertools.chain.from_iterable(a_gt_FB_implied_all))
+            a_predict_FB_all_implied_flat = list(itertools.chain.from_iterable(a_predict_FB_implied_all))
+            a_correct_mark_all_RB_flat = list(itertools.chain.from_iterable(a_correct_mark_all_RB))
+            a_correct_mark_all_ML_flat = list(itertools.chain.from_iterable(a_correct_mark_all_ML))
+            output_accuracy_for_each_reason(a_predict_FB_RB_implied_all_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_RB_implied, a_all_RB_reasons,
+                                            a_correct_mark_all_RB_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc,
+                                            NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage,
+                                            sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc,
+                                            empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err,
+                                            sixteenth_note_err, empty_FB_err, cv_log, [], [],
+                                            [])
+            output_accuracy_for_each_reason(a_predict_FB_all_implied_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_implied, a_all_ML_reasons,
+                                            a_correct_mark_all_ML_flat, NCT_bass_acc_ML, NCT_bass_percentage_ML, NCT_upper_acc_ML,
+                                            NCT_upper_percentage_ML, FB_already_labeled_acc_ML, FB_already_labeled_percentage_ML,
+                                            sixteenth_note_acc_ML, sixteenth_note_percentage_ML, empty_FB_acc_ML,
+                                            empty_FB_percentage_ML, NCT_bass_err_ML, NCT_upper_err_ML, FB_already_labeled_err_ML,
+                                            sixteenth_note_err_ML, empty_FB_err_ML, cv_log, ML_rule_acc, ML_rule_percentage,
+                                            ML_rule_err)
+
+
+def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_implied_flat, a_intervals_all, a_counter, a_counter_correct_implied, a_all_reasons, a_correct_mark_all_flat, NCT_bass_acc, NCT_bass_percentage, NCT_upper_acc, NCT_upper_percentage, FB_already_labeled_acc, FB_already_labeled_percentage, sixteenth_note_acc, sixteenth_note_percentage, empty_FB_acc, empty_FB_percentage, NCT_bass_err, NCT_upper_err, FB_already_labeled_err, sixteenth_note_err, empty_FB_err, cv_log, ML_rule_acc, ML_rule_percentage, ML_rule_err):
+    a_predict_FB_implied_all_flat_temp = copy.deepcopy(a_predict_FB_implied_all_flat)
+    a_gt_FB_all_implied_flat_temp = copy.deepcopy(a_gt_FB_all_implied_flat)
+    NCT_bass_count = 0
+    NCT_bass_count_right = 0
+    NCT_upper_count = 0
+    NCT_upper_count_right = 0
+    FB_labelled_count = 0
+    FB_labelled_count_right = 0
+    sixteenth_count = 0
+    sixteenth_count_right = 0
+    error_counts = a_counter - a_counter_correct_implied
+    empty_count = 0
+    empty_count_right = 0
+    ML_count = 0
+    ML_count_right = 0
+    for i, each_reason in enumerate(a_all_reasons):
+        # if i == 39:
+        #     print('debug')
+        error_reasons = []
+        for each_gt_figure in a_gt_FB_all_implied_flat_temp[i]:
+            if each_gt_figure not in a_intervals_all[i]:
+                a_gt_FB_all_implied_flat_temp[i].remove(each_gt_figure)  # remove the ones not actually in the sonority
+
+        common_part = copy.deepcopy(set(a_predict_FB_implied_all_flat_temp[i]) & set(a_gt_FB_all_implied_flat_temp[i]))
+        if len(common_part) != 0:
+            for each_common_figure in common_part:
+                a_predict_FB_implied_all_flat_temp[i].remove(each_common_figure)
+                a_gt_FB_all_implied_flat_temp[i].remove(each_common_figure)
+        difference = a_predict_FB_implied_all_flat_temp[i] + a_gt_FB_all_implied_flat_temp[i]  # the difference figures are two sets minusing the common elements
+        for each_difference in difference:
+            error_reasons.append(each_reason[a_intervals_all[i].index(each_difference)])
+        if error_reasons != []:
+            print('slice number', i, 'error reasons', error_reasons)
+        NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
+                                                                                  NCT_bass_count_right,
+                                                                                  'NCT bass', error_reasons)
+        NCT_upper_count, NCT_upper_count_right = count_each_reason_and_right_number(each_reason, NCT_upper_count,
+                                                                                    NCT_upper_count_right,
+
+                                                                                    'NCT upper voices', error_reasons)
+        FB_labelled_count, FB_labelled_count_right = count_each_reason_and_right_number(each_reason,
+                                                                                        FB_labelled_count,
+                                                                                        FB_labelled_count_right,
+
+                                                                                        'FB already labeled', error_reasons)
+        sixteenth_count, sixteenth_count_right = count_each_reason_and_right_number(each_reason, sixteenth_count,
+                                                                                    sixteenth_count_right,
+
+                                                                                    '16th (or shorter) note slice ignored', error_reasons
+                                                                                    )
+        empty_count, empty_count_right = count_each_reason_and_right_number(each_reason, empty_count, empty_count_right,
+                                                                            '', error_reasons)
+        ML_count, ML_count_right = count_each_reason_and_right_number(each_reason, ML_count, ML_count_right,
+
+                                                                            'ML rules', error_reasons)
+    NCT_bass_acc.append((NCT_bass_count_right / NCT_bass_count) * 100) if NCT_bass_count != 0 else 0
+    NCT_bass_percentage.append(NCT_bass_count / a_counter * 100)
+    NCT_upper_acc.append((NCT_upper_count_right / NCT_upper_count) * 100) if NCT_upper_count != 0 else 0
+    NCT_upper_percentage.append(NCT_upper_count / a_counter * 100)
+    FB_already_labeled_acc.append((FB_labelled_count_right / FB_labelled_count) * 100) if FB_labelled_count != 0 else 0
+    FB_already_labeled_percentage.append(FB_labelled_count / a_counter * 100)
+    sixteenth_note_acc.append((sixteenth_count_right / sixteenth_count) * 100) if sixteenth_count != 0 else 0
+    sixteenth_note_percentage.append(sixteenth_count / a_counter * 100)
+    empty_FB_acc.append((empty_count_right / empty_count) * 100) if empty_count != 0 else 0
+    empty_FB_percentage.append(empty_count / a_counter * 100)
+    ML_rule_acc.append((ML_count_right / ML_count) * 100) if ML_count != 0 else 0
+    ML_rule_percentage.append((ML_count / a_counter) * 100)
+    NCT_bass_err.append((NCT_bass_count - NCT_bass_count_right) / error_counts * 100) if error_counts != 0 else 0
+    NCT_upper_err.append((NCT_upper_count - NCT_upper_count_right) / error_counts * 100) if error_counts != 0 else 0
+    FB_already_labeled_err.append((FB_labelled_count - FB_labelled_count_right) / error_counts * 100) if error_counts != 0 else 0
+    sixteenth_note_err.append((sixteenth_count - sixteenth_count_right) / error_counts * 100) if error_counts != 0 else 0
+    empty_FB_err.append((empty_count - empty_count_right) / error_counts * 100) if error_counts != 0 else 0
+    ML_rule_err.append((ML_count - ML_count_right) / error_counts * 100) if error_counts != 0 else 0
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', stats.sem(NCT_bass_acc), '%;', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', stats.sem(NCT_bass_percentage), '%;')
+    print('NCT bass accuracy:', np.mean(NCT_bass_acc), '%', '±', stats.sem(NCT_bass_acc), '%', 'percentage is:',
+          np.mean(NCT_bass_percentage), '%', '±', stats.sem(NCT_bass_percentage), '%;', file=cv_log)
+    print('NCT upper accuracy:', np.mean(NCT_upper_acc), '%', '±', stats.sem(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', stats.sem(NCT_upper_percentage), '%;')
+    print('NCT upper cccuracy:', np.mean(NCT_upper_acc), '%', '±', stats.sem(NCT_upper_acc), '%', 'percentage is:',
+          np.mean(NCT_upper_percentage), '%', '±', stats.sem(NCT_upper_percentage), '%;', file=cv_log)
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', stats.sem(FB_already_labeled_acc),
+          '%', 'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±',
+          stats.sem(FB_already_labeled_percentage), '%;')
+    print('FB already labeled accuracy:', np.mean(FB_already_labeled_acc), '%', '±', stats.sem(FB_already_labeled_acc),
+          'percentage is:', np.mean(FB_already_labeled_percentage), '%', '±', stats.sem(FB_already_labeled_percentage),
+          '%;', file=cv_log)
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', stats.sem(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', stats.sem(sixteenth_note_percentage), '%;')
+    print('16th note no FB accuracy:', np.mean(sixteenth_note_acc), '%', '±', stats.sem(sixteenth_note_acc),
+          'percentage is:', np.mean(sixteenth_note_percentage), '%', '±', stats.sem(sixteenth_note_percentage), '%;',
+          file=cv_log)
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', stats.sem(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', stats.sem(empty_FB_percentage), '%;')
+    print('empty FB Rule accuracy:', np.mean(empty_FB_acc), '%', '±', stats.sem(empty_FB_acc), 'percentage is:',
+          np.mean(empty_FB_percentage), '%', '±', stats.sem(empty_FB_percentage), '%;', file=cv_log)
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', stats.sem(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', stats.sem(ML_rule_percentage), '%;')
+    print('ML rule accuracy', np.mean(ML_rule_acc), '%', '±', stats.sem(ML_rule_acc), 'percentage is:',
+          np.mean(ML_rule_percentage), '%', '±', stats.sem(ML_rule_percentage), '%;', file=cv_log)
+    print('Here is the breakdown of different types of errors, among all errors:')
+    print('Here is the breakdown of different types of errors, among all errors:', file=cv_log)
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', stats.sem(NCT_bass_err))
+    print('% of NCT bass being wrong:', np.mean(NCT_bass_err), '%', '±', stats.sem(NCT_bass_err), file=cv_log)
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', stats.sem(NCT_upper_err))
+    print('% of NCT upper being wrong:', np.mean(NCT_upper_err), '%', '±', stats.sem(NCT_upper_err), file=cv_log)
+    print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
+          stats.sem(FB_already_labeled_err), file=cv_log)
+    print('% of FB already labeled being wrong:', np.mean(FB_already_labeled_err), '%', '±',
+          stats.sem(FB_already_labeled_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', stats.sem(sixteenth_note_err))
+    print('% of 16th note no FB being wrong:', np.mean(sixteenth_note_err), '%', '±', stats.sem(sixteenth_note_err),
+          file=cv_log)
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', stats.sem(empty_FB_err))
+    print('% of empty FB Rule being wrong:', np.mean(empty_FB_err), '%', '±', stats.sem(empty_FB_err), file=cv_log)
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', stats.sem(ML_rule_err))
+    print('% of ML rule being wrong:', np.mean(ML_rule_err), '%', '±', stats.sem(ML_rule_err), file=cv_log)
+    print('----------------------------------------------------------------------')
+
+
+def count_each_reason_and_right_number(each_reason, count, count_right, reason_to_check, error_reasons):
+
+    if reason_to_check in each_reason:
+        count += 1
+        if reason_to_check not in error_reasons:
+            count_right += 1
+        # else:  # if not exactly the same, we need to find out which one causes the error
+        #     for each_interval in intervals:
+        #         if not each_interval in gt_FB_implied and each_interval not in predict_FB_implied:
+        #             count_right += 1
+        #     # find what are the difference in GT and prediction
+        #     # find these differences in intervals, and attribute to specific voices
+    return count, count_right
+
+
+def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[]):
     print('Step 5: Training and testing the machine learning models')
@@ -745,8 +1721,8 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         append=True, separator=';')
     error_list = []  # save all the errors to calculate frequencies
     for times in range(cv):
-        if times != 0:
-            continue
+        # if times != 0:
+        #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
                      str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
                      + str(timestep) + extension  + '_cv_' + str(times + 1)
@@ -909,10 +1885,16 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
             for i, item in enumerate(test_xx_only_pitch_no_window):
                  if inputtype.find('NewOnset') != -1:
-                     if modelID != 'SVM' and modelID != 'DNN':
-                        NewOnset = list(test_xx_no_window[i][-1][12:24])
+                     if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
+                        if 'with_bass' not in pitch_class:
+                            NewOnset = list(test_xx_no_window[i][-1][12:24])
+                        else:
+                            NewOnset = list(test_xx_no_window[i][-1][24:36])
                      else:
-                        NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
+                         if 'with_bass' not in pitch_class:
+                            NewOnset = list(test_xx_no_window[i][12:24])  # we need the onset sign of the vector
+                         else:
+                             NewOnset = list(test_xx_no_window[i][24:36])
                  for j, item2 in enumerate(item):
                      if int(predict_y[i][j]) == 1: # predict_y predicts NCT label for each slice
                         if int(item2) == 1: # if the there is a current pitch class and it is predicted as a NCT
@@ -925,19 +1907,19 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                      predict_xx_chord_tone[i] = np.concatenate(
                          (predict_xx_chord_tone[i], NewOnset))
                  if inputtype.find('3meter') != -1:
-                     if modelID != 'SVM' and modelID != 'DNN':
+                     if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                          predict_xx_chord_tone[i] = np.concatenate(
                              (predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-1][-3:]))
                      else:
-                        predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
+                         predict_xx_chord_tone[i] = np.concatenate((predict_xx_chord_tone[i], test_xx_chord_tone_no_window[i][-3:])) # add beat feature
                  # TODO: 3 might not be modular enough
-            if modelID.find('SVM') != -1 or modelID.find('DNN') != -1:
+            if modelID.find('SVM') != -1 or modelID.find('DNN') != -1 or modelID.find('DT') != -1:
                 predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
 
             else:
                 predict_xx_chord_tone_window = create_3D_data(np.asarray(predict_xx_chord_tone), ts)
             #predict_xx_chord_tone_window = adding_window_one_hot(np.asarray(predict_xx_chord_tone), windowsize + 1)
-            if modelID == 'SVM':
+            if modelID == 'SVM' or modelID == 'DT':
                 predict_y_chord_tone = model_chord_tone.predict(predict_xx_chord_tone_window) # TODO: we need to make this part modular so it can deal with all possible specs
                 gt_y_chord_tone = model_chord_tone.predict(test_xx_chord_tone)
             else:
@@ -962,7 +1944,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 scores_test_chord_tone = model_chord_tone.evaluate(test_xx_chord_tone, test_yy_chord_label, verbose=0)
                 cvscores_chord_tone.append(scores_chord_tone[1] * 100)
                 cvscores_test_chord_tone.append(scores_test_chord_tone[1] * 100)
-        elif modelID == "SVM":
+        elif modelID == "SVM" or modelID == 'DT':
             cvscores.append(test_acc * 100)
             cvscores_test.append(test_acc * 100)
         # SaveModelLog.Save(MODEL_NAME, hist, model, valid_xx, valid_yy)
@@ -1045,14 +2027,17 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
 
                 num_salami_slice = numSalamiSlices[i]
                 if exclude != []:
-                    if augmentation == 'Y':
-                        input('Nat annotations are only in c major or a minor!') #TODO: Fix this when aug is used
                     for fileName_Sam in os.listdir(os.path.join(output, 'Nat_GT')):
                         if fileName[i][-7:-4] in fileName_Sam: # found the Nat's annotation, load it
                             f_nat = open(os.path.join(output, 'Nat_GT', fileName_Sam), 'r')
                             chord_label_list_Nat = []
                             for chord_nat in f_nat.readlines():
-                                chord_label_list_Nat.append(chord_nat.strip())
+                                if augmentation == 'Y':  # transpose these labels back to the original key
+                                    transposed_interval, root = find_tranposed_interval(fileName[i])
+                                    transposed_result = transpose_chord(transposed_interval, chord_nat.strip())
+                                    chord_label_list_Nat.append(transposed_result)
+                                else:  # don't transpose, so the annotation is either in C major or A minor
+                                    chord_label_list_Nat.append(chord_nat.strip())
                             break
                 correct_num = 0 # Record either the correct slice/chord in direct harmonic analysis or NCT approach
                 correct_num_chord = 0 # record the correct predicted chord labels from NCT approach
@@ -1066,8 +2051,11 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                 #num_of_disagreement = [] # record the number of disagreement across all chord inferring algorithms
                 num_of_agreement_per_chorale = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                # s = remove_concert_pitch_voices(s)
                 s_bb = converter.parse(os.path.join(input, fileName[i]))
+                # s_bb = remove_concert_pitch_voices(s_bb)
                 s_exclamation = converter.parse(os.path.join(input, fileName[i]))
+                # s_exclamation = remove_concert_pitch_voices(s_exclamation)
                 sChords = s.chordify()
                 sChords_bb = s_bb.chordify()
                 sChords_exclamation = s_exclamation.chordify()
@@ -1232,7 +2220,7 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                         dimension = test_xx_only_pitch.shape[1]
 
                         realdimension = int(dimension / (2 * windowsize + 1))
-                        if modelID != 'SVM' and modelID != 'DNN':
+                        if modelID != 'SVM' and modelID != 'DNN' and modelID != 'DT':
                             x = test_xx_only_pitch[a_counter][-1] # no window if the matrix is 3D
                         else:
                             if windowsize < 0:
@@ -1373,7 +2361,12 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
                       file=f_all)
                 print('accumulative frame accucary: ' + str(a_counter_correct / a_counter), end='\n', file=f_all)
                 print('chord accucary: ' + str(correct_num_chord / num_salami_slice), end='\n', file=f_all)
+
                 print('num of correct chord answers: ' + str(correct_num_chord) + ' number of salami slices: ' + str(num_salami_slice),
+                      file=f_all)
+                print('chord Nat accucary: ' + str(correct_num_nat / num_salami_slice), end='\n', file=f_all)
+                print('num of correct chord Nat answers: ' + str(correct_num_nat) + ' number of salami slices: ' + str(
+                    num_salami_slice),
                       file=f_all)
                 print('accumulative chord accucary: ' + str(a_counter_correct_chord / a_counter), end='\n', file=f_all)
                 print('accumulative chord ground truth accucary: ' + str(a_counter_correct_chord_gt / a_counter), end='\n', file=f_all)
@@ -1416,21 +2409,21 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         counts = Counter(error_list)
         print(counts, file=f_all)
         f_all.close()
-    print(np.mean(cvscores), np.std(cvscores))
+    print(np.mean(cvscores), stats.sem(cvscores))
     print(MODEL_NAME, file=cv_log)
-    if modelID != 'SVM':
+    if modelID != 'SVM' and modelID != 'DT':
         model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
         model.summary(print_fn=lambda x: cv_log.write(x + '\n'))  # output model struc ture into the text file
-    print('valid accuracy:', np.mean(cvscores), '%', '±', np.std(cvscores), '%', file=cv_log)
+    print('valid accuracy:', np.mean(cvscores), '%', '±', stats.sem(cvscores), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
-        print('valid precision:', np.mean(pre), '%', '±', np.std(pre), '%', file=cv_log)
-        print('valid recall:', np.mean(rec), '%', '±', np.std(rec), '%', file=cv_log)
-        print('valid f1:', np.mean(f1), '%', '±', np.std(f1), '%', file=cv_log)
-        print('valid acc (validate previous):', np.mean(acc), '%', '±', np.std(acc), '%', file=cv_log)
-        print('valid tp number:', np.mean(tp), '±', np.std(tp), file=cv_log)
-        print('valid fp number:', np.mean(fp), '±', np.std(fp), file=cv_log)
-        print('valid fn number:', np.mean(fn), '±', np.std(fn), file=cv_log)
-        print('valid tn number:', np.mean(tn), '±', np.std(tn), file=cv_log)
+        print('valid precision:', np.mean(pre), '%', '±', stats.sem(pre), '%', file=cv_log)
+        print('valid recall:', np.mean(rec), '%', '±', stats.sem(rec), '%', file=cv_log)
+        print('valid f1:', np.mean(f1), '%', '±', stats.sem(f1), '%', file=cv_log)
+        print('valid acc (validate previous):', np.mean(acc), '%', '±', stats.sem(acc), '%', file=cv_log)
+        print('valid tp number:', np.mean(tp), '±', stats.sem(tp), file=cv_log)
+        print('valid fp number:', np.mean(fp), '±', stats.sem(fp), file=cv_log)
+        print('valid fn number:', np.mean(fn), '±', stats.sem(fn), file=cv_log)
+        print('valid tn number:', np.mean(tn), '±', stats.sem(tn), file=cv_log)
         if predict == 'Y':
             for i in range(len(cvscores_test)):
                 print('Test f1:', i, f1_test[i], '%', 'Frame acc:', frame_acc[i], '%', 'Frame acc 2:', frame_acc_2[i], '%', 'Chord acc:', chord_acc[i], 'Chord gt acc:', chord_acc_gt[i], 'Chord tone acc:', chord_tone_acc[i], 'Chord tone gt acc:', chord_tone_acc_gt[i], 'Direct harmonic analysis acc:', direct_harmonic_analysis_acc[i], '% of agreements:', percentage_of_agreements_for_chord_inferral_algorithms[i], 'Voting acc:', chord_acc_vote[i], 'Nat acc:', chord_acc_nat[i], 'Nat acc spot checking:', chord_acc_nat_spot_checking[i], file=cv_log)
@@ -1444,43 +2437,43 @@ def  train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID
         else:
             for i in range(len(cvscores_test)):
                 print('Test acc:', i, cvscores_test[i], '%', file=cv_log)
-    print('Test accuracy:', np.mean(cvscores_test), '%', '±', np.std(cvscores_test), '%', file=cv_log)
+    print('Test accuracy:', np.mean(cvscores_test), '%', '±', stats.sem(cvscores_test), '%', file=cv_log)
     if outputtype.find("CL") != -1 and predict == 'Y':
-        print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
+        print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
     if outputtype.find("NCT") != -1:
-        print('Test precision:', np.mean(pre_test), '%', '±', np.std(pre_test), '%', file=cv_log)
-        print('Test recall:', np.mean(rec_test), '%', '±', np.std(rec_test), '%', file=cv_log)
-        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%', file=cv_log)
-        print('Test f1:', np.mean(f1_test), '%', '±', np.std(f1_test), '%',)
-        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±', np.std(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
+        print('Test precision:', np.mean(pre_test), '%', '±', stats.sem(pre_test), '%', file=cv_log)
+        print('Test recall:', np.mean(rec_test), '%', '±', stats.sem(rec_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%', file=cv_log)
+        print('Test f1:', np.mean(f1_test), '%', '±', stats.sem(f1_test), '%',)
+        print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±', stats.sem(cvscores_percentage_of_NCT_per_slice), '%', file=cv_log)
         print('Test % of NCTs per slice:', np.mean(cvscores_percentage_of_NCT_per_slice), '%', '±',
-              np.std(cvscores_percentage_of_NCT_per_slice), '%')
-        print('Test acc:', np.mean(acc_test), '%', '±', np.std(acc_test), '%', file=cv_log)
-        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%', file=cv_log)
-        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', np.std(frame_acc_2), '%')
+              stats.sem(cvscores_percentage_of_NCT_per_slice), '%')
+        print('Test acc:', np.mean(acc_test), '%', '±', stats.sem(acc_test), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', stats.sem(frame_acc_2), '%', file=cv_log)
+        print('Test frame acc 2:', np.mean(frame_acc_2), '%', '±', stats.sem(frame_acc_2), '%')
         if predict == 'Y':
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%', file=cv_log)
-            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%', file=cv_log)
-            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%', file=cv_log)
-            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%', file=cv_log)
-            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%', file=cv_log)
-            print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', np.std(direct_harmonic_analysis_acc), '%', file=cv_log)
-            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
-            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', np.std(chord_acc_vote), '%', file=cv_log)
-            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', np.std(chord_acc_nat), '%', file=cv_log)
-            print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±', np.std(chord_acc_nat_spot_checking), '%', file=cv_log)
-            print('Test frame acc:', np.mean(frame_acc), '%', '±', np.std(frame_acc), '%')
-            print('Test chord acc:', np.mean(chord_acc), '%', '±', np.std(chord_acc), '%')
-            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', np.std(chord_acc_gt), '%')
-            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', np.std(chord_tone_acc), '%')
-            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', np.std(chord_tone_acc_gt), '%')
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%', file=cv_log)
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', stats.sem(chord_acc), '%', file=cv_log)
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', stats.sem(chord_acc_gt), '%', file=cv_log)
+            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', stats.sem(chord_tone_acc), '%', file=cv_log)
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', stats.sem(chord_tone_acc_gt), '%', file=cv_log)
+            print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±', stats.sem(direct_harmonic_analysis_acc), '%', file=cv_log)
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', stats.sem(percentage_of_agreements_for_chord_inferral_algorithms), '%', file=cv_log)
+            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', stats.sem(chord_acc_vote), '%', file=cv_log)
+            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', stats.sem(chord_acc_nat), '%', file=cv_log)
+            print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±', stats.sem(chord_acc_nat_spot_checking), '%', file=cv_log)
+            print('Test frame acc:', np.mean(frame_acc), '%', '±', stats.sem(frame_acc), '%')
+            print('Test chord acc:', np.mean(chord_acc), '%', '±', stats.sem(chord_acc), '%')
+            print('Test chord acc gt:', np.mean(chord_acc_gt), '%', '±', stats.sem(chord_acc_gt), '%')
+            print('Test chord tone acc:', np.mean(chord_tone_acc), '%', '±', stats.sem(chord_tone_acc), '%')
+            print('Test chord tone acc gt:', np.mean(chord_tone_acc_gt), '%', '±', stats.sem(chord_tone_acc_gt), '%')
             print('Test direct harmonic analysis acc:', np.mean(direct_harmonic_analysis_acc), '%', '±',
-                  np.std(direct_harmonic_analysis_acc), '%')
-            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', np.std(percentage_of_agreements_for_chord_inferral_algorithms), '%')
-            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', np.std(chord_acc_vote), '%')
-            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', np.std(chord_acc_nat), '%')
+                  stats.sem(direct_harmonic_analysis_acc), '%')
+            print('Test % of agreements:', np.mean(percentage_of_agreements_for_chord_inferral_algorithms), '%', '±', stats.sem(percentage_of_agreements_for_chord_inferral_algorithms), '%')
+            print('Test chord acc voting:', np.mean(chord_acc_vote), '%', '±', stats.sem(chord_acc_vote), '%')
+            print('Test chord acc Nat:', np.mean(chord_acc_nat), '%', '±', stats.sem(chord_acc_nat), '%')
             print('Test chord acc Nat spot checking:', np.mean(chord_acc_nat_spot_checking), '%', '±',
-                  np.std(chord_acc_nat_spot_checking), '%')
+                  stats.sem(chord_acc_nat_spot_checking), '%')
     cv_log.close()
 
 if __name__ == "__main__":

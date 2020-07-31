@@ -1,9 +1,8 @@
 from music21 import *
 import os
 import re
+c2=['c','d-','d','e-','e','f','f#','g','a-','a','b-','b']
 c1=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
-c2=['c','d-','d','e-','e','f','g-','g','a-','a','b-','b']
-
 
 def get_displacement(k):
     """
@@ -80,7 +79,7 @@ def provide_path_12keys(input, f1, output, f2, source):
                     else:
                         transposed_interval = interval.Interval(k.tonic, pitch.Pitch(c2[displacement - key_transpose]))
                         key_name = c2[(displacement - key_transpose) % len(c2)].upper()
-                    if transposed_interval.directedName == 'P1':
+                    if transposed_interval.directedName == 'P1' or transposed_interval.directedName == 'd2':
                         key_name = key_name + '_ori'
                     f = open(os.path.join(output, file_name), 'r')
                     fnew = open(os.path.join(output, 'transposed_') + 'KB' + key_name + 'KE' + file_name, 'w')
