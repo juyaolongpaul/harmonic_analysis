@@ -1154,12 +1154,10 @@ def take_top_N(dictionary, num):
 if __name__ == '__main__':
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     no_instrument = False
+    # Step 1: we need to first extract the figured bass anntoations from BCFB into a format music21 can process
     extract_FB_as_lyrics(path, no_instrument)
-        # till this point, all FB has been extracted and attached as lyrics underneath the bass line!
-    # lyrics_to_chordify(want_IR, path, no_instrument, 'N') # generate only FB as lyrics without translating as chords
-    # want_root_position_traid = True
-    # want_suspension_NCT = True
-    # want_discrepancies_chord_labels = True
+    # Step 2: choose an algorithm you want to use to generate chord labels
+    # you can also uncomment them all, and they will be executed in a serial manner
     # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
     # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
     # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C

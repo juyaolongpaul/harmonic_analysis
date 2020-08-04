@@ -1536,8 +1536,8 @@ def output_accuracy_for_each_reason(a_predict_FB_implied_all_flat, a_gt_FB_all_i
         difference = a_predict_FB_implied_all_flat_temp[i] + a_gt_FB_all_implied_flat_temp[i]  # the difference figures are two sets minusing the common elements
         for each_difference in difference:
             error_reasons.append(each_reason[a_intervals_all[i].index(each_difference)])
-        if error_reasons != []:
-            print('slice number', i, 'error reasons', error_reasons)
+        # if error_reasons != []:
+        #     print('slice number', i, 'error reasons', error_reasons)
         NCT_bass_count, NCT_bass_count_right = count_each_reason_and_right_number(each_reason, NCT_bass_count,
                                                                                   NCT_bass_count_right,
                                                                                   'NCT bass', error_reasons)
