@@ -656,6 +656,7 @@ def translate_FB_into_chords(want_root_position_traid, want_suspension_NCT, want
         print(thisChord.lyrics)
         if thisChord.lyrics[-1].text == ' ':
             del thisChord.lyrics[-1]
+    # the lines above is to make sure that the FBAs only take up 3 vertical lines
     chord_pitch = []
     if fig != [' '] and fig != '':
         fig_collapsed = colllapse_interval(fig)
@@ -935,7 +936,6 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     a_suspension = [] # record of all the suspensions indicated by FB
     a_discrepancy = []
     a_slice_discrepancy = []
-    # "??" means a note in the sonority is not indicated by figured bass. "?!" is vice versa
     No_of_files = 0
     # create folder structure
     if not os.path.isdir(os.path.join(path, 'BCMCL')):
@@ -957,9 +957,9 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
     elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
         f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_D_all_chords.txt'), 'w')
     for filename in os.listdir(path):
-        # if '124.06' not in filename: continue
-        # if '11.06' not in filename: continue
         # if '83.05' not in filename or '172.06' in filename: continue
+        # These lines below ensure that the algorithm only process the 120 chorale files,
+        # and skip all other irrelevant ones
         if no_instrument:
             if 'lyric_no_instrumental' not in filename: continue
         else:
@@ -972,12 +972,6 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         if 'chordify' in filename: continue
         if '2_voice'  in filename: continue
         if 'FB_align' in filename: continue
-        # if not any(each_ID in filename for each_ID in
-        #        ['16.06', '506', '248.05', '447', '113.08', '488', '244.44', '244.40', '248.33', '140.07']):
-        #     # exclude the ones that do not align with Sam
-        #         continue  # exclude all the interlude chorales
-        # if filename[:-4] + '_FB_align' + filename[-4:] in os.listdir(path) and translate_chord != 'Y':
-        #     continue
         No_of_files += 1
         # if No_of_files > 5: continue
         print(No_of_files)
@@ -1006,16 +1000,21 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         align_FB_with_slice(bassline, sChords, MIDI)
         if translate_chord == 'Y':
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                if i == 39:
-                    print('debug')
+                # if i == 39:
+                #     print('debug')
                 fig = get_FB(sChords, i)
                 if fig != []:
                     print(fig)
-                if fig == ['b5']:
-                    print('debug')
-                    print(thisChord.lyrics)
+                # if fig == ['b5']:
+                #     print('debug')
+                #     print(thisChord.lyrics)
                 a_FB.append(fig)
-                suspension_ptr, a_suspension = translate_FB_into_chords(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, fig, thisChord, i, sChords, s, 3, a_suspension, a_discrepancy, a_slice_discrepancy, suspension_ptr)
+                suspension_ptr, a_suspension = translate_FB_into_chords(want_root_position_traid, want_suspension_NCT,
+                                                                        want_discrepancies_chord_labels,
+                                                                        fig, thisChord, i, sChords, s, 3, a_suspension,
+                                                                        a_discrepancy,
+                                                                        a_slice_discrepancy, suspension_ptr)
+                # the line above is the entry of the main chord translation function
                 thisChord.closedPosition(forceOctave=4, inPlace=True)  # if you put it too early, some notes including an
                 # octave apart will be collapsed!
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -1039,7 +1038,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 thisChord.closedPosition(forceOctave=4, inPlace=True)
         # s.remove(s.parts[-1]) # remove the unnecessary continuo voice
         s.insert(0, sChords)
-        if translate_chord == 'Y':
+        if translate_chord == 'Y': # write chord results to files
             if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
                 s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_A', filename[:-4] + '_' + 'chordify_algorithm_A' + '.xml'))
             elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
@@ -1051,7 +1050,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         else:
             s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
-        # obtain chord labels
+        # obtain chord labels and do some statistical analysis
         voice_FB = s.parts[-1]
         a_chord_label_FB, all_chord_for_this_file = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
         print(all_chord_for_this_file, file=f_all_chords)
