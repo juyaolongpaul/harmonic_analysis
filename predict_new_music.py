@@ -316,8 +316,8 @@ def predict_new_music_FB(modelpath_FB, inputpath):
 def predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_DH, inputpath, bach='N'):
     # transpose_polyphony(inputpath, inputpath, 'N')  # tranpose to 12 keys
     encoding_path = os.path.join(inputpath, 'encodings')
-    # if not os.path.isdir(os.path.join(inputpath, 'encodings')):
-    #     os.mkdir(os.path.join(inputpath, 'encodings'))
+    if not os.path.isdir(os.path.join(inputpath, 'encodings')):
+        os.mkdir(os.path.join(inputpath, 'encodings'))
     # get_input_encoding(inputpath, encoding_path)  # generate input encodings
     xx, fileName = generate_ML_matrix_one_file(filename, encoding_path, 1, 'N')
     xx_no_window, fileName_fake = generate_ML_matrix_one_file(filename, encoding_path, 0, 'N')
@@ -404,10 +404,10 @@ def predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_D
                 if fileName[i][fileName[i].find('KE') + 2:-4] in fn:
                     print(fileName[i][fileName[i].find('KE') + 2:-4])
                     print('music21 is parsing:', fn, 'Is this a directory', os.path.isdir(os.path.join(inputpath, fn)))
-                    s = bypass_outputing_transposed_file(inputpath, fn)
+                    s_temp = bypass_outputing_transposed_file(inputpath, fn)
                     #s = converter.parse(os.path.join(inputpath, fn))
-                    s.insert(0, sChords)
-                    k = s.analyze('AardenEssen')
+                    # s.insert(0, sChords)
+                    k = s_temp.analyze('AardenEssen')
                     if k.mode == 'minor':
                         key_info = k.tonic.name.lower()
                         transposed_interval = interval.Interval(pitch.Pitch('A'), pitch.Pitch(key_info))
@@ -544,7 +544,7 @@ if __name__ == "__main__":
                                 '3layer300DNNwindow_size1_2training_data1timestep0Bach_o_FBNCT_pitch_classpitch_class_with_bass3meter_NewOnset_New_annotation_12keys__training79_cv_1.hdf5')
 
 
-    inputpath = os.path.join(os.getcwd(), 'new_music', 'New')
+    inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later')
     if not os.path.isdir(inputpath):
         os.mkdir(os.path.join(os.getcwd(), 'new_music'))
         os.mkdir(inputpath)
@@ -557,7 +557,8 @@ if __name__ == "__main__":
     for fn in os.listdir(inputpath):
         if 'transposed' in fn: continue
         if '.musicxml' not in fn: continue
-        # if '4_op44ii_1_revised' not in fn: continue
+        if 'test' in fn: continue
+        if '4_op44ii_4' not in fn: continue
         filename, file_extension = os.path.splitext(fn)
         print(filename)
         predict_new_music(f_info, filename, modelpath_NCT, modelpath_CL, modelpath_DH, inputpath)
