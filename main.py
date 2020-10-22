@@ -22,7 +22,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -46,7 +46,7 @@ def main():
                         type=float, default=1)
     parser.add_argument('-c', '--cross_validation',
                         help='how many times do you want to cross validate (default: %(default))',
-                        type=int, default=1)
+                        type=int, default=10)
     parser.add_argument('-r', '--ratio',
                         help='the portion of the trainig data you want to use (a float number between 0-1'
                              ', not a percentage. 0.6 means 60% for training, 40% for testing) (default: %(default))',
