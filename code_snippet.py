@@ -35,6 +35,7 @@ def count_pickup_measure_NO():
 def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
     previous_chord = []
     all_chords = []
+    sign = 0 # judge whether the first chord is empty or not
     for i, thisChord in enumerate(sChord.recurse().getElementsByClass('Chord')):
         # obtain all the chord labels
         chord_label = []
@@ -42,6 +43,10 @@ def put_chords_into_files(sChord, a_chord_label=[], replace='Y', f=[]):
             if len(label.text) > 0:
                 if label.text[0].isalpha() and label.text[0].isupper(): # this is a chord label
                     chord_label.append(label.text)
+                    sign = 1
+                elif j == len(thisChord.lyrics) - 1 and sign == 0:
+                    chord_label.append('n/a')
+                    print('this is the special "chord"')
         if i == 0 and (len(chord_label) == 0):
             print('the first chord is empty!')
         elif len(chord_label) == 0:

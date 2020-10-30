@@ -8,7 +8,7 @@ from kernscore import extract_chord_labels
 from predict_result_for_140 import train_and_predict_non_chord_tone
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
-from transpose_to_C_polyphony import transpose_polyphony
+from transpose_to_C_polyphony import transpose_polyphony, transpose_polyphony_FB
 
 
 def main():
@@ -16,13 +16,13 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='ISMIR2019')
+                        type=str, default='MLL_BCMCL')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -53,7 +53,7 @@ def main():
                         type=float, default=0.8)
     parser.add_argument('-v', '--version',
                         help='whether to use 153 chorales (same with Rameau) or 367 chorales (rule-based) (default: %(default))',
-                        type=int, default=367)
+                        type=int, default=120)
     parser.add_argument('-bal', '--balanced',
                         help='specify whether you want to make the dataset balanced (default: %(default))',
                         type=int, default=0)
@@ -73,16 +73,26 @@ def main():
     if args.source == 'Rameau':
         input = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
         f1 = '.mid'
-    else:
+    elif args.source == 'ISMIR2019':
         input = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')
         f1 = '.krn'  # the version of chorales used
-    output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
+    elif args.source == 'MLL_BCMCL':
+        input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
+        f1 = '.xml'
+    if args.source == 'ISMIR2019':
+        output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
+    elif args.source == 'MLL_BCMCL':
+        output = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
     f2 = '.txt'
-    if args.source.find('rule_MaxMel') == -1:
-        extract_chord_labels(output, f1)
-    annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
+    if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL':
+        extract_chord_labels(output, f1)  # extract chord labels into text files
+    if args.source != 'MLL_BCMCL':  # chord annotations in BCMCL have already been standardized
+        annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
     provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
-    transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
+    if args.source != 'MLL_BCMCL':
+        transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
+    else:
+        transpose_polyphony_FB(args.source, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'))
     if args.source != 'Rameau':
         f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly

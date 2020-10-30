@@ -238,111 +238,138 @@ def extract_chord_labels(file_path, filetype):
     """
     from transpose_to_C_chords import get_displacement
     from transpose_to_C_chords import transpose
-    c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'g-', 'g', 'a-', 'a', 'b-', 'b']
-    print('Step 0: Extract chord labels from the Kern files')
-    x = KernScore()
-    for file_name in os.listdir(file_path):
-        if file_name[-4:] == filetype:
-            #print(file_name)
-            x.import_kernfile(os.path.join(file_path, file_name))
-            p = re.compile(r'\d{3}')
-            id = p.findall(file_name)
-            chord = x.import_kernfile(os.path.join(file_path, file_name))
-            for file_name_read_GT in os.listdir(os.path.join(file_path, 'Real_GT')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
-                if id[0] in file_name_read_GT:
-                    # if id[0] == '259':
-                    #     print('debug')
-                    if os.path.isfile(os.path.join(file_path,file_name)[:-3] + 'txt'): # Save Nat's data in a difference name
-                        f_nat = open(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt', 'w')
-                    f = open(os.path.join(file_path,file_name)[:-3] + 'txt', 'w')
-                    s = converter.parse(os.path.join(file_path, 'Real_GT', file_name_read_GT))
-                    s_key = converter.parse(os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[0] + '.krn')
-                    k = s_key.analyze('AardenEssen')
-                    displacement = get_displacement(k)
-                    if k.mode == 'minor':
-                        transposed_interval = interval.Interval(pitch.Pitch('A'), k.tonic)
-                    else:
-                        transposed_interval = interval.Interval(pitch.Pitch('C'), k.tonic)
-                    p = re.compile(r'[#-]+')
-                    sChords = s.parts[-1]
-                    # length = len(sChords.recurse().getElementsByClass('Chord'))
-                    for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                        ptr = thisChord.lyrics[-1].text.find('>')
-                        if ptr != -1:
-                            print(thisChord.lyrics[-1].text[:ptr], file=f_nat) # Preserve the original chord
-                            chord = thisChord.lyrics[-1].text[ptr + 1:]
-                        else:
-                            print(thisChord.lyrics[-1].text, file=f_nat)  # Preserve the original chord
-                            chord = thisChord.lyrics[-1].text
-                        id_id = p.findall(chord)
-                        if id_id != []:  # has flat or sharp
-                            root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
-                            transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
-                            #print(transposed_result)
-                            print(transposed_result, file=f)
-                            # print('original: ', line, 'transposed: ', transposed_result)
-                        else:  # no flat or sharp, which means only the first element is the root
-                            transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
-                            #print(transposed_result)
-                            print(transposed_result, file=f)
-                            # print('original: ', line, 'transposed: ', transposed_result)
-                    f.close()
-                    if os.path.isfile(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt'):
-                        f_nat.close()
-
-                else:
-                    continue
-            if os.path.exists(os.path.join(file_path, 'Spot_Checking')):  # If spot-checking folder exist,
-            # it contains all the rest chorales spot-checked
-                p = re.compile(r'[#-]+')
-                for file_name_read_spot_checking in os.listdir(os.path.join(file_path, 'Spot_Checking')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
-                    if id[0] in file_name_read_spot_checking:
-                        # if id[0] == '283':
+    import music21
+    if filetype == '.krn':
+        print('Step 0: Extract chord labels from the Kern files')
+        x = KernScore()
+        for file_name in os.listdir(file_path):
+            if file_name[-4:] == filetype:
+                #print(file_name)
+                x.import_kernfile(os.path.join(file_path, file_name))
+                p = re.compile(r'\d{3}')
+                id = p.findall(file_name)
+                chord = x.import_kernfile(os.path.join(file_path, file_name))
+                for file_name_read_GT in os.listdir(os.path.join(file_path, 'Real_GT')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
+                    if id[0] in file_name_read_GT:
+                        # if id[0] == '259':
                         #     print('debug')
-                        s = converter.parse(os.path.join(file_path, 'Spot_Checking', file_name_read_spot_checking))
-                        s_key = converter.parse(
-                            os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[
-                                0] + '.krn')
+                        if os.path.isfile(os.path.join(file_path,file_name)[:-3] + 'txt'): # Save Nat's data in a difference name
+                            f_nat = open(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt', 'w')
+                        f = open(os.path.join(file_path,file_name)[:-3] + 'txt', 'w')
+                        s = converter.parse(os.path.join(file_path, 'Real_GT', file_name_read_GT))
+                        s_key = converter.parse(os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[0] + '.krn')
                         k = s_key.analyze('AardenEssen')
+                        displacement = get_displacement(k)
                         if k.mode == 'minor':
                             transposed_interval = interval.Interval(pitch.Pitch('A'), k.tonic)
                         else:
                             transposed_interval = interval.Interval(pitch.Pitch('C'), k.tonic)
+                        p = re.compile(r'[#-]+')
                         sChords = s.parts[-1]
-                        length = len(sChords.recurse().getElementsByClass('Chord'))
-                        f = open(os.path.join(file_path, file_name)[:-3] + 'txt', 'w')
+                        # length = len(sChords.recurse().getElementsByClass('Chord'))
                         for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                            if len(thisChord.lyrics) > 0:
-                                ptr = thisChord.lyrics[-1].text.find('>')
-                                if ptr != -1:
-                                    chord_new = thisChord.lyrics[-1].text[ptr + 1:]
-                                    if 'b' in chord_new:
-                                        chord_new = chord_new.replace('b', '-') # Get the spot-checked
-                                    # chord
-                                    #print('original chord is', chord[i])
-                                    id_id = p.findall(chord_new)
-                                    if id_id != []:  # has flat or sharp
-                                        root_ptr = re.search(r'[#-]+', chord_new).end()  # get the last flat or sharp position
-                                        transposed_result = transpose(chord_new[0: root_ptr], transposed_interval) + chord_new[
-                                                                                                                 root_ptr:]
-                                        #print(transposed_result)
-
-                                        # print('original: ', line, 'transposed: ', transposed_result)
-                                    else:  # no flat or sharp, which means only the first element is the root
-                                        transposed_result = transpose(chord_new[0], transposed_interval) + chord_new[1:]
-                                        #print(transposed_result)
-                                    if transposed_result not in chord[i]:  # AM7AM7 changed to AAM7 with spot-checking,
-                                        # Discard analyses like this
-                                        print(transposed_result, file=f)
-                                    else:
-                                        print(chord[i], file=f)
-                                    #print('replace as', transposed_result)
-                                else:
-                                    print(chord[i], file=f)
+                            ptr = thisChord.lyrics[-1].text.find('>')
+                            if ptr != -1:
+                                print(thisChord.lyrics[-1].text[:ptr], file=f_nat) # Preserve the original chord
+                                chord = thisChord.lyrics[-1].text[ptr + 1:]
                             else:
-                                print(chord[i], file=f)
+                                print(thisChord.lyrics[-1].text, file=f_nat)  # Preserve the original chord
+                                chord = thisChord.lyrics[-1].text
+                            id_id = p.findall(chord)
+                            if id_id != []:  # has flat or sharp
+                                root_ptr = re.search(r'[#-]+', chord).end()  # get the last flat or sharp position
+                                transposed_result = transpose(chord[0: root_ptr], transposed_interval) + chord[root_ptr:]
+                                #print(transposed_result)
+                                print(transposed_result, file=f)
+                                # print('original: ', line, 'transposed: ', transposed_result)
+                            else:  # no flat or sharp, which means only the first element is the root
+                                transposed_result = transpose(chord[0], transposed_interval) + chord[1:]
+                                #print(transposed_result)
+                                print(transposed_result, file=f)
+                                # print('original: ', line, 'transposed: ', transposed_result)
                         f.close()
-
+                        if os.path.isfile(os.path.join(file_path, 'Nat_GT' ,file_name)[:-4] + 'Nat' + '.txt'):
+                            f_nat.close()
 
                     else:
                         continue
+                if os.path.exists(os.path.join(file_path, 'Spot_Checking')):  # If spot-checking folder exist,
+                # it contains all the rest chorales spot-checked
+                    p = re.compile(r'[#-]+')
+                    for file_name_read_spot_checking in os.listdir(os.path.join(file_path, 'Spot_Checking')): # Extract the GT chord labels from the xml files, and overwrite the original Nat's annotations in these files
+                        if id[0] in file_name_read_spot_checking:
+                            # if id[0] == '283':
+                            #     print('debug')
+                            s = converter.parse(os.path.join(file_path, 'Spot_Checking', file_name_read_spot_checking))
+                            s_key = converter.parse(
+                                os.path.join(os.path.join('.', 'bach-371-chorales-master-kern', 'kern'), 'chor') + id[
+                                    0] + '.krn')
+                            k = s_key.analyze('AardenEssen')
+                            if k.mode == 'minor':
+                                transposed_interval = interval.Interval(pitch.Pitch('A'), k.tonic)
+                            else:
+                                transposed_interval = interval.Interval(pitch.Pitch('C'), k.tonic)
+                            sChords = s.parts[-1]
+                            length = len(sChords.recurse().getElementsByClass('Chord'))
+                            f = open(os.path.join(file_path, file_name)[:-3] + 'txt', 'w')
+                            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                                if len(thisChord.lyrics) > 0:
+                                    ptr = thisChord.lyrics[-1].text.find('>')
+                                    if ptr != -1:
+                                        chord_new = thisChord.lyrics[-1].text[ptr + 1:]
+                                        if 'b' in chord_new:
+                                            chord_new = chord_new.replace('b', '-') # Get the spot-checked
+                                        # chord
+                                        #print('original chord is', chord[i])
+                                        id_id = p.findall(chord_new)
+                                        if id_id != []:  # has flat or sharp
+                                            root_ptr = re.search(r'[#-]+', chord_new).end()  # get the last flat or sharp position
+                                            transposed_result = transpose(chord_new[0: root_ptr], transposed_interval) + chord_new[
+                                                                                                                     root_ptr:]
+                                            #print(transposed_result)
+
+                                            # print('original: ', line, 'transposed: ', transposed_result)
+                                        else:  # no flat or sharp, which means only the first element is the root
+                                            transposed_result = transpose(chord_new[0], transposed_interval) + chord_new[1:]
+                                            #print(transposed_result)
+                                        if transposed_result not in chord[i]:  # AM7AM7 changed to AAM7 with spot-checking,
+                                            # Discard analyses like this
+                                            print(transposed_result, file=f)
+                                        else:
+                                            print(chord[i], file=f)
+                                        #print('replace as', transposed_result)
+                                    else:
+                                        print(chord[i], file=f)
+                                else:
+                                    print(chord[i], file=f)
+                            f.close()
+
+
+                        else:
+                            continue
+    elif filetype == '.xml':
+        print('Step 0: Extract chord labels from the XML files')
+        for fn in os.listdir(file_path):
+            if fn[-3:] == 'txt':
+                f_chord_label = open(os.path.join(file_path, fn))
+                for each_line in f_chord_label.readlines():
+                    if 'FB_lyric' in each_line: # a new file
+                        f_write = open(os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.txt'), 'w')
+                        s = music21.converter.parse(
+                            os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.xml'))
+                    else:  # chord annotations
+                        chords = each_line.split(']')
+                        sChords = s.chordify()
+                        # print('onset slices', len(sChords.recurse().getElementsByClass('Chord')), 'the number of chords is', len(chords[:-2]))
+                        if len(sChords.recurse().getElementsByClass('Chord')) != len(chords[:-2]):
+                            input('music and annotation do not match!')
+                        for each_chord in chords[:-2]:
+                            if each_chord.replace('[', '').replace(',', '').replace('\'', '')[0].isalpha():
+                                # print(each_chord.replace('[', '').replace(',', '').replace('\'', ''))
+                                print(each_chord.replace('[', '').replace(',', '').replace('\'', ''), file=f_write)
+                            else:
+                                # print(each_chord.replace('[', '').replace(',', '').replace('\'', '')[1:])
+                                print(each_chord.replace('[', '').replace(',', '').replace('\'', '')[1:], file=f_write)
+                        f_write.close()
+
+
