@@ -519,7 +519,7 @@ def add_chord(thisChord, chordname):
     if thisChord.lyrics[-1].text.replace('?', '').replace('!', '') != chordname.replace('?', '').replace('!', ''):
         # we don't want duplicated chord labels!
         if chordname[-1] == '-':  # This is the bug music21 has: for chords with flats, it will fail to add as lyrics
-            thisChord.addLyric(chordname + '*')  # adding a casual sign (then remove it) to avoid this bug
+            thisChord.addLyric(chordname.replace('?', '').replace('!', '') + '*')  # adding a casual sign (then remove it) to avoid this bug
             thisChord.lyrics[-1].text = thisChord.lyrics[-1].text.replace('*', '')
         else:
             thisChord.addLyric(chordname.replace('?', '').replace('!', ''))  # get rid of all the ? and !
@@ -713,7 +713,7 @@ def translate_FB_into_chords(want_root_position_traid, want_suspension_NCT, want
             # if chord_label.pitchClasses != []:  # making sure there is no empty chord
             chord_name = is_legal_chord(chord_label)
             if chord_name:  # this slice contains a legal chord
-                add_chord(thisChord, mark + chord_name)
+                add_chord(thisChord, chord_name)
             else:
                 if len(sChord.recurse().getElementsByClass('Chord')) > ptr + 1 and thisChord.style.color != 'pink' and \
                     want_suspension_NCT == True: # there is a next slice, but only consider it
@@ -976,6 +976,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         if 'chordify' in filename: continue
         if '2_voice'  in filename: continue
         if 'FB_align' in filename: continue
+        # if '10.07a' not in filename: continue
         No_of_files += 1
         # if No_of_files > 5: continue
         print(No_of_files)
@@ -1005,8 +1006,8 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         if translate_chord == 'Y':
             if algorithm_e == False:
                 for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    # if i == 39:
-                    #     print('debug')
+                    if i == 42:
+                        print('debug')
                     fig = get_FB(sChords, i)
                     if fig != []:
                         print(fig)
@@ -1213,7 +1214,7 @@ if __name__ == '__main__':
     # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
     # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
     # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
-    # lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
-    lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e)
+    lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
+    # lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e)
     # Algorithm E, where we still want modern suspension treatment
 

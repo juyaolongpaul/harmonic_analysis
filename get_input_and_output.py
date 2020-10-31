@@ -1416,7 +1416,7 @@ def add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_tota
 
 def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output,
                   f2, sign, augmentation, pitch, data_id, portion, outputtype, data_id_total,
-                  inputtype, semitone):
+                  inputtype, semitone, algorithm=''):
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign)):
         os.mkdir(os.path.join('.', 'data_for_ML', sign))
     fn_total_all = []  # this save all file ID, including training, validation and test data
@@ -1427,6 +1427,30 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
             input1)):  # this part should be executed no matter what since we want a updated version of chord list
         fn_total, fn_total_all = add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_total_all, p, 'FB')
     print(fn_total, fn_total_all)
+    dic = {}  # Save chord name + frequencies
+    for id, fn in enumerate(fn_total_all):
+        print(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))
+        if (
+                os.path.isfile(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
+            f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2), 'r')
+        else:
+            continue  # skip the file which does not have chord labels
+        for line in f.readlines():
+            line = get_chord_line(line, sign)
+            dic = calculate_freq(dic, line)
+    li = sorted(dic.items(), key=lambda d: d[1], reverse=True)
+    list_of_chords = []
+    for i, word in enumerate(li):
+        list_of_chords.append(word[0])  # Get all the chords
+    f_chord = open('chord_freq_' + algorithm + '.txt', 'w')
+    for item in li:
+        print(item, file=f_chord)
+    f_chord.close()
+    f_chord2 = open('chord_name_' + algorithm + '.txt', 'w')
+    for item in list_of_chords:
+        print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
+        # confusion matrix
+    f_chord2.close()
     if not os.path.isdir(os.path.join('.', 'data_for_ML', sign,
                                       sign) + '_x_' + outputtype + pitch + inputtype + '_New_annotation_' + keys + '_' + music21):
         os.mkdir(os.path.join('.', 'data_for_ML', sign,
@@ -1462,43 +1486,73 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
         # generate encoding for output
         slice_counter = 0
         yy = []  # output encoding for the whole piece
-        sChords = s.parts[-1]  # get the existing chordify voice with FB
-        for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-            fig_collapsed = []
-            FB_sonority = [0] * inputdim
-            fig = get_FB(sChords, i)
-            if fig != [' '] and fig != '' and fig != []:
-                fig_collapsed = colllapse_interval(fig)
-            intervals = []
-            pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
-            bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
-            for ii, sonority in enumerate(thisChord._notes):
-                if sonority.isRest == False and bass is not False:
-                    aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
-                    colllapsed_interval = colllapse_interval(aInterval.name[1:])
-                    intervals.append(colllapsed_interval)
-                    if any(colllapsed_interval in each for each in fig_collapsed) or ('3' in colllapsed_interval and
-                                                    any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
-                # explicitly labeled in FB
-                        FB_sonority[sonority.pitch.pitchClass] = 1
-            if semitone == 'Y':
-                # print(FB_sonority)
-                if i == 62:
-                    print('debug')
-                FB_sonority = convert_pitch_class_into_semitones(FB_sonority, bass, pitch_class_four_voice, 'Y')
-            # for each_figure in fig_collapsed:
-            #     if each_figure == '' or '_' in each_figure:
-            #         continue
-            #     if each_figure[-1] not in intervals:  # FB not in sonorities
-            #         if each_figure in ['n', '#', 'b'] and '3' in intervals == False:  # also need to consider
-            #             # FB not in the sonorities
-            #             imaginary_note = '????'  # how identify the quality of the interval?????
-            # Not considering this right now
-            slice_counter += 1
-            if (slice_counter == 1):
-                yy = np.concatenate((yy, FB_sonority))
-            else:
-                yy = np.vstack((yy, FB_sonority))
+        if outputtype == 'NCT_pitch_class':  # in this case, we conduct automatic figured bass annotation
+            sChords = s.parts[-1]  # get the existing chordify voice with FB
+            for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                fig_collapsed = []
+                FB_sonority = [0] * inputdim
+                fig = get_FB(sChords, i)
+                if fig != [' '] and fig != '' and fig != []:
+                    fig_collapsed = colllapse_interval(fig)
+                intervals = []
+                pitch_class_four_voice, pitch_four_voice = get_pitch_class_for_four_voice(thisChord, s)
+                bass = get_bass_note(thisChord, pitch_four_voice, pitch_class_four_voice, 'Y')
+                for ii, sonority in enumerate(thisChord._notes):
+                    if sonority.isRest == False and bass is not False:
+                        aInterval = interval.Interval(noteStart=bass, noteEnd=sonority)
+                        colllapsed_interval = colllapse_interval(aInterval.name[1:])
+                        intervals.append(colllapsed_interval)
+                        if any(colllapsed_interval in each for each in fig_collapsed) or ('3' in colllapsed_interval and
+                                                        any(each in ['n', '#', 'b'] for each in fig_collapsed)):  # only add sonority that is
+                    # explicitly labeled in FB
+                            FB_sonority[sonority.pitch.pitchClass] = 1
+                if semitone == 'Y':
+                    # print(FB_sonority)
+                    if i == 62:
+                        print('debug')
+                    FB_sonority = convert_pitch_class_into_semitones(FB_sonority, bass, pitch_class_four_voice, 'Y')
+                # for each_figure in fig_collapsed:
+                #     if each_figure == '' or '_' in each_figure:
+                #         continue
+                #     if each_figure[-1] not in intervals:  # FB not in sonorities
+                #         if each_figure in ['n', '#', 'b'] and '3' in intervals == False:  # also need to consider
+                #             # FB not in the sonorities
+                #             imaginary_note = '????'  # how identify the quality of the interval?????
+                # Not considering this right now
+                slice_counter += 1
+                if (slice_counter == 1):
+                    yy = np.concatenate((yy, FB_sonority))
+                else:
+                    yy = np.vstack((yy, FB_sonority))
+        elif outputtype == 'CL': # in this case, we conduct chord labelling based on the ones translated from FB
+            if algorithm == 'Algorithm_D':
+                if (
+                        os.path.isfile(
+                            os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
+                    f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2),
+                             'r')
+                else:
+                    continue  # skip the file which does not have chord labels
+                for line in f.readlines():
+                    line = get_chord_line(line, sign).replace("\n", "")
+                    chord_class = [0] * len(list_of_chords)
+                    if ' ' in line:  # more than one chord label per line
+                        for chord in line.split(' '):
+                            if len(chord) > 1:
+                                print('debug')
+                            if (chord.find('g]') != -1):
+                                print(fn)
+                                input1('wtf is that?')
+                            counter2 += 1
+                            chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                    else:  # only one chord label
+                        counter2 += 1
+                        chord_class = fill_in_chord_class(line, chord_class, list_of_chords)
+                    slice_counter += 1
+                    if (slice_counter == 1):
+                        yy = np.concatenate((yy, chord_class))
+                    else:
+                        yy = np.vstack((yy, chord_class))
         print('slices of output: ', slice_counter, "slices of input", slice_input)
         if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
             print('fix this or delete this')
@@ -1882,12 +1936,12 @@ def get_id(id_sum, num_of_chorale, times):
 def generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,
                                                                  sign, augmentation, pitch, ratio, cv, version,
-                                                                 outputtype, inputtype, semitone):
+                                                                 outputtype, inputtype, semitone, algorithm='Algorithm_D'):
     print('Step 4: Translate all the data into machine-learning-friendly encodings')
-    id_sum = find_id_FB(output)
+    id_sum = find_id_FB(input)
     generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                   output, f2, sign, augmentation, pitch, id_sum, 'train', outputtype, id_sum,
-                  inputtype, semitone)
+                  inputtype, semitone, algorithm)
 
 def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,
