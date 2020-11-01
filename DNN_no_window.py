@@ -249,7 +249,9 @@ def evaluate_f1score(model, x,y, modelname):
                 i[j] = 1
             else:
                 i[j] = 0
-
+    for item_ID, i in enumerate(yyy):
+        if np.max(i) < 0.5:
+            yy[item_ID][np.where(i == np.max(i))[0].item()] = 1
 
     tp = 0
     fp = 0

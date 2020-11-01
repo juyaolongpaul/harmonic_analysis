@@ -192,9 +192,14 @@ def onehot_decode(arr):
     """
     arr_decoded = []
     for i, item in enumerate(arr):
+        chord = []
         for ii, itemitem in enumerate(item):
             if itemitem == 1:
-                arr_decoded.append(ii)
+                chord.append(ii)
+        if len(chord) == 1:
+            arr_decoded.append(chord[0])
+        else:
+            arr_decoded.append(chord)
 
     return arr_decoded
 
@@ -768,7 +773,7 @@ def generate_ML_matrix(augmentation, portion, id, model, windowsize, ts, path, s
     return encoding_all, fn_all
 
 
-def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign, FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx, valid_yy):
+def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign, FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy, valid_xx, valid_yy, algorithm=''):
     INPUT_DIM = train_xx.shape[1]
     OUTPUT_DIM = train_yy.shape[1]
     print('train_xx shape:', train_xx.shape)
@@ -840,8 +845,12 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
                 model.add(Activation('softmax'))
                 model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
         elif outputtype == "CL":
-            model.add(Activation('softmax'))
-            model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
+            if algorithm == '':
+                model.add(Activation('softmax'))
+                model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
+            else:  # we are doing MLL, using binary classifier
+                model.add(Activation('sigmoid'))
+                model.compile(optimizer=nadam, loss='binary_crossentropy', metrics=['binary_accuracy'])
         early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5",
@@ -1640,9 +1649,256 @@ def count_each_reason_and_right_number(each_reason, count, count_right, reason_t
     return count, count_right
 
 
+def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+                                     cv, pitch_class, ratio, input, output, balanced, outputtype,
+                                     inputtype, predict, exclude=[], algorithm=''):
+    """
+    Dedicated function to train MLL algorithms
+    :param layer:
+    :param nodes:
+    :param windowsize:
+    :param portion:
+    :param modelID:
+    :param ts:
+    :param bootstraptime:
+    :param sign:
+    :param augmentation:
+    :param cv:
+    :param pitch_class:
+    :param ratio:
+    :param input:
+    :param output:
+    :param balanced:
+    :param outputtype:
+    :param inputtype:
+    :param predict:
+    :param exclude:
+    :param algorithm:
+    :return:
+    """
+    print('Step 5: Training and testing the MLL machine learning models')
+    id_sum = find_id_FB(input, exclude)
+    num_of_chorale = len(id_sum)
+    train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
+    pre = []
+    pre_test = []
+    rec = []
+    rec_test = []
+    f1 = []
+    f1_test = []
+    acc = []
+    acc_test = []
+    cvscores = []
+    cvscores_test = []
+    tp = []
+    tn = []
+    fp = []
+    fn = []
+    frame_acc = []
+    frame_acc_implied = []
+    frame_acc_RB = []
+    frame_acc_RB_implied = []
+    frame_acc_2 = []
+    cvscores_percentage_of_NCT_per_slice = []
+    batch_size = 256
+    epochs = 500
+    if modelID == 'DNN':
+        patience = 50
+    else:
+        patience = 20
+    print('Loading data...')
+    extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+        train_num)
+    timestep = ts
+    HIDDEN_NODE = nodes
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                 + str(timestep) + extension
+    print('Loading data...')
+    print('Build model...')
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
+        os.mkdir(os.path.join('.', 'ML_result', sign))
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
+        os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
+                           append=True, separator=';')
+    for times in range(1):
+        # if times != 0 :
+        #     continue
+        MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                     + str(timestep) + extension  + '_cv_' + str(times + 1)
+        FOLDER_NAME = 'MODEL'
+        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        # if exclude != []:
+        #     train_id.extend(test_id)
+        #     test_id = exclude # Swap the test id into the 39 ones
+        valid_yy, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+        valid_xx, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                      os.path.join('.', 'data_for_ML', sign,
+                                                   sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
+            train_xx, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+            train_yy, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                          os.path.join('.', 'data_for_ML', sign,
+                                                       sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+            train_xx = train_xx[
+                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+            train_yy = train_yy[:int(portion * train_yy.shape[0])]
+            print('training and predicting...')
+            model = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+                                   FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy,
+                                   valid_xx,
+                                   valid_yy, algorithm)  # train the machine learning model
+        else:
+            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+        test_xx, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB_N')
+        test_xx_only_pitch, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                                os.path.join('.', 'data_for_ML', sign,
+                                                             sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                'FB_Y')
+        test_yy, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                     os.path.join('.', 'data_for_ML', sign,
+                                                  sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21, 'FB')
+
+        predict_y = model.predict(test_xx)
+        predict_y_copy = np.array(list(predict_y))# Predict the probability for each bit of FB sonority
+        test_yy_int = np.asarray(onehot_decode(test_yy))
+        for i in predict_y:  # regulate the prediction
+            for j, item in enumerate(i):
+                if (item > 0.5):
+                    i[j] = 1
+                else:
+                    i[j] = 0
+        for item_ID, i in enumerate(predict_y_copy):
+            if np.max(i) < 0.5:
+                predict_y[item_ID][np.where(i==np.max(i))[0].item()] = 1
+            # if 1.0 not in i:  # if there is no positive label, choose the one that has the highest probability
+            #
+        predict_y_int = np.asarray(onehot_decode(predict_y))
+        correct_num2 = 0
+        for i, item in enumerate(predict_y):
+            if np.array_equal(item, test_yy[
+                i]):  # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
+                correct_num2 += 1
+        frame_acc_2.append(((correct_num2 / predict_y.shape[0]) * 100))
+        precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
+            model, valid_xx, valid_yy, modelID)
+        precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
+                                                                                                        test_xx,
+                                                                                                        test_yy,
+                                                                                                        modelID)
+        num_of_NCT_slices = 0
+        for i, item in enumerate(test_yy):
+            if 1 in item:
+                num_of_NCT_slices += 1
+        cvscores_percentage_of_NCT_per_slice.append((num_of_NCT_slices / test_yy.shape[0]) * 100)
+        pre.append(precision * 100)
+        pre_test.append(precision_test * 100)
+        rec.append(recall * 100)
+        rec_test.append(recall_test * 100)
+        f1.append(f1score * 100)
+        f1_test.append(f1score_test * 100)
+        acc.append(accuracy * 100)
+        acc_test.append(accuracy_test * 100)
+        tp.append(true_positive)
+        fp.append(false_positive)
+        fn.append(false_negative)
+        tn.append(true_negative)
+        if algorithm == '':
+            with open('chord_name.txt') as f:
+                chord_name = f.read().splitlines()
+            with open('chord_name.txt') as f:
+                chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+        else:
+            with open('chord_name_' + algorithm + '.txt') as f:
+                chord_name = f.read().splitlines()
+            with open('chord_name_' + algorithm + '.txt') as f:
+                chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+        # print(matrix, file=cv_log)
+        if outputtype.find('CL') != -1:
+            for i, item in enumerate(chord_name):
+                if i not in test_yy_int and i not in predict_y: # predict_y is different in NCT and CL!
+                    chord_name2.remove(item)
+        # if outputtype.find('CL') != -1:
+        #     print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
+        if predict == 'Y':
+            # prediction put into files
+            for i, each_file in enumerate(fileName):
+                fileName[i] = fileName[i][:-3] + 'xml'
+            numSalamiSlices = []
+            for id, FN in enumerate(fileName):
+                length = 0
+                s = converter.parse(os.path.join(input, FN))
+                sChords = s.chordify()
+                for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    length += 1
+                numSalamiSlices.append(length)
+            # fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
+            sum = 0
+            for i in range(len(numSalamiSlices)):
+                sum += numSalamiSlices[i]
+            # input(sum)
+            # input(predict_y.shape[0])
+
+            length = len(fileName)
+            a_counter = 0
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(windowsize + 1))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign, outputtype + pitch_class + inputtype + modelID  + str(windowsize) + '_' + str(windowsize + 1)))
+            for i in range(length):
+                print(fileName[i])
+                num_salami_slice = numSalamiSlices[i]
+                correct_num = 0
+                s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                sChords = s.chordify()
+                k = s.analyze('AardenEssen')
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    print_multiple_chord_label(a_counter, test_yy_int, thisChord, chord_name)
+                    print_multiple_chord_label(a_counter, predict_y_int, thisChord, chord_name)
+                    if test_yy_int[a_counter] == predict_y_int[a_counter]:
+                        thisChord.addLyric('✓')
+                    else:
+                        thisChord.addLyric('✘')
+                    # gt = test_yy[a_counter]
+                    # prediction = predict_y[a_counter]
+                    a_counter += 1
+                s.insert(0, sChords)
+                s.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign,
+                                        outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                            windowsize + 1), fileName[i][
+                                                             :-4]) + '.xml')
+def print_multiple_chord_label(a_counter, y, thisChord, chord_name):
+    """
+    Modular function that prints (multiple) chords to the file
+    :param a_counter:
+    :param y:
+    :param thisChord:
+    :param chord_name:
+    :return:
+    """
+    if type(y[a_counter]) == type(1):  # if int
+        thisChord.addLyric(chord_name[y[a_counter]])
+    elif type(y[a_counter]) == type([]):  # if list, meaning multiple answers
+        final_chords = []
+        for each in y[a_counter]:
+            final_chords.append(chord_name[each])
+        thisChord.addLyric(','.join(final_chords))
+
+
 def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
-                                     inputtype, predict, exclude=[]):
+                                     inputtype, predict, exclude=[], algorithm=''):
     print('Step 5: Training and testing the machine learning models')
     id_sum = find_id(output, '', ['099', '193', '210', '345', '053', '071', '104', '133', '182', '227',
                                '232', '238', '243', '245', '259', '261', '271', '294', '346', '239', '282', '080',

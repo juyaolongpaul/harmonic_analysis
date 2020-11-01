@@ -5,11 +5,11 @@ import os
 
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys, generate_data_windowing_non_chord_tone_new_annotation_12keys_FB
 from kernscore import extract_chord_labels
-from predict_result_for_140 import train_and_predict_non_chord_tone
+from predict_result_for_140 import train_and_predict_non_chord_tone, train_and_predict_MLL_chord_label
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony, transpose_polyphony_FB
-
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 def main():
     parser = argparse.ArgumentParser()
@@ -87,11 +87,11 @@ def main():
     elif args.source == 'MLL_BCMCL':
         output = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
     f2 = '.txt'
-    if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL':
-        extract_chord_labels(output, f1)  # extract chord labels into text files
-    if args.source != 'MLL_BCMCL':  # chord annotations in BCMCL have already been standardized
-        annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
-    provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
+    # if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL':
+    #     extract_chord_labels(output, f1)  # extract chord labels into text files
+    # if args.source != 'MLL_BCMCL':  # chord annotations in BCMCL have already been standardized
+    #     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
+    # provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
     # if args.source != 'MLL_BCMCL':
     #     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
     # else:
@@ -117,30 +117,35 @@ def main():
                                                                  args.augmentation, args.pitch, args.ratio,
                                                                  args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
       # only execute this when the CV matrices are complete
-    else:
-        generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
-                                                                        args.window,
-                                                                        counter, counterMin, input, f1, output, f2,
-                                                                        args.source,
-                                                                        args.augmentation, args.pitch, args.ratio,
-                                                                        args.cross_validation, args.version,
-                                                                        args.output, args.input,
-                                                                        'N', args.algorithm)  # generate training and testing data, return the sequence of test id
-    #
-    train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-                                     args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-                                     args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
-    # if args.source == 'ISMIR2019':
-    #     train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
-    #                                      args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-    #                                      args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
-    #                                      args.output, args.input, args.predict, ['099', '193', '210', '345', '053', '071', '104',
-    #                                                                              '133', '182', '227', '232', '238', '243', '245', '259'
-    #         , '261', '271', '294', '346', '239', '282', '080',
-    #                                '121', '136', '137', '139', '141', '156', '179', '201', '247', '260', '272', '275',
-    #                                '278', '289', '308', '333', '365']) # Evaluate on the 39 reserved chorales
-    # elif args.source == '':
-    #
+    # else:
+    #     generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
+    #                                                                     args.window,
+    #                                                                     counter, counterMin, input, f1, output, f2,
+    #                                                                     args.source,
+    #                                                                     args.augmentation, args.pitch, args.ratio,
+    #                                                                     args.cross_validation, args.version,
+    #                                                                     args.output, args.input,
+    #                                                                     'N', args.algorithm)  # generate training and testing data, return the sequence of test id
+
+    # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+    #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+    #                                  args.cross_validation, args.pitch, args.ratio, input, output, args.balanced, args.output, args.input, args.predict)
+    if args.source == 'ISMIR2019':
+        train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
+                                         args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+                                         args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
+                                         args.output, args.input, args.predict, ['099', '193', '210', '345', '053', '071', '104',
+                                                                                 '133', '182', '227', '232', '238', '243', '245', '259'
+            , '261', '271', '294', '346', '239', '282', '080',
+                                   '121', '136', '137', '139', '141', '156', '179', '201', '247', '260', '272', '275',
+                                   '278', '289', '308', '333', '365']) # Evaluate on the 39 reserved chorales
+    elif args.source == 'MLL_BCMCL':
+        train_and_predict_MLL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
+                                         args.percentage,
+                                         args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+                                         args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
+                                         args.output, args.input, args.predict,
+                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)  # Evaluate on the 39 reserved chorales
     # # #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()
