@@ -1650,6 +1650,18 @@ def count_each_reason_and_right_number(each_reason, count, count_right, reason_t
     return count, count_right
 
 
+def printboth(str, var, f):
+    """
+    Modular function that prints information to both terminal and file
+    :param var:
+    :param str:
+    :param file:
+    :return:
+    """
+    print(str, var)
+    print(str, var, file=f)
+
+
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm=''):
@@ -1690,16 +1702,18 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
     f1_test = []
     acc = []
     acc_test = []
-    cvscores = []
-    cvscores_test = []
     tp = []
     tn = []
     fp = []
     fn = []
-    frame_acc = []
-    frame_acc_implied = []
-    frame_acc_RB = []
-    frame_acc_RB_implied = []
+    a_precision_macro = []
+    a_recall_macro = []
+    a_f1_macro = []
+    a_precision_micro = []
+    a_recall_micro = []
+    a_f1_micro = []
+    a_subset_acc = []
+    a_hamming_loss = []
     frame_acc_2 = []
     cvscores_percentage_of_NCT_per_slice = []
     batch_size = 256
@@ -1725,7 +1739,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
     cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
-    for times in range(1):
+    for times in range(2):
         # if times != 0 :
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -1814,14 +1828,22 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
         fp.append(false_positive)
         fn.append(false_negative)
         tn.append(true_negative)
+        print(MODEL_NAME, file=cv_log)
         #print('manual calculation of subset accuracy', frame_acc_2)
-        print('sklearn calculation of subset accuracy', accuracy_score(test_yy, predict_y))
+        printboth('subset accuracy', accuracy_score(test_yy, predict_y), cv_log)
+        a_subset_acc.append(accuracy_score(test_yy, predict_y))
         #print('manual calculation of micro-avg accuracy', precision_test, recall_test, f1score_test)
-        print('sklearn calculation of micro-avg accuracy', precision_score(test_yy, predict_y, average='micro'), recall_score(test_yy, predict_y, average='micro'), f1_score(test_yy, predict_y, average='micro'))
-        print('sklearn calculation of macro-avg accuracy', precision_score(test_yy, predict_y, average='macro'),
-              recall_score(test_yy, predict_y, average='macro'), f1_score(test_yy, predict_y, average='macro'))
-        print('sklearn calculation of hamming loss', hamming_loss(test_yy, predict_y))
-        print(classification_report(test_yy, predict_y, target_names=chord_name))
+        printboth('micro-avg accuracy', [precision_score(test_yy, predict_y, average='micro'), recall_score(test_yy, predict_y, average='micro'), f1_score(test_yy, predict_y, average='micro')], cv_log)
+        a_precision_micro.append(precision_score(test_yy, predict_y, average='micro'))
+        a_recall_micro.append(recall_score(test_yy, predict_y, average='micro'))
+        a_f1_micro.append(f1_score(test_yy, predict_y, average='micro'))
+        a_precision_macro.append(precision_score(test_yy, predict_y, average='macro'))
+        a_recall_macro.append(recall_score(test_yy, predict_y, average='macro'))
+        a_f1_macro.append(f1_score(test_yy, predict_y, average='macro'))
+        printboth('macro-avg accuracy', [precision_score(test_yy, predict_y, average='macro'),
+              recall_score(test_yy, predict_y, average='macro'), f1_score(test_yy, predict_y, average='macro')], cv_log)
+        printboth('hamming loss', hamming_loss(test_yy, predict_y), cv_log)
+        a_hamming_loss.append(hamming_loss(test_yy, predict_y))
         if algorithm == '':
             with open('chord_name.txt') as f:
                 chord_name = f.read().splitlines()
@@ -1839,7 +1861,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
                     chord_name2.remove(item)
         # if outputtype.find('CL') != -1:  # print micro and macro averaging results for each category
         #     print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
-        print(classification_report(test_yy, predict_y, target_names=chord_name))
+        printboth('', classification_report(test_yy, predict_y, target_names=chord_name), cv_log)
         if predict == 'Y':
             # prediction put into files
             for i, each_file in enumerate(fileName):
@@ -1888,7 +1910,16 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                             windowsize + 1), fileName[i][
                                                              :-4]) + '.xml')
-
+    print('overall results:')
+    print('subset accuracy', np.mean(a_subset_acc), '±', stats.sem(a_subset_acc), file=cv_log)
+    print('hamming loss', np.mean(a_hamming_loss), '±', stats.sem(a_hamming_loss), file=cv_log)
+    print('micro avg precision', np.mean(a_precision_micro), '±', stats.sem(a_precision_micro), file=cv_log)
+    print('micro avg recall', np.mean(a_recall_micro), '±', stats.sem(a_recall_micro), file=cv_log)
+    print('micro avg f1', np.mean(a_f1_micro), '±', stats.sem(a_f1_micro), file=cv_log)
+    print('macro avg precision', np.mean(a_precision_macro), '±', stats.sem(a_precision_macro), file=cv_log)
+    print('macro avg recall', np.mean(a_recall_macro), '±', stats.sem(a_recall_macro), file=cv_log)
+    print('macro avg f1', np.mean(a_f1_macro), '±', stats.sem(a_f1_macro), file=cv_log)
+    cv_log.close()
 
 def align_gt_and_prediction(test_y, predict_y):
     """
