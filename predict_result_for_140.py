@@ -33,6 +33,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
 from keras.callbacks import TensorBoard
+from sklearn.metrics import hamming_loss, accuracy_score, f1_score, precision_score, recall_score
 import itertools
 import re
 import os
@@ -1813,6 +1814,14 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
         fp.append(false_positive)
         fn.append(false_negative)
         tn.append(true_negative)
+        #print('manual calculation of subset accuracy', frame_acc_2)
+        print('sklearn calculation of subset accuracy', accuracy_score(test_yy, predict_y))
+        #print('manual calculation of micro-avg accuracy', precision_test, recall_test, f1score_test)
+        print('sklearn calculation of micro-avg accuracy', precision_score(test_yy, predict_y, average='micro'), recall_score(test_yy, predict_y, average='micro'), f1_score(test_yy, predict_y, average='micro'))
+        print('sklearn calculation of macro-avg accuracy', precision_score(test_yy, predict_y, average='macro'),
+              recall_score(test_yy, predict_y, average='macro'), f1_score(test_yy, predict_y, average='macro'))
+        print('sklearn calculation of hamming loss', hamming_loss(test_yy, predict_y))
+        print(classification_report(test_yy, predict_y, target_names=chord_name))
         if algorithm == '':
             with open('chord_name.txt') as f:
                 chord_name = f.read().splitlines()
@@ -1828,8 +1837,9 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
             for i, item in enumerate(chord_name):
                 if i not in test_yy_int and i not in predict_y: # predict_y is different in NCT and CL!
                     chord_name2.remove(item)
-        # if outputtype.find('CL') != -1:
+        # if outputtype.find('CL') != -1:  # print micro and macro averaging results for each category
         #     print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
+        print(classification_report(test_yy, predict_y, target_names=chord_name))
         if predict == 'Y':
             # prediction put into files
             for i, each_file in enumerate(fileName):
@@ -1878,6 +1888,16 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                             windowsize + 1), fileName[i][
                                                              :-4]) + '.xml')
+
+
+def align_gt_and_prediction(test_y, predict_y):
+    """
+    Function to align these annotations and flat them, so that it can calculate micro and macro average
+    :param test_y:
+    :param predict_y:
+    :return:
+    """
+
 def print_multiple_chord_label(a_counter, y, thisChord, chord_name):
     """
     Modular function that prints (multiple) chords to the file
