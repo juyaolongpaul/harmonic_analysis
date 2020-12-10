@@ -299,7 +299,7 @@ def get_FB_and_FB_PC(rule_set, x, y, sChords, j, outputtype, s, key, this_pitch_
     else:
         previous_pitch_class_four_voice = []
     if type == 'RB':
-        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice)
+        this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, j, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB)
     pitchclass = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
     chord_tone = list(x)
     chord_tone = [int(round(x)) for x in chord_tone]
@@ -1715,6 +1715,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
     a_subset_acc = []
     a_hamming_loss = []
     frame_acc_2 = []
+    frame_acc_3 = []
     cvscores_percentage_of_NCT_per_slice = []
     batch_size = 256
     epochs = 500
@@ -1739,7 +1740,17 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
     cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
     csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
                            append=True, separator=';')
-    for times in range(2):
+    if algorithm == '':
+        with open('chord_name.txt') as f:
+            chord_name = f.read().splitlines()
+        with open('chord_name.txt') as f:
+            chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+    else:
+        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+            chord_name = f.read().splitlines()
+        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+            chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+    for times in range(cv):
         # if times != 0 :
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -1800,11 +1811,24 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
             #
         predict_y_int = np.asarray(onehot_decode(predict_y))
         correct_num2 = 0
+        correct_num3 = 0  # this is for inclusive metric
+        for i, item in enumerate(predict_y):
+            difference_list = []
+            both_positive = False
+            for j, item2 in enumerate(item):
+                if item2 == 1 and test_yy[i][j] == 1:
+                    both_positive = True
+                if item2 != test_yy[i][j]:
+                    difference_list.append([item2, test_yy[i][j]])
+            # print(difference_list)
+            if both_positive and [1, 0] not in difference_list:
+                correct_num3 += 1
         for i, item in enumerate(predict_y):
             if np.array_equal(item, test_yy[
                 i]):  # https://stackoverflow.com/questions/10580676/comparing-two-numpy-arrays-for-equality-element-wise
                 correct_num2 += 1
         frame_acc_2.append(((correct_num2 / predict_y.shape[0]) * 100))
+        frame_acc_3.append(((correct_num3 / predict_y.shape[0]) * 100))
         precision, recall, f1score, accuracy, true_positive, false_positive, false_negative, true_negative = evaluate_f1score(
             model, valid_xx, valid_yy, modelID)
         precision_test, recall_test, f1score_test, accuracy_test, asd, sdf, dfg, fgh = evaluate_f1score(model,
@@ -1831,6 +1855,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
         print(MODEL_NAME, file=cv_log)
         #print('manual calculation of subset accuracy', frame_acc_2)
         printboth('subset accuracy', accuracy_score(test_yy, predict_y), cv_log)
+        printboth('inclusive accuracy', frame_acc_3, cv_log)
         a_subset_acc.append(accuracy_score(test_yy, predict_y))
         #print('manual calculation of micro-avg accuracy', precision_test, recall_test, f1score_test)
         printboth('micro-avg accuracy', [precision_score(test_yy, predict_y, average='micro'), recall_score(test_yy, predict_y, average='micro'), f1_score(test_yy, predict_y, average='micro')], cv_log)
@@ -1844,21 +1869,12 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
               recall_score(test_yy, predict_y, average='macro'), f1_score(test_yy, predict_y, average='macro')], cv_log)
         printboth('hamming loss', hamming_loss(test_yy, predict_y), cv_log)
         a_hamming_loss.append(hamming_loss(test_yy, predict_y))
-        if algorithm == '':
-            with open('chord_name.txt') as f:
-                chord_name = f.read().splitlines()
-            with open('chord_name.txt') as f:
-                chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
-        else:
-            with open('chord_name_' + algorithm + '.txt') as f:
-                chord_name = f.read().splitlines()
-            with open('chord_name_' + algorithm + '.txt') as f:
-                chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+
         # print(matrix, file=cv_log)
-        if outputtype.find('CL') != -1:
-            for i, item in enumerate(chord_name):
-                if i not in test_yy_int and i not in predict_y: # predict_y is different in NCT and CL!
-                    chord_name2.remove(item)
+        # if outputtype.find('CL') != -1:
+        #     for i, item in enumerate(chord_name):
+        #         if i not in test_yy_int and i not in predict_y: # predict_y is different in NCT and CL!
+        #             chord_name2.remove(item)
         # if outputtype.find('CL') != -1:  # print micro and macro averaging results for each category
         #     print(classification_report(test_yy_int, predict_y, target_names=chord_name2), file=cv_log)
         printboth('', classification_report(test_yy, predict_y, target_names=chord_name), cv_log)
@@ -1899,6 +1915,11 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
                     print_multiple_chord_label(a_counter, predict_y_int, thisChord, chord_name)
                     if test_yy_int[a_counter] == predict_y_int[a_counter]:
                         thisChord.addLyric('✓')
+                    elif type(test_yy_int[a_counter]) == type([]):
+                        if predict_y_int[a_counter] in test_yy_int[a_counter]:
+                            thisChord.addLyric('✓_')
+                        else:
+                            thisChord.addLyric('✘')
                     else:
                         thisChord.addLyric('✘')
                     # gt = test_yy[a_counter]
@@ -1912,6 +1933,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
                                                              :-4]) + '.xml')
     print('overall results:')
     print('subset accuracy', np.mean(a_subset_acc), '±', stats.sem(a_subset_acc), file=cv_log)
+    print('inclusive accuracy', np.mean(frame_acc_3), '±', stats.sem(frame_acc_3), file=cv_log)
     print('hamming loss', np.mean(a_hamming_loss), '±', stats.sem(a_hamming_loss), file=cv_log)
     print('micro avg precision', np.mean(a_precision_micro), '±', stats.sem(a_precision_micro), file=cv_log)
     print('micro avg recall', np.mean(a_recall_micro), '±', stats.sem(a_recall_micro), file=cv_log)
