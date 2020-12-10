@@ -929,7 +929,7 @@ def align_FB_with_slice(bassline, sChords, MIDI):
                 break
 
 
-def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument, algorithm_e=False, translate_chord='Y'):
+def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument, algorithm_e=False, algorithm_b_prime = False, translate_chord='Y'):
     a_chord_label_FB = []  # record of all the chord labels by figured bass
     a_FB = [] # record of all FB figures
     a_suspension = [] # record of all the suspensions indicated by FB
@@ -943,6 +943,8 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_A'))
     if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_B')):
         os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_B'))
+    if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_B_prime')):
+        os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_B_prime'))
     if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_C')):
         os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_C'))
     if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_D')):
@@ -955,11 +957,16 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
             f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_B_all_chords.txt'), 'w')
         elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == False:
-            f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_C_all_chords.txt'), 'w')
+            if algorithm_b_prime:
+                f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_B_prime_all_chords.txt'), 'w')
+            else:
+                f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_C_all_chords.txt'), 'w')
         elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
             f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_D_all_chords.txt'), 'w')
     else:
         f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_E_all_chords.txt'), 'w')
+
+
     for filename in os.listdir(path):
         # if '83.05' not in filename or '172.06' in filename: continue
         # These lines below ensure that the algorithm only process the 120 chorale files,
@@ -1071,15 +1078,26 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
             # replace the suspension slices with the chord labels where it is resolved
                 if want_suspension_NCT:
                     if thisChord.style.color == 'pink':  # the suspensions
+                        look_ahead = True # in the normal situation, we need to consider all the slices between suspension and resolution, only ignore them when the suspension already has a chord label in ALgorithm B'
                         for j in range(i, suspension_ptr[ptr]):
                             if any(char.isalpha() for char in
                                 sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text) \
-                            and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text:
+                            and 'b' not in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-1].text and look_ahead:
                                 for label1 in sChords.recurse().getElementsByClass('Chord')[suspension_ptr[ptr]].lyrics[-2:]:
                                     if label1.text[0].isalpha() and label1.text[0].isupper() and label1.text != sChords.recurse().getElementsByClass('Chord')[j].lyrics[-2].text \
                                         and label1.text != sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text:
-                                        add_chord(sChords.recurse().getElementsByClass('Chord')[j],
-                                                  label1.text)
+                                        if algorithm_b_prime:
+                                            if sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text == '?' or \
+                                                sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text == '' or \
+                                                    sChords.recurse().getElementsByClass('Chord')[j].lyrics[-1].text == ' ':  # only add if the lyric is ?
+                                                add_chord(sChords.recurse().getElementsByClass('Chord')[j],
+                                                          label1.text)
+                                            else: # if the suspension already has a chord label, skip the whole thing
+                                                look_ahead = False
+                                                break
+                                        else:
+                                            add_chord(sChords.recurse().getElementsByClass('Chord')[j],
+                                                      label1.text)
                         ptr += 1
         else:
             for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -1092,7 +1110,11 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
                     s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_B', filename[:-4] + '_' + 'chordify_algorithm_B' + '.xml'))
                 elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == False:
-                    s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_C', filename[:-4] + '_' + 'chordify_algorithm_C' + '.xml'))
+                    if algorithm_b_prime:
+                        s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_B_prime',
+                                                         filename[:-4] + '_' + 'chordify_algorithm_B_prime' + '.xml'))
+                    else:
+                        s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_C', filename[:-4] + '_' + 'chordify_algorithm_C' + '.xml'))
                 elif want_root_position_traid == True and want_suspension_NCT == True and want_discrepancies_chord_labels == True:
                     s.write('musicxml', os.path.join(path, 'BCMCL', 'Algorithm_D', filename[:-4] + '_' + 'chordify_algorithm_D' + '.xml'))
             else:
@@ -1207,14 +1229,16 @@ if __name__ == '__main__':
     path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     no_instrument = False
     algorithm_e = True
+    algorithm_b_prime = True # remove the second option from Algorithm C
     # Step 1: we need to first extract the figured bass anntoations from BCFB into a format music21 can process
     extract_FB_as_lyrics(path, no_instrument)
     # Step 2: choose an algorithm you want to use to generate chord labels
     # you can also uncomment them all, and they will be executed in a serial manner
     # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
     # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
+    lyrics_to_chordify(True, True, False, path, no_instrument, algorithm_e=False, algorithm_b_prime=True) # Algorithm B'
     # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
-    lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
+    # lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
     # lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e)
     # Algorithm E, where we still want modern suspension treatment
 
