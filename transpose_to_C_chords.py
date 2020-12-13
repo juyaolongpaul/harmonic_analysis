@@ -71,7 +71,10 @@ def provide_path_12keys(input, f1, output, f2, source):
                         s = converter.parse(os.path.join(input, 'chor') + ptr[0] + f1)
                     transpose_chord_label(s, output, file_name)
     else:  # translate chord labels for the BCMCL dataset, needs to translate for Algorithm B, D, and E
+        # prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_A'))
         prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_B'))
+        prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_B_prime'))
+        prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_C'))
         prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_D'))
         prepare_chord_label_BCMCL(os.path.join(output, 'Algorithm_E'))
 

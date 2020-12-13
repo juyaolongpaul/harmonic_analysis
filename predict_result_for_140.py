@@ -17,6 +17,7 @@ import collections
 #import graphviz
 np.random.seed(1337)  # for reproducibility
 from keras import optimizers
+from keras import losses
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree as TREE
 from keras.preprocessing import sequence
@@ -32,8 +33,9 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.models import load_model
 from collections import Counter
+from keras import backend as K
 from keras.callbacks import TensorBoard
-from sklearn.metrics import hamming_loss, accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import hamming_loss, accuracy_score, f1_score, precision_score, recall_score, mean_absolute_error
 import itertools
 import re
 import os
@@ -849,9 +851,13 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
             if algorithm == '':
                 model.add(Activation('softmax'))
                 model.compile(optimizer=nadam, loss='categorical_crossentropy', metrics=['accuracy'])
-            else:  # we are doing MLL, using binary classifier
+            elif 'MLL' in sign:  # we are doing MLL, using binary classifier
                 model.add(Activation('sigmoid'))
                 model.compile(optimizer=nadam, loss='binary_crossentropy', metrics=['binary_accuracy'])
+            elif 'LDL' in sign:
+                model.add(Activation('softmax'))
+                model.compile(optimizer=nadam, loss='kullback_leibler_divergence'
+, metrics=['kullback_leibler_divergence'])
         early_stopping = EarlyStopping(monitor='val_loss', patience=patience)  # set up early stopping
         print("Train...")
         checkpointer = ModelCheckpoint(filepath=os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5",
@@ -1660,6 +1666,104 @@ def printboth(str, var, f):
     """
     print(str, var)
     print(str, var, file=f)
+
+
+def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
+                                     cv, pitch_class, ratio, input, output, balanced, outputtype,
+                                     inputtype, predict, exclude=[], algorithm=''):
+    print('Step 5: Training and testing the MLL machine learning models')
+    id_sum = find_id_FB(input, exclude)
+    num_of_chorale = len(id_sum)
+    train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
+    keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
+    batch_size = 256
+    epochs = 500
+    if modelID == 'DNN':
+        patience = 50
+    else:
+        patience = 20
+    print('Loading data...')
+    extension = sign + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21 + '_' + 'training' + str(
+        train_num)
+    timestep = ts
+    HIDDEN_NODE = nodes
+    MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                 str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                 + str(timestep) + extension
+    print('Loading data...')
+    print('Build model...')
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign)):
+        os.mkdir(os.path.join('.', 'ML_result', sign))
+    if not os.path.isdir(os.path.join('.', 'ML_result', sign, MODEL_NAME)):
+        os.mkdir(os.path.join('.', 'ML_result', sign, MODEL_NAME))
+    cv_log = open(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict.txt', 'w')
+    csv_logger = CSVLogger(os.path.join('.', 'ML_result', sign, MODEL_NAME, 'cv_log+') + 'predict_log.csv',
+                           append=True, separator=';')
+    if algorithm == '':
+        with open('chord_name.txt') as f:
+            chord_name = f.read().splitlines()
+        with open('chord_name.txt') as f:
+            chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+    else:
+        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+            chord_name = f.read().splitlines()
+        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+            chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
+    for times in range(cv):
+        # if times != 0 :
+        #     continue
+        MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
+                     str(windowsize) + '_' + str(windowsize + 1) + 'training_data' + str(portion) + 'timestep' \
+                     + str(timestep) + extension + '_cv_' + str(times + 1)
+        FOLDER_NAME = 'MODEL'
+        train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        # if exclude != []:
+        #     train_id.extend(test_id)
+        #     test_id = exclude # Swap the test id into the 39 ones
+        valid_yy, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                                     os.path.join('.', 'data_for_ML', sign,
+                                                                  sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                     'FB')
+        valid_xx, fileName_fake = generate_ML_matrix(augmentation, 'valid', valid_id, modelID, windowsize, ts,
+                                                     os.path.join('.', 'data_for_ML', sign,
+                                                                  sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                     'FB_N')
+        if not (os.path.isfile((os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5"))):
+            train_xx, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                                         os.path.join('.', 'data_for_ML', sign,
+                                                                      sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                         'FB_N')
+            train_yy, fileName_fake = generate_ML_matrix(augmentation, 'train', train_id, modelID, windowsize, ts,
+                                                         os.path.join('.', 'data_for_ML', sign,
+                                                                      sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                         'FB')
+            train_xx = train_xx[
+                       :int(portion * train_xx.shape[0])]  # expose the option of training only on a subset of data
+            train_yy = train_yy[:int(portion * train_yy.shape[0])]
+            print('training and predicting...')
+            model = train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, sign,
+                                   FOLDER_NAME, MODEL_NAME, batch_size, epochs, csv_logger, train_xx, train_yy,
+                                   valid_xx,
+                                   valid_yy, algorithm)  # train the machine learning model
+        else:
+            model = load_model(os.path.join('.', 'ML_result', sign, FOLDER_NAME, MODEL_NAME) + ".hdf5")
+        test_xx, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                               os.path.join('.', 'data_for_ML', sign,
+                                                            sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                               'FB_N')
+        test_xx_only_pitch, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                                          os.path.join('.', 'data_for_ML', sign,
+                                                                       sign) + '_x_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                                          'FB_Y')
+        test_yy, fileName = generate_ML_matrix(augmentation, 'test', test_id, modelID, windowsize, ts,
+                                               os.path.join('.', 'data_for_ML', sign,
+                                                            sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
+                                               'FB')
+        predict_y = model.predict(test_xx)
+
+        print('MAE:', mean_absolute_error(test_yy, predict_y))
+        # print('KL_divergence:', losses.kullback_leibler_divergence(K.constant(test_yy), K.constant(predict_y)))
+
 
 
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,

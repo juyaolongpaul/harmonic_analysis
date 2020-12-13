@@ -351,12 +351,20 @@ def extract_chord_labels(file_path, filetype):
         print('Step 0: Extract chord labels from the XML files')
         for fn in os.listdir(file_path):
             if fn[-3:] == 'txt':
+                if 'prime' not in fn: continue
                 f_chord_label = open(os.path.join(file_path, fn))
                 for each_line in f_chord_label.readlines():
                     if 'FB_lyric' in each_line: # a new file
-                        f_write = open(os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.txt'), 'w')
-                        s = music21.converter.parse(
-                            os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.xml'))
+                        if 'prime' in fn:
+                            f_write = open(os.path.join(file_path, fn[:11] + '_prime',
+                                                        each_line[:-5] + '_chordify_algorithm_' + fn[10] + '_prime' + '.txt'), 'w')
+                            s = music21.converter.parse(
+                                os.path.join(file_path, fn[:11] + '_prime',
+                                             each_line[:-5] + '_chordify_algorithm_' + fn[10] + '_prime' + '.xml'))
+                        else:
+                            f_write = open(os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.txt'), 'w')
+                            s = music21.converter.parse(
+                                os.path.join(file_path, fn[:11], each_line[:-5] + '_chordify_algorithm_' + fn[10] + '.xml'))
                     else:  # chord annotations
                         chords = each_line.split(']')
                         sChords = s.chordify()

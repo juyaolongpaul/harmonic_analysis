@@ -182,7 +182,8 @@ def is_suspension_RB(ptr, s, sChord, voice_number, sus_type):
                 return False
             if previous_note.pitch.pitchClass == each_note.pitch.pitchClass and (1 <= (each_note.pitch.midi - next_note.pitch.midi) <= 2 or sus_type == '6') and previous_bass != -1 and next_bass != -1:  # the previous note and the current note should be the same, or in the same pitch class (2)
                 # and also the note should resolve downstep (3), or it is a 6-5 suspension, and bass should be the previous one different from the current one while the next one is the same with the current one
-                if pitch_four_voice[-1].pitch.pitchClass == next_bass.pitch.pitchClass and pitch_four_voice[-1].pitch.pitchClass != previous_bass.pitch.pitchClass:
+                if pitch_four_voice[-1].pitch.pitchClass == next_bass.pitch.pitchClass:# and pitch_four_voice[-1].pitch.pitchClass != previous_bass.pitch.pitchClass:
+                    # BWV102.07 the end, I64 chord goes to V chord with stationary bass still has a suspension there, so the bass does not have to be different!
                     if suspension_dissonant(pitch_four_voice[-1], each_note):
                         return True
         elif each_note.beat < thisChord.beat and (each_note.beat + each_note.duration.quarterLength * denominator_chorale / 4 > thisChord.beat): # It is possible that the "previous" note sustains through the suspended slice
@@ -238,7 +239,7 @@ def is_suspension(ptr, ptr2, s, sChord, voice_number, sus_type):
     return False
 
 
-def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB, concert_pitch, chordify_voice):
+def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previous_NCT_sign_FB):
     """
     Look into passing tone and neighbour tone on the weak beat
     :return:
@@ -311,9 +312,10 @@ def determine_NCT(sChords, ii, s, this_pitch_list, this_pitch_class_list, previo
                                     NCT_sign_FB[i] = 'NCT_anticipation'
                                     sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'green' # hope is green
                         elif sChords.recurse().getElementsByClass('Chord')[ii].beat % 1 == 0:
-                            if 'NCT' not in previous_NCT_sign_FB[i]:
+                            # if 'NCT' not in previous_NCT_sign_FB[i]:
                         # suspension is on beat
                                 if is_suspension_RB(ii, s, sChords, i, ''):
+                                    print('slice:', ii, 'voice: (top down)', i, 'has SUSPENSION')
                                     this_pitch_class_list_2[i] = -2  # indicate this is a NCT
                                     NCT_sign_FB[i] = 'NCT_suspension'
                                     sChords.recurse().getElementsByClass('Chord')[ii].style.color = 'yellow'
@@ -443,6 +445,23 @@ def fill_in_chord_class(chord, chordclass, list):
     empty = [0] * (len(list) + 1)
     if (chordclass == empty):  # this is 'other' chord!
         chordclass[len(list)] = 1
+    return chordclass
+
+
+def fill_in_chord_class_increments(chord, chordclass, list):
+    """
+
+    :param chordclass: The chord class vector that needs to label
+    :param list: The chord list with outputdim top freq
+    :return: the modified pitch class that need to store
+    """
+    for i, chord2 in enumerate(list):
+        if (chord == chord2):
+            chordclass[i] += 1
+            break
+    empty = [0] * (len(list) + 1)
+    if (chordclass == empty):  # this is 'other' chord!
+        chordclass[len(list)] += 1
     return chordclass
 
 
@@ -1414,6 +1433,19 @@ def add_files(pitch, fn, data_id, augmentation, fn_total, data_id_total, fn_tota
     return fn_total, fn_total_all
 
 
+def distribution_vector(line, counter2, chord_class, list_of_chords):
+    if ' ' in line:  # more than one chord label per line
+        for chord in line.split(' '):
+            if len(chord) > 1:
+                print('debug')
+            counter2 += 1
+            chord_class = fill_in_chord_class_increments(chord, chord_class, list_of_chords)
+    else:  # only one chord label
+        counter2 += 1
+        chord_class = fill_in_chord_class_increments(line, chord_class, list_of_chords)
+    return chord_class
+
+
 def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input1, f1, output,
                   f2, sign, augmentation, pitch, data_id, portion, outputtype, data_id_total,
                   inputtype, semitone, algorithm=''):
@@ -1442,11 +1474,11 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
     list_of_chords = []
     for i, word in enumerate(li):
         list_of_chords.append(word[0])  # Get all the chords
-    f_chord = open('chord_freq_' + algorithm + '.txt', 'w')
+    f_chord = open('chord_freq_' + algorithm + augmentation + '.txt', 'w')
     for item in li:
         print(item, file=f_chord)
     f_chord.close()
-    f_chord2 = open('chord_name_' + algorithm + '.txt', 'w')
+    f_chord2 = open('chord_name_' + algorithm + augmentation + '.txt', 'w')
     for item in list_of_chords:
         print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
         # confusion matrix
@@ -1525,34 +1557,78 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                 else:
                     yy = np.vstack((yy, FB_sonority))
         elif outputtype == 'CL': # in this case, we conduct chord labelling based on the ones translated from FB
-            if algorithm == 'Algorithm_D':
+            if sign == 'MLL_BCMCL':
+                if algorithm == 'Algorithm_D':
+                    if (
+                            os.path.isfile(
+                                os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
+                        f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2),
+                                 'r')
+                    else:
+                        continue  # skip the file which does not have chord labels
+                    for line in f.readlines():
+                        line = get_chord_line(line, sign).replace("\n", "")
+                        chord_class = [0] * len(list_of_chords)
+                        if ' ' in line:  # more than one chord label per line
+                            for chord in line.split(' '):
+                                if len(chord) > 1:
+                                    print('debug')
+                                if (chord.find('g]') != -1):
+                                    print(fn)
+                                    input1('wtf is that?')
+                                counter2 += 1
+                                chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                        else:  # only one chord label
+                            counter2 += 1
+                            chord_class = fill_in_chord_class(line, chord_class, list_of_chords)
+                        slice_counter += 1
+                        if (slice_counter == 1):
+                            yy = np.concatenate((yy, chord_class))
+                        else:
+                            yy = np.vstack((yy, chord_class))
+            elif sign == 'LDL_BCMCL':  # we want chord labels from all algorithms
+                # print(os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2))
+                # print(os.path.isfile(
+                #             os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2)))
                 if (
                         os.path.isfile(
-                            os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
-                    f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2),
-                             'r')
+                            os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2))):
+                    # f_a = open(os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2),
+                    #          'r')
+                    f_b = open(os.path.join(output, 'Algorithm_B_prime', fn[:-12] + 'chordify_algorithm_B_prime' + f2),
+                               'r')
+                    f_c = open(os.path.join(output, 'Algorithm_C', fn[:-12] + 'chordify_algorithm_C' + f2),
+                               'r')
+                    f_d = open(os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2),
+                               'r')
+                    f_e = open(os.path.join(output, 'Algorithm_E', fn[:-12] + 'chordify_algorithm_E' + f2),
+                               'r')
                 else:
                     continue  # skip the file which does not have chord labels
-                for line in f.readlines():
-                    line = get_chord_line(line, sign).replace("\n", "")
+                b_chords = f_b.readlines()
+                c_chords = f_c.readlines()
+                d_chords = f_d.readlines()
+                e_chords = f_e.readlines()
+                for line_ID, line in enumerate(b_chords):
+                    line_b = get_chord_line(line, sign).replace("\n", "")
+                    # line_b = get_chord_line(f_b.readlines()[line_ID], sign).replace("\n", "")
+                    line_c = get_chord_line(c_chords[line_ID], sign).replace("\n", "")
+                    line_d = get_chord_line(d_chords[line_ID], sign).replace("\n", "")
+                    line_e = get_chord_line(e_chords[line_ID], sign).replace("\n", "")
                     chord_class = [0] * len(list_of_chords)
-                    if ' ' in line:  # more than one chord label per line
-                        for chord in line.split(' '):
-                            if len(chord) > 1:
-                                print('debug')
-                            if (chord.find('g]') != -1):
-                                print(fn)
-                                input1('wtf is that?')
-                            counter2 += 1
-                            chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                    else:  # only one chord label
-                        counter2 += 1
-                        chord_class = fill_in_chord_class(line, chord_class, list_of_chords)
+                    # chord_class = distribution_vector(line_a, counter2, chord_class)
+                    chord_class = distribution_vector(line_b, counter2, chord_class, list_of_chords)
+                    chord_class = distribution_vector(line_c, counter2, chord_class, list_of_chords)
+                    chord_class = distribution_vector(line_d, counter2, chord_class, list_of_chords)
+                    chord_class = distribution_vector(line_e, counter2, chord_class, list_of_chords)
+                    # normalize
+                    chord_class_normalize = [float(i)/sum(chord_class) for i in chord_class]
                     slice_counter += 1
                     if (slice_counter == 1):
-                        yy = np.concatenate((yy, chord_class))
+                        yy = np.concatenate((yy, chord_class_normalize))
                     else:
-                        yy = np.vstack((yy, chord_class))
+                        yy = np.vstack((yy, chord_class_normalize))
+
         print('slices of output: ', slice_counter, "slices of input", slice_input)
         if abs(slice_counter - slice_input) >= 1 and slice_counter != 0:
             print('fix this or delete this')
@@ -1590,6 +1666,7 @@ def convert_pitch_class_into_semitones(ori_pitch_class, bass, pitch_class_four_v
 
     return new
 
+
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
                             chorale_x_only_newOnset, keys, music21, counter, countermin, sign, semitone):
@@ -1599,6 +1676,8 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
     chordify_voice = contain_chordify_voice(s)
     for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
         # print('measure number: ', thisChord.measureNumber)
+        # if i == 69:
+        #     print('debug')
         slice_input += 1
         counter1 += 1
         if pitch != 'pitch_class_binary':
@@ -1652,7 +1731,7 @@ def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype,
                 # print('measure', thisChord.measureNumber, 'beat', thisChord.beat)
                 this_pitch_class_list_only_CT, NCT_sign = determine_NCT(sChords, i, s, pitch_four_voice,
                                                                         pitch_class_four_voice, previous_NCT_sign,
-                                                                        concert_pitch, chordify_voice)
+                                                                        )
                 NCT = [0] * inputdim
                 for each_pitch_class in pitch_class_four_voice:
                     if each_pitch_class not in this_pitch_class_list_only_CT:  # this means it is a NCT
@@ -1942,6 +2021,7 @@ def generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, co
     generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, counter, countermin, input, f1,
                   output, f2, sign, augmentation, pitch, id_sum, 'train', outputtype, id_sum,
                   inputtype, semitone, algorithm)
+
 
 def generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, inputdim, outputdim,
                                                                  windowsize, counter, countermin, input, f1, output, f2,
