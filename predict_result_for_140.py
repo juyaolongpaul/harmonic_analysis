@@ -59,6 +59,7 @@ from transpose_to_C_chords import transpose
 from get_input_and_output import get_pitch_class_for_four_voice, get_bass_note
 from FB2lyrics import is_suspension, colllapse_interval, get_actual_figures
 from scipy import stats
+from scipy import special
 c2 = ['c', 'd-', 'd', 'e-', 'e', 'f', 'f#', 'g', 'a-', 'a', 'b-', 'b']
 
 
@@ -1678,6 +1679,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
     batch_size = 256
     epochs = 500
+    a_ranking_acc = []
+    a_kl_divergence = []
     if modelID == 'DNN':
         patience = 50
     else:
@@ -1710,6 +1713,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
         with open('chord_name_' + algorithm + augmentation + '.txt') as f:
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     for times in range(cv):
+        print('performance on the', times, 'batch', file=cv_log)
         # if times != 0 :
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -1762,8 +1766,109 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
         predict_y = model.predict(test_xx)
 
         print('MAE:', mean_absolute_error(test_yy, predict_y))
-        # print('KL_divergence:', losses.kullback_leibler_divergence(K.constant(test_yy), K.constant(predict_y)))
+        print('KL_divergence:',np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0))/len(test_yy))
+        print('KL_divergence:', np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0)) / len(test_yy), file=cv_log)
+        a_kl_divergence.append(np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0)) / len(test_yy))
+        # https://towardsdatascience.com/kl-divergence-python-example-b87069e4b810
+        # print('KL_divergence on valid:',np.sum(np.where(valid_yy != 0, valid_yy * np.log(valid_yy / model.predict(valid_xx)), 0))/len(valid_yy))
+        if predict == 'Y':
+            # prediction put into files
+            for i, each_file in enumerate(fileName):
+                fileName[i] = fileName[i][:-3] + 'xml'
+            numSalamiSlices = []
+            for id, FN in enumerate(fileName):
+                length = 0
+                s = converter.parse(os.path.join(input, FN))
+                sChords = s.chordify()
+                for i, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    length += 1
+                numSalamiSlices.append(length)
+            # fileName, numSalamiSlices = get_predict_file_name(input, test_id, augmentation, 'FB')
+            sum = 0
+            for i in range(len(numSalamiSlices)):
+                sum += numSalamiSlices[i]
+            # input(sum)
+            # input(predict_y.shape[0])
 
+            length = len(fileName)
+            a_counter = 0
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign)):
+                os.mkdir(os.path.join('.', 'predicted_result', sign))
+            if not os.path.isdir(os.path.join('.', 'predicted_result', sign,
+                                              outputtype + pitch_class + inputtype + modelID + str(
+                                                      windowsize) + '_' + str(windowsize + 1))):
+                os.mkdir(os.path.join('.', 'predicted_result', sign,
+                                      outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                          windowsize + 1)))
+            ranking_accuracy = []
+            for i in range(length):
+                each_ranking_accuracy = 0
+                print(fileName[i])
+                if '133.06' in fileName[i]:
+                    print('debug')
+                num_salami_slice = numSalamiSlices[i]
+                correct_num = 0
+                s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
+                sChords = s.chordify(removeRedundantPitches=False)
+                for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
+                    if j == 5:
+                        print('debug')
+                    thisChord.closedPosition(forceOctave=4, inPlace=True)
+                    sorted_GT = sorted(list(set(test_yy[a_counter])), reverse=True)
+                    sorted_pre = sorted(predict_y[a_counter], reverse=True)
+                    gt_chord_label_list = []
+                    predicted_chord_label_list = []
+                    for ID, each_LDL in enumerate(sorted_GT):
+                        gt_ID = [i for i, x in enumerate(list(test_yy[a_counter])) if x == each_LDL] # can have ties
+                        # https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
+                        pre_ID = list(predict_y[a_counter]).index(sorted_pre[ID])
+                        if each_LDL != 0:
+                            for each_ID in gt_ID:
+                                thisChord.addLyric(
+                                    chord_name[each_ID] + ':' + str(round(test_yy[a_counter][each_ID], 2)))
+                                gt_chord_label_list.append(chord_name[each_ID])
+                            predicted_chord_label_list.append(chord_name[pre_ID])
+                        else:
+                            break
+                    thisChord.addLyric(' ')
+                    for each_pre_chord_label in predicted_chord_label_list:
+                        thisChord.addLyric(
+                            each_pre_chord_label + ':' + str(round(predict_y[a_counter][chord_name.index(each_pre_chord_label)], 2)))
+                    if gt_chord_label_list == predicted_chord_label_list:
+                        thisChord.addLyric('✓')
+                        each_ranking_accuracy += 1
+                    else:
+                        thisChord.addLyric('✘')
+
+                        #     if each_LDL == 1:
+                        #         thisChord.addLyric(chord_name[ID])
+                        #         thisChord.addLyric(str(chord_name[ID]) + ':' + str(round(predict_y[a_counter][ID], 2)))
+                        #         max_ID = list(predict_y[a_counter]).index(max(predict_y[a_counter]))
+                        #         if max_ID != ID:
+                        #             thisChord.addLyric(str(chord_name[max_ID]) + ':' + str(round(predict_y[a_counter][max_ID], 2)))
+                        #     else:
+                        #         top_N = sorted_GT.index(each_LDL)
+                        #         thisChord.addLyric(str(chord_name[ID])+ ':' + str(round(each_LDL, 2)))
+                        #         thisChord.addLyric(str(chord_name[ID]) + ':' + str(round(predict_y[a_counter][ID], 2)))
+                        #         if sorted_pre[top_N] != predict_y[a_counter][ID]:
+                        #             ID_pre = list(predict_y[a_counter]).index(sorted_pre[top_N])
+                        #             thisChord.addLyric(
+                        #                 str(chord_name[ID_pre]) + ':' + str(round(predict_y[a_counter][ID_pre], 2)))
+                    a_counter += 1
+                ranking_accuracy.append(each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                print('ranking acc:', each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                s.insert(0, sChords)
+                s.write('musicxml',
+                        fp=os.path.join('.', 'predicted_result', sign,
+                                        outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
+                                            windowsize + 1), fileName[i][
+                                                             :-4]) + '.xml')
+            print(ranking_accuracy, np.mean(ranking_accuracy))
+            print('ranking acc:', np.mean(ranking_accuracy), file=cv_log)
+            a_ranking_acc.append(np.mean(ranking_accuracy))
+    print('overall performance', file=cv_log)
+    print('overall kl divergence', np.mean(a_kl_divergence), '±', stats.sem(a_kl_divergence), file=cv_log)
+    print('overall ranking accuracy', np.mean(a_ranking_acc), '±', stats.sem(a_ranking_acc), file=cv_log)
 
 
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
