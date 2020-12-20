@@ -16,6 +16,7 @@ import copy
 import collections
 #import graphviz
 np.random.seed(1337)  # for reproducibility
+import operator
 from keras import optimizers
 from keras import losses
 from sklearn.tree import DecisionTreeClassifier
@@ -1669,6 +1670,25 @@ def printboth(str, var, f):
     print(str, var, file=f)
 
 
+# https://towardsdatascience.com/normalized-discounted-cumulative-gain-37e6f75090e9
+def discountedCumulativeGain(result):
+    dcg = []
+    for idx, val in enumerate(result):
+        numerator = 2**val - 1
+        # add 2 because python 0-index
+        denominator =  np.log2(idx + 2)
+        score = numerator/denominator
+        dcg.append(score)
+    return sum(dcg)
+
+
+def normalizedDiscountedCumulativeGain(result, sorted_result):
+    dcg = discountedCumulativeGain(result)
+    idcg = discountedCumulativeGain(sorted_result)
+    ndcg = dcg / idcg
+    return ndcg
+
+
 def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm=''):
@@ -1681,6 +1701,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     epochs = 500
     a_ranking_acc = []
     a_kl_divergence = []
+    a_NDCG = []
     if modelID == 'DNN':
         patience = 50
     else:
@@ -1714,6 +1735,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     for times in range(cv):
         print('performance on the', times, 'batch', file=cv_log)
+        print('-------------------------------', file=cv_log)
         # if times != 0 :
         #     continue
         MODEL_NAME = str(layer) + 'layer' + str(nodes) + modelID + 'window_size' + \
@@ -1801,20 +1823,38 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                       outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                           windowsize + 1)))
             ranking_accuracy = []
+            ndcg = []
             for i in range(length):
                 each_ranking_accuracy = 0
                 print(fileName[i])
-                if '133.06' in fileName[i]:
-                    print('debug')
+                # if '133.06' in fileName[i]:
+                #     print('debug')
                 num_salami_slice = numSalamiSlices[i]
                 correct_num = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify(removeRedundantPitches=False)
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
-                    if j == 5:
-                        print('debug')
                     thisChord.closedPosition(forceOctave=4, inPlace=True)
                     sorted_GT = sorted(list(set(test_yy[a_counter])), reverse=True)
+                    # calculate NDCG
+                    predicted_value_chord_pair = {}
+                    gt_value = test_yy[a_counter]
+                    for id, item in enumerate(predict_y[a_counter]):
+                        predicted_value_chord_pair[chord_name[id]] = item
+                    predicted_value_chord_pair_sorted_ori = dict(sorted(predicted_value_chord_pair.items(), key=lambda item: item[1], reverse=True))
+                    predicted_value_chord_pair_sorted = dict(
+                        sorted(predicted_value_chord_pair.items(), key=lambda item: item[1], reverse=True))
+                    for key in predicted_value_chord_pair_sorted:
+                        predicted_value_chord_pair_sorted[key] = gt_value[chord_name.index(key)] # replace with human rating
+
+
+                    # logic: sort predicted value first and map it to chord label names
+                    # replace the predicted values into gt values
+                    # rank this value, and get the NDCG score
+                    values = list(predicted_value_chord_pair_sorted.values())
+                    sorted_values = sorted(values, reverse=True)
+                    each_ndcg = normalizedDiscountedCumulativeGain(values, sorted_values)
+                    ndcg.append(each_ndcg)
                     sorted_pre = sorted(predict_y[a_counter], reverse=True)
                     gt_chord_label_list = []
                     predicted_chord_label_list = []
@@ -1865,11 +1905,14 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                                              :-4]) + '.xml')
             print(ranking_accuracy, np.mean(ranking_accuracy))
             print('ranking acc:', np.mean(ranking_accuracy), file=cv_log)
+            print(ndcg, np.mean(ndcg))
+            print('NDCG score:', np.mean(ndcg), file=cv_log)
             a_ranking_acc.append(np.mean(ranking_accuracy))
+            a_NDCG.append(np.mean(ndcg))
     print('overall performance', file=cv_log)
     print('overall kl divergence', np.mean(a_kl_divergence), '±', stats.sem(a_kl_divergence), file=cv_log)
     print('overall ranking accuracy', np.mean(a_ranking_acc), '±', stats.sem(a_ranking_acc), file=cv_log)
-
+    print('overall NDCG score', np.mean(a_NDCG), '±', stats.sem(a_NDCG), file=cv_log)
 
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
