@@ -1702,6 +1702,9 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     a_ranking_acc = []
     a_kl_divergence = []
     a_NDCG = []
+    a_MLL_acc = []
+    a_MLL_inclusive_acc = []
+    smallest_vote_portion = 0.12
     if modelID == 'DNN':
         patience = 50
     else:
@@ -1823,6 +1826,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                       outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                           windowsize + 1)))
             ranking_accuracy = []
+            MLL_acc = []
+            MLL_inclusive_acc = []
             ndcg = []
             for i in range(length):
                 each_ranking_accuracy = 0
@@ -1830,7 +1835,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                 # if '133.06' in fileName[i]:
                 #     print('debug')
                 num_salami_slice = numSalamiSlices[i]
-                correct_num = 0
+                correct_num_MLL = 0
+                correct_num_MLL_inclusive = 0
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify(removeRedundantPitches=False)
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
@@ -1839,6 +1845,9 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     # calculate NDCG
                     predicted_value_chord_pair = {}
                     gt_value = test_yy[a_counter]
+                    # for each_value in gt_value:
+                    #     if smallest_vote_portion > each_value and each_value != 0:
+                    #         smallest_vote_portion = each_value
                     for id, item in enumerate(predict_y[a_counter]):
                         predicted_value_chord_pair[chord_name[id]] = item
                     predicted_value_chord_pair_sorted_ori = dict(sorted(predicted_value_chord_pair.items(), key=lambda item: item[1], reverse=True))
@@ -1858,6 +1867,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     sorted_pre = sorted(predict_y[a_counter], reverse=True)
                     gt_chord_label_list = []
                     predicted_chord_label_list = []
+                    predicted_chord_label_list_thresholding = []
                     for ID, each_LDL in enumerate(sorted_GT):
                         gt_ID = [i for i, x in enumerate(list(test_yy[a_counter])) if x == each_LDL] # can have ties
                         # https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
@@ -1879,6 +1889,25 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                         each_ranking_accuracy += 1
                     else:
                         thisChord.addLyric('✘')
+                    for ID, each_value in enumerate(predict_y[a_counter]):
+                        if each_value >= 0.12 and chord_name[ID] not in predicted_chord_label_list:
+                            thisChord.addLyric(chord_name[ID] + ':' + str(round(each_value, 2)))
+                        if each_value >= 0.12:
+                            predicted_chord_label_list_thresholding.append(chord_name[ID])
+                    # use accuracy and inclusive accuracy
+                    if sorted(predicted_chord_label_list_thresholding) == sorted(gt_chord_label_list):
+                        correct_num_MLL += 1
+                        correct_num_MLL_inclusive += 1
+                        thisChord.addLyric('✓')
+                    elif set(predicted_chord_label_list_thresholding) <= set(gt_chord_label_list):
+                        correct_num_MLL_inclusive += 1
+                        thisChord.addLyric('✓_')
+                    else:
+                        thisChord.addLyric('✘')
+
+                    # print('debug')
+                    # also output chord labels whose values is >= smallest value
+
 
                         #     if each_LDL == 1:
                         #         thisChord.addLyric(chord_name[ID])
@@ -1897,6 +1926,10 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     a_counter += 1
                 ranking_accuracy.append(each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
                 print('ranking acc:', each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                print('MLL acc', correct_num_MLL/len(sChords.recurse().getElementsByClass('Chord')))
+                print('MLL inclusive acc', (correct_num_MLL_inclusive/len(sChords.recurse().getElementsByClass('Chord'))))
+                MLL_acc.append(correct_num_MLL/len(sChords.recurse().getElementsByClass('Chord')))
+                MLL_inclusive_acc.append((correct_num_MLL_inclusive/len(sChords.recurse().getElementsByClass('Chord'))))
                 s.insert(0, sChords)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign,
@@ -1905,15 +1938,22 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                                              :-4]) + '.xml')
             print(ranking_accuracy, np.mean(ranking_accuracy))
             print('ranking acc:', np.mean(ranking_accuracy), file=cv_log)
-            print(ndcg, np.mean(ndcg))
+            print('MLL acc:', np.mean(MLL_acc), file=cv_log)
+            print('MLL inclusive:', np.mean(MLL_inclusive_acc), file=cv_log)
+            # print(ndcg, np.mean(ndcg))
             print('NDCG score:', np.mean(ndcg), file=cv_log)
             a_ranking_acc.append(np.mean(ranking_accuracy))
+            a_MLL_acc.append(np.mean(MLL_acc))
+            a_MLL_inclusive_acc.append(np.mean(MLL_inclusive_acc))
             a_NDCG.append(np.mean(ndcg))
+
     print('overall performance', file=cv_log)
     print('overall kl divergence', np.mean(a_kl_divergence), '±', stats.sem(a_kl_divergence), file=cv_log)
     print('overall ranking accuracy', np.mean(a_ranking_acc), '±', stats.sem(a_ranking_acc), file=cv_log)
     print('overall NDCG score', np.mean(a_NDCG), '±', stats.sem(a_NDCG), file=cv_log)
-
+    print('smallest vote portion', smallest_vote_portion, file=cv_log)
+    print('MLL acc', np.mean(a_MLL_acc), '±', stats.sem(a_MLL_acc), file=cv_log)
+    print('MLL inclusive acc', np.mean(a_MLL_inclusive_acc), '±', stats.sem(a_MLL_inclusive_acc), file=cv_log)
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm=''):
