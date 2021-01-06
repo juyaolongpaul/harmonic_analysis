@@ -1538,7 +1538,7 @@ def convert_pitch_class_into_semitones(ori_pitch_class, bass, pitch_class_four_v
 
 def generate_encoding_input(sChords, slice_input, counter1, inputdim, inputtype, s, outputtype, fn, pitch,
                             chorale_x, chorale_x_12, chorale_x_only_pitch_class, chorale_x_only_meter,
-                            chorale_x_only_newOnset, keys, music21, counter, countermin, sign, semitone):
+                            chorale_x_only_newOnset, keys, music21, counter, countermin, sign, semitone="N"):
     key = s.analyze('AardenEssen')
     previous_NCT_sign = [''] * 100
     concert_pitch = contain_concert_pitch(s)
