@@ -1699,11 +1699,16 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
     batch_size = 256
     epochs = 500
+    a_top1_acc = []
     a_ranking_acc = []
     a_kl_divergence = []
     a_NDCG = []
     a_MLL_acc = []
     a_MLL_inclusive_acc = []
+    a_precision_micro = []
+    a_recall_micro = []
+    a_f1_micro = []
+
     smallest_vote_portion = 0.12
     if modelID == 'DNN':
         patience = 50
@@ -1789,7 +1794,22 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                                             sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                                'FB')
         predict_y = model.predict(test_xx)
-
+        predict_y_thresholding = []
+        for each_row in predict_y:
+            each_row_thresholding = [1 if x > 0.12 else 0 for x in each_row]
+            predict_y_thresholding.append(each_row_thresholding)
+        test_yy_thresholding = []
+        for each_row in test_yy:
+            each_row_thresholding = [1 if x > 0.12 else 0 for x in each_row]
+            test_yy_thresholding.append(each_row_thresholding)
+        test_yy_thresholding = np.array(test_yy_thresholding)
+        predict_y_thresholding = np.array(predict_y_thresholding)
+        # calculate P/r/F1, predicted values and ground truth value >= 0.12
+        # test_yy_thresholding_flat = [item for sublist in test_yy_thresholding for item in sublist]
+        # predict_y_thresholding_flat = [item for sublist in predict_y_thresholding for item in sublist]
+        a_precision_micro.append(precision_score(test_yy_thresholding, predict_y_thresholding, average='micro'))
+        a_recall_micro.append(recall_score(test_yy_thresholding, predict_y_thresholding, average='micro'))
+        a_f1_micro.append(f1_score(test_yy_thresholding, predict_y_thresholding, average='micro'))
         print('MAE:', mean_absolute_error(test_yy, predict_y))
         print('KL_divergence:',np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0))/len(test_yy))
         print('KL_divergence:', np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0)) / len(test_yy), file=cv_log)
@@ -1826,11 +1846,13 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                       outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                           windowsize + 1)))
             ranking_accuracy = []
+            top1_accuracy = []
             MLL_acc = []
             MLL_inclusive_acc = []
             ndcg = []
             for i in range(length):
                 each_ranking_accuracy = 0
+                each_top1_accuracy = 0
                 print(fileName[i])
                 # if '133.06' in fileName[i]:
                 #     print('debug')
@@ -1887,6 +1909,10 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     if gt_chord_label_list == predicted_chord_label_list:
                         thisChord.addLyric('✓')
                         each_ranking_accuracy += 1
+                        each_top1_accuracy += 1
+                    elif gt_chord_label_list[0] == predicted_chord_label_list[0]:
+                        each_top1_accuracy += 1
+                        thisChord.addLyric('✓!')
                     else:
                         thisChord.addLyric('✘')
                     for ID, each_value in enumerate(predict_y[a_counter]):
@@ -1925,6 +1951,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                         #                 str(chord_name[ID_pre]) + ':' + str(round(predict_y[a_counter][ID_pre], 2)))
                     a_counter += 1
                 ranking_accuracy.append(each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                top1_accuracy.append(each_top1_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                print('top1 acc:', each_top1_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
                 print('ranking acc:', each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
                 print('MLL acc', correct_num_MLL/len(sChords.recurse().getElementsByClass('Chord')))
                 print('MLL inclusive acc', (correct_num_MLL_inclusive/len(sChords.recurse().getElementsByClass('Chord'))))
@@ -1942,6 +1970,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
             print('MLL inclusive:', np.mean(MLL_inclusive_acc), file=cv_log)
             # print(ndcg, np.mean(ndcg))
             print('NDCG score:', np.mean(ndcg), file=cv_log)
+            a_top1_acc.append(np.mean(top1_accuracy))
             a_ranking_acc.append(np.mean(ranking_accuracy))
             a_MLL_acc.append(np.mean(MLL_acc))
             a_MLL_inclusive_acc.append(np.mean(MLL_inclusive_acc))
@@ -1949,11 +1978,17 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
 
     print('overall performance', file=cv_log)
     print('overall kl divergence', np.mean(a_kl_divergence), '±', stats.sem(a_kl_divergence), file=cv_log)
+    print('overall top1 accuracy', np.mean(a_top1_acc), '±', stats.sem(a_top1_acc), file=cv_log)
     print('overall ranking accuracy', np.mean(a_ranking_acc), '±', stats.sem(a_ranking_acc), file=cv_log)
     print('overall NDCG score', np.mean(a_NDCG), '±', stats.sem(a_NDCG), file=cv_log)
     print('smallest vote portion', smallest_vote_portion, file=cv_log)
     print('MLL acc', np.mean(a_MLL_acc), '±', stats.sem(a_MLL_acc), file=cv_log)
     print('MLL inclusive acc', np.mean(a_MLL_inclusive_acc), '±', stats.sem(a_MLL_inclusive_acc), file=cv_log)
+    print('micro avg precision', np.mean(a_precision_micro), '±', stats.sem(a_precision_micro), file=cv_log)
+    print('micro avg recall', np.mean(a_recall_micro), '±', stats.sem(a_recall_micro), file=cv_log)
+    print('micro avg f1', np.mean(a_f1_micro), '±', stats.sem(a_f1_micro), file=cv_log)
+
+
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm=''):
