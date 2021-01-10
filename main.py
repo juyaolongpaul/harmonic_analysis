@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='LDL_BCMCL')
+                        type=str, default='MLL_BCMCL')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -36,7 +36,7 @@ def main():
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
                              'input feature. You can also append 7 in the end to use '
                              'do the generic pitch(default: %(default)',
-                        type=str, default='pitch_class')
+                        type=str, default='pitch_class_with_bass')
     parser.add_argument('-w', '--window',
                         help='the size of the input window (default: %(default))',
                         type=int, default=2)
@@ -71,7 +71,7 @@ def main():
                         type=str, default='Y')
     parser.add_argument('-alg', '--algorithm',
                         help='specify which version of chord labels you want to use (default: %(default))',
-                        type=str, default='Algorithm_D')
+                        type=str, default='ALL')
     args = parser.parse_args()
     if args.source == 'Rameau':
         input = os.path.join('.', 'bach_chorales_scores', 'original_midi+PDF')
@@ -91,7 +91,7 @@ def main():
     #     extract_chord_labels(output, f1)  # extract chord labels into text files
     # if args.source != 'MLL_BCMCL':  # chord annotations in BCMCL have already been standardized
     #     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
-    provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
+    # provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
     # if args.source != 'MLL_BCMCL':
     #     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
     # else:
@@ -110,22 +110,22 @@ def main():
     input_dim = 12
     x = []
     y = []
-    # if 'BCMCL' not in args.source:
-    #     generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
-    #                                                              counter, counterMin, input, f1, output, f2,
-    #                                                              args.source,
-    #                                                              args.augmentation, args.pitch, args.ratio,
-    #                                                              args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
-    #   # only execute this when the CV matrices are complete
-    # else:
-    #     generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
-    #                                                                     args.window,
-    #                                                                     counter, counterMin, input, f1, output, f2,
-    #                                                                     args.source,
-    #                                                                     args.augmentation, args.pitch, args.ratio,
-    #                                                                     args.cross_validation, args.version,
-    #                                                                     args.output, args.input,
-    #                                                                     'N', args.algorithm)  # generate training and testing data, return the sequence of test id
+    if 'BCMCL' not in args.source:
+        generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
+                                                                 counter, counterMin, input, f1, output, f2,
+                                                                 args.source,
+                                                                 args.augmentation, args.pitch, args.ratio,
+                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+      # only execute this when the CV matrices are complete
+    else:
+        generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
+                                                                        args.window,
+                                                                        counter, counterMin, input, f1, output, f2,
+                                                                        args.source,
+                                                                        args.augmentation, args.pitch, args.ratio,
+                                                                        args.cross_validation, args.version,
+                                                                        args.output, args.input,
+                                                                        'N', args.algorithm)  # generate training and testing data, return the sequence of test id
 
     # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
     #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,

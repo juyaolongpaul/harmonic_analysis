@@ -1737,9 +1737,9 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
         with open('chord_name.txt') as f:
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     else:
-        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+        with open('chord_name_' + 'Algorithm_D' + augmentation + '.txt') as f:
             chord_name = f.read().splitlines()
-        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+        with open('chord_name_' + 'Algorithm_D'+ augmentation + '.txt') as f:
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     for times in range(cv):
         print('performance on the', times, 'batch', file=cv_log)
@@ -2073,9 +2073,9 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
         with open('chord_name.txt') as f:
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     else:
-        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+        with open('chord_name_' + 'Algorithm_D'+ augmentation + '.txt') as f:
             chord_name = f.read().splitlines()
-        with open('chord_name_' + algorithm + augmentation + '.txt') as f:
+        with open('chord_name_' + 'Algorithm_D' + augmentation + '.txt') as f:
             chord_name2 = f.read().splitlines()  # delete all the chords which do not appear in the test set
     for times in range(cv):
         # if times != 0 :

@@ -1461,10 +1461,10 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
     print(fn_total, fn_total_all)
     dic = {}  # Save chord name + frequencies
     for id, fn in enumerate(fn_total_all):
-        print(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))
+        print(os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2))
         if (
-                os.path.isfile(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
-            f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2), 'r')
+                os.path.isfile(os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2))):
+            f = open(os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2), 'r')
         else:
             continue  # skip the file which does not have chord labels
         for line in f.readlines():
@@ -1474,11 +1474,11 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
     list_of_chords = []
     for i, word in enumerate(li):
         list_of_chords.append(word[0])  # Get all the chords
-    f_chord = open('chord_freq_' + algorithm + augmentation + '.txt', 'w')
+    f_chord = open('chord_freq_' + 'Algorithm_D' + augmentation + '.txt', 'w')
     for item in li:
         print(item, file=f_chord)
     f_chord.close()
-    f_chord2 = open('chord_name_' + algorithm + augmentation + '.txt', 'w')
+    f_chord2 = open('chord_name_' + 'Algorithm_D' + augmentation + '.txt', 'w')
     for item in list_of_chords:
         print(item, file=f_chord2)  # write these chords into files, so that we can have chords name for
         # confusion matrix
@@ -1557,39 +1557,39 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                 else:
                     yy = np.vstack((yy, FB_sonority))
         elif outputtype == 'CL': # in this case, we conduct chord labelling based on the ones translated from FB
-            if sign == 'MLL_BCMCL':
-                if algorithm == 'Algorithm_D':
-                    if (
-                            os.path.isfile(
-                                os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
-                        f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2),
-                                 'r')
-                    else:
-                        continue  # skip the file which does not have chord labels
-                    for line in f.readlines():
-                        line = get_chord_line(line, sign).replace("\n", "")
-                        chord_class = [0] * len(list_of_chords)
-                        if ' ' in line:  # more than one chord label per line
-                            for chord in line.split(' '):
-                                if len(chord) > 1:
-                                    print('debug')
-                                if (chord.find('g]') != -1):
-                                    print(fn)
-                                    input1('wtf is that?')
-                                counter2 += 1
-                                chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
-                        else:  # only one chord label
+            if sign == 'MLL_BCMCL' and algorithm == 'Algorithm_D':
+                if (
+                        os.path.isfile(
+                            os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2))):
+                    f = open(os.path.join(output, algorithm, fn[:-12] + 'chordify_algorithm_' + algorithm[10] + f2),
+                             'r')
+                else:
+                    continue  # skip the file which does not have chord labels
+                for line in f.readlines():
+                    line = get_chord_line(line, sign).replace("\n", "")
+                    chord_class = [0] * len(list_of_chords)
+                    if ' ' in line:  # more than one chord label per line
+                        for chord in line.split(' '):
+                            if len(chord) > 1:
+                                print('debug')
+                            if (chord.find('g]') != -1):
+                                print(fn)
+                                input1('wtf is that?')
                             counter2 += 1
-                            chord_class = fill_in_chord_class(line, chord_class, list_of_chords)
-                        slice_counter += 1
-                        if (slice_counter == 1):
-                            yy = np.concatenate((yy, chord_class))
-                        else:
-                            yy = np.vstack((yy, chord_class))
-            elif sign == 'LDL_BCMCL':  # we want chord labels from all algorithms
+                            chord_class = fill_in_chord_class(chord, chord_class, list_of_chords)
+                    else:  # only one chord label
+                        counter2 += 1
+                        chord_class = fill_in_chord_class(line, chord_class, list_of_chords)
+                    slice_counter += 1
+                    if (slice_counter == 1):
+                        yy = np.concatenate((yy, chord_class))
+                    else:
+                        yy = np.vstack((yy, chord_class))
+            elif sign == 'LDL_BCMCL' or (sign == 'MLL_BCMCL' and algorithm == 'ALL'):  # we want chord labels from all algorithms
                 # print(os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2))
-                # print(os.path.isfile(
-                #             os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2)))
+                print(os.path.isfile(
+                            os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2)))
+                print(os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2))
                 if (
                         os.path.isfile(
                             os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2))):
@@ -1622,7 +1622,15 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                     chord_class = distribution_vector(line_d, counter2, chord_class, list_of_chords)
                     chord_class = distribution_vector(line_e, counter2, chord_class, list_of_chords)
                     # normalize
-                    chord_class_normalize = [float(i)/sum(chord_class) for i in chord_class]
+                    if sign == 'LDL_BCMCL':
+                        chord_class_normalize = [float(i)/sum(chord_class) for i in chord_class]
+                    elif sign == 'MLL_BCMCL':
+                        chord_class_normalize = []
+                        for i in chord_class:
+                            if i >= 1:
+                                chord_class_normalize.append(1)
+                            else:
+                                chord_class_normalize.append(i)
                     slice_counter += 1
                     if (slice_counter == 1):
                         yy = np.concatenate((yy, chord_class_normalize))
