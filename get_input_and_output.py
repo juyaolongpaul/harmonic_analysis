@@ -1585,7 +1585,7 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                         yy = np.concatenate((yy, chord_class))
                     else:
                         yy = np.vstack((yy, chord_class))
-            elif sign == 'LDL_BCMCL' or (sign == 'MLL_BCMCL' and algorithm == 'ALL'):  # we want chord labels from all algorithms
+            elif sign == 'LDL_BCMCL' or (sign == 'MLL_BCMCL' and algorithm == 'ALL') or (sign == 'SLL_BCMCL' and algorithm == 'ALL'):  # we want chord labels from all algorithms
                 # print(os.path.join(output, 'Algorithm_A', fn[:-12] + 'chordify_algorithm_A' + f2))
                 print(os.path.isfile(
                             os.path.join(output, 'Algorithm_D', fn[:-12] + 'chordify_algorithm_D' + f2)))
@@ -1631,6 +1631,9 @@ def generate_data_FB(counter1, counter2, x, y, inputdim, outputdim, windowsize, 
                                 chord_class_normalize.append(1)
                             else:
                                 chord_class_normalize.append(i)
+                    elif sign == 'SLL_BCMCL':
+                        chord_class_normalize = [0] * len(list_of_chords)
+                        chord_class_normalize[chord_class.index(max(chord_class))] = 1  # set top1 as positive
                     slice_counter += 1
                     if (slice_counter == 1):
                         yy = np.concatenate((yy, chord_class_normalize))

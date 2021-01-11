@@ -5,7 +5,7 @@ import os
 
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys, generate_data_windowing_non_chord_tone_new_annotation_12keys_FB
 from kernscore import extract_chord_labels
-from predict_result_for_140 import train_and_predict_non_chord_tone, train_and_predict_MLL_chord_label, train_and_predict_LDL_chord_label
+from predict_result_for_140 import train_and_predict_non_chord_tone, train_and_predict_MLL_chord_label, train_and_predict_LDL_chord_label, train_and_predict_SLL_chord_label
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony, transpose_polyphony_FB
@@ -16,13 +16,13 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='MLL_BCMCL')
+                        type=str, default='SLL_BCMCL')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -79,12 +79,12 @@ def main():
     elif args.source == 'ISMIR2019':
         input = os.path.join('.', 'bach-371-chorales-master-kern', 'kern')
         f1 = '.krn'  # the version of chorales used
-    elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
+    elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL' or args.source == 'SLL_BCMCL':
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
         f1 = '.xml'
     if args.source == 'ISMIR2019':
         output = os.path.join('.', 'genos-corpus', 'answer-sheets', 'bach-chorales', 'New_annotation', args.source)
-    elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
+    elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL' or args.source == 'SLL_BCMCL':
         output = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
     f2 = '.txt'
     # if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
@@ -145,14 +145,22 @@ def main():
                                          args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                          args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
                                          args.output, args.input, args.predict,
-                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)  # Evaluate on the 39 reserved chorales
+                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)
     elif args.source == 'LDL_BCMCL':
         train_and_predict_LDL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
                                          args.percentage,
                                          args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
                                          args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
                                          args.output, args.input, args.predict,
-                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)  # Evaluate on the 39 reserved chorales
+                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)
+    elif args.source == 'SLL_BCMCL':
+        train_and_predict_SLL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
+                                          args.percentage,
+                                          args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+                                          args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
+                                          args.output, args.input, args.predict,
+                                          ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'],
+                                          args.algorithm)
     # # # #put_non_chord_tone_into_musicXML(input, output, args.source, f1, f2, args.pitch)  # visualize as scores
 if __name__ == "__main__":
     main()
