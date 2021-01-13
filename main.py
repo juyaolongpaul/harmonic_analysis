@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='SLL_BCMCL')
+                        type=str, default='LDL_BCMCL')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
@@ -110,22 +110,22 @@ def main():
     input_dim = 12
     x = []
     y = []
-    if 'BCMCL' not in args.source:
-        generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
-                                                                 counter, counterMin, input, f1, output, f2,
-                                                                 args.source,
-                                                                 args.augmentation, args.pitch, args.ratio,
-                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
-      # only execute this when the CV matrices are complete
-    else:
-        generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
-                                                                        args.window,
-                                                                        counter, counterMin, input, f1, output, f2,
-                                                                        args.source,
-                                                                        args.augmentation, args.pitch, args.ratio,
-                                                                        args.cross_validation, args.version,
-                                                                        args.output, args.input,
-                                                                        'N', args.algorithm)  # generate training and testing data, return the sequence of test id
+    # if 'BCMCL' not in args.source:
+    #     generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
+    #                                                              counter, counterMin, input, f1, output, f2,
+    #                                                              args.source,
+    #                                                              args.augmentation, args.pitch, args.ratio,
+    #                                                              args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+    #   # only execute this when the CV matrices are complete
+    # else:
+    #     generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
+    #                                                                     args.window,
+    #                                                                     counter, counterMin, input, f1, output, f2,
+    #                                                                     args.source,
+    #                                                                     args.augmentation, args.pitch, args.ratio,
+    #                                                                     args.cross_validation, args.version,
+    #                                                                     args.output, args.input,
+    #                                                                     'N', args.algorithm)  # generate training and testing data, return the sequence of test id
 
     # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
     #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,

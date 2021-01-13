@@ -1689,6 +1689,50 @@ def normalizedDiscountedCumulativeGain(result, sorted_result):
     return ndcg
 
 
+def finding_threshold(valid_yy, predict_y_valid, chord_name):
+    results = {}
+    for i in range(0, 100): #
+        threshold = i/100
+        predict_y_valid_threshold = get_thresholding_results(predict_y_valid, threshold)
+        valid_yy_threshold = get_thresholding_results(valid_yy, 0)
+        f1 = f1_score(valid_yy_threshold, predict_y_valid_threshold, average='micro')
+        correct_num_MLL = 0
+        correct_num_MLL_inclusive = 0
+        a_predicted_labels = []
+        a_gt_labels = []
+        for id, each in enumerate(predict_y_valid_threshold):
+            predicted_labels = []
+            gt_labels = []
+            for ID, each_value in enumerate(each):
+                if each_value == 1:
+                    predicted_labels.append(chord_name[ID])
+                if valid_yy_threshold[id][ID] == 1:
+                    gt_labels.append(chord_name[ID])
+            # use accuracy and inclusive accuracy
+            a_predicted_labels.append(predicted_labels)
+            a_gt_labels.append(gt_labels)
+            if sorted(predicted_labels) == sorted(gt_labels):
+                correct_num_MLL += 1
+                correct_num_MLL_inclusive += 1
+            elif predicted_labels != [] and set(predicted_labels) <= set(gt_labels):
+                correct_num_MLL_inclusive += 1
+
+        inclusive_acc = correct_num_MLL_inclusive/len(valid_yy)
+        subset_acc = correct_num_MLL/len(valid_yy)
+        f1 = f1_score(valid_yy_threshold, predict_y_valid_threshold, average='micro')
+        results[threshold] = subset_acc # finetune based on these three results
+    rank = dict(sorted(results.items(), key=lambda item: item[1]))
+    return list(rank.keys())[-1]
+
+def get_thresholding_results(y, threshold):
+    y_thresholding = []
+    for each_row in y:
+        each_row_thresholding = [1 if x > threshold else 0 for x in each_row]
+        y_thresholding.append(each_row_thresholding)
+    return np.array(y_thresholding)
+
+
+
 def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm=''):
@@ -1794,16 +1838,20 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                                             sign) + '_y_' + outputtype + pitch_class + inputtype + '_New_annotation_' + keys + '_' + music21,
                                                'FB')
         predict_y = model.predict(test_xx)
-        predict_y_thresholding = []
-        for each_row in predict_y:
-            each_row_thresholding = [1 if x > 0.12 else 0 for x in each_row]
-            predict_y_thresholding.append(each_row_thresholding)
-        test_yy_thresholding = []
-        for each_row in test_yy:
-            each_row_thresholding = [1 if x > 0.12 else 0 for x in each_row]
-            test_yy_thresholding.append(each_row_thresholding)
-        test_yy_thresholding = np.array(test_yy_thresholding)
-        predict_y_thresholding = np.array(predict_y_thresholding)
+        predict_y_valid = model.predict(valid_xx)
+        threshold = finding_threshold(valid_yy, predict_y_valid, chord_name)
+        predict_y_thresholding = get_thresholding_results(predict_y, threshold)
+        test_yy_thresholding = get_thresholding_results(test_yy, smallest_vote_portion)
+        # predict_y_thresholding = []
+        # for each_row in predict_y:
+        #     each_row_thresholding = [1 if x > 0.12 else 0 for x in each_row]
+        #     predict_y_thresholding.append(each_row_thresholding)
+        # test_yy_thresholding = []
+        # for each_row in test_yy:
+        #     each_row_thresholding = [1 if x > smallest_vote_portion else 0 for x in each_row]
+        #     test_yy_thresholding.append(each_row_thresholding)
+        # test_yy_thresholding = np.array(test_yy_thresholding)
+        # predict_y_thresholding = np.array(predict_y_thresholding)
         # calculate P/r/F1, predicted values and ground truth value >= 0.12
         # test_yy_thresholding_flat = [item for sublist in test_yy_thresholding for item in sublist]
         # predict_y_thresholding_flat = [item for sublist in predict_y_thresholding for item in sublist]
@@ -1813,6 +1861,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
         print('MAE:', mean_absolute_error(test_yy, predict_y))
         print('KL_divergence:',np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0))/len(test_yy))
         print('KL_divergence:', np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0)) / len(test_yy), file=cv_log)
+        print('threshold:', threshold, file=cv_log)
         a_kl_divergence.append(np.sum(np.where(test_yy != 0, test_yy * np.log(test_yy / predict_y), 0)) / len(test_yy))
         # https://towardsdatascience.com/kl-divergence-python-example-b87069e4b810
         # print('KL_divergence on valid:',np.sum(np.where(valid_yy != 0, valid_yy * np.log(valid_yy / model.predict(valid_xx)), 0))/len(valid_yy))
@@ -1916,20 +1965,22 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     else:
                         thisChord.addLyric('✘')
                     for ID, each_value in enumerate(predict_y[a_counter]):
-                        if each_value >= 0.12 and chord_name[ID] not in predicted_chord_label_list:
+                        if each_value >= threshold and chord_name[ID] not in predicted_chord_label_list:
                             thisChord.addLyric(chord_name[ID] + ':' + str(round(each_value, 2)))
-                        if each_value >= 0.12:
+                        if each_value >= threshold:
                             predicted_chord_label_list_thresholding.append(chord_name[ID])
                     # use accuracy and inclusive accuracy
                     if sorted(predicted_chord_label_list_thresholding) == sorted(gt_chord_label_list):
                         correct_num_MLL += 1
                         correct_num_MLL_inclusive += 1
                         thisChord.addLyric('✓')
-                    elif set(predicted_chord_label_list_thresholding) <= set(gt_chord_label_list):
+                    elif predicted_chord_label_list_thresholding != [] and set(predicted_chord_label_list_thresholding) <= set(gt_chord_label_list):
                         correct_num_MLL_inclusive += 1
                         thisChord.addLyric('✓_')
                     else:
                         thisChord.addLyric('✘')
+                    if j == 0:
+                        thisChord.addLyric('thres:' + str(threshold))
 
                     # print('debug')
                     # also output chord labels whose values is >= smallest value
