@@ -22,7 +22,7 @@ def main():
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='N')
+                        type=str, default='Y')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -30,7 +30,7 @@ def main():
                         help='number of units (default: %(default)s)',
                         type=int, default=300)
     parser.add_argument('-m', '--model',
-                        help='DNN, RNN and LSTM to choose from (default: %(default)s)',
+                        help='DNN, CNN, RNN and LSTM to choose from (default: %(default)s)',
                         type=str, default='DNN')
     parser.add_argument('-p', '--pitch',
                         help='use pitch or pitch class or pitch class binary or pitch class 4 voices as '
@@ -122,7 +122,7 @@ def main():
     #                                                                     args.window,
     #                                                                     counter, counterMin, input, f1, output, f2,
     #                                                                     args.source,
-    #                                                                     args.augmentation, args.pitch, args.ratio,
+    #                                                                     args.augmentation, args. pitch, args.ratio,
     #                                                                     args.cross_validation, args.version,
     #                                                                     args.output, args.input,
     #                                                                     'N', args.algorithm)  # generate training and testing data, return the sequence of test id

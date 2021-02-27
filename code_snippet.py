@@ -324,7 +324,7 @@ def print_this_plot():
     from matplotlib.pyplot import figure
     plt.rcParams.update({'font.size': 40})
     figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
-    counter_fre =  {'M': 0.5113951644867222, 'm': 0.24900911613158938, '7': 0.07520808561236624, 'o': 0.0587594133967499, 'm7': 0.05648038049940547, '/o7': 0.023285770907649623, 'M7': 0.016845025762980578, 'o7': 0.006936187078874356, '+': 0.002080856123662307}
+    counter_fre =  {'M': 0.44436519258202567, 'm': 0.22032017752417182, '7': 0.11657948961800603, 'm7': 0.08178792201616739, 'o': 0.05444602948169282, 'M7': 0.03685211602472658, '/o7': 0.03312727849104454, 'o7': 0.009193216040576954, '+': 0.0033285782215882074}
     plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
@@ -348,5 +348,5 @@ if __name__ == "__main__":
     # inputpath = os.path.join(os.getcwd(), 'new_music', 'New_later', 'predicted_result')
     # compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     # #count_pickup_measure_NO()
-    # print_this_plot()
-    key_invariant_pairs()
+    print_this_plot()
+    # key_invariant_pairs()

@@ -27,7 +27,7 @@ from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
-from keras.layers import LSTM, Bidirectional, RNN, SimpleRNN, TimeDistributed
+from keras.layers import LSTM, Bidirectional, RNN, SimpleRNN, TimeDistributed, Conv1D, MaxPooling1D
 from keras.datasets import imdb
 from scipy.io import loadmat
 from keras.callbacks import EarlyStopping
@@ -839,6 +839,14 @@ def train_ML_model(modelID, HIDDEN_NODE, layer, timestep, outputtype, patience, 
                 else:
                     model.add(
                         LSTM(units=HIDDEN_NODE, dropout=0.2))
+            elif modelID.find('CNN') != -1:
+                model.add(Conv1D(kernel_size=1, filters=HIDDEN_NODE, activation='relu', input_shape=(batch_size, INPUT_DIM))) # won't work since it only aceepts 3-d tensor!
+                model.add(Dropout(0.2))
+                for i in range(layer - 2):
+                    model.add(Conv1D(kernel_size=1, filters=HIDDEN_NODE, activation='relu'))
+                    # model.add(Dropout(0.2)) https://www.zhihu.com/question/52426832
+        model.add(Dense(HIDDEN_NODE, init='uniform', activation='relu'))
+        model.add(Dropout(0.2))
         model.add(Dense(OUTPUT_DIM))
         nadam = optimizers.nadam(lr=0.001)
         if outputtype.find("NCT") != -1:
@@ -1115,7 +1123,7 @@ def train_and_predict_FB(rule_set, layer, nodes, windowsize, portion, modelID, t
     ML_rule_err = []
     batch_size = 256
     epochs = 500
-    if modelID == 'DNN':
+    if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
         patience = 20
@@ -1720,7 +1728,7 @@ def finding_threshold(valid_yy, predict_y_valid, chord_name):
         inclusive_acc = correct_num_MLL_inclusive/len(valid_yy)
         subset_acc = correct_num_MLL/len(valid_yy)
         f1 = f1_score(valid_yy_threshold, predict_y_valid_threshold, average='micro')
-        results[threshold] = subset_acc # finetune based on these three results
+        results[threshold] = inclusive_acc + subset_acc + f1 # finetune based on these three results
     rank = dict(sorted(results.items(), key=lambda item: item[1]))
     return list(rank.keys())[-1]
 
@@ -1731,6 +1739,14 @@ def get_thresholding_results(y, threshold):
         y_thresholding.append(each_row_thresholding)
     return np.array(y_thresholding)
 
+
+def harte_chord_distance(chord_name1, chord_name2):
+    chord1 = harmony.ChordSymbol(chord_name1)
+    chord2 = harmony.ChordSymbol(chord_name2)
+    intersection_chord_tones = set(chord1.pitchNames).intersection(chord2.pitchNames)
+    union_chord_tones = set(chord1.pitchNames).union(chord2.pitchNames)
+    chord_score = len(intersection_chord_tones)/len(union_chord_tones)
+    return chord_score
 
 
 def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
@@ -1744,6 +1760,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     batch_size = 256
     epochs = 500
     a_top1_acc = []
+    a_chord_similarity  = []
     a_ranking_acc = []
     a_kl_divergence = []
     a_NDCG = []
@@ -1753,8 +1770,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     a_recall_micro = []
     a_f1_micro = []
 
-    smallest_vote_portion = 0.12
-    if modelID == 'DNN':
+    smallest_vote_portion = 0.125
+    if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
         patience = 20
@@ -1839,7 +1856,8 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                                'FB')
         predict_y = model.predict(test_xx)
         predict_y_valid = model.predict(valid_xx)
-        threshold = finding_threshold(valid_yy, predict_y_valid, chord_name)
+        # threshold = finding_threshold(valid_yy, predict_y_valid, chord_name)
+        threshold = smallest_vote_portion
         predict_y_thresholding = get_thresholding_results(predict_y, threshold)
         test_yy_thresholding = get_thresholding_results(test_yy, smallest_vote_portion)
         # predict_y_thresholding = []
@@ -1896,12 +1914,14 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                                           windowsize + 1)))
             ranking_accuracy = []
             top1_accuracy = []
+            chord_similarity = []
             MLL_acc = []
             MLL_inclusive_acc = []
             ndcg = []
             for i in range(length):
                 each_ranking_accuracy = 0
                 each_top1_accuracy = 0
+                each_chord_similarity = 0
                 print(fileName[i])
                 # if '133.06' in fileName[i]:
                 #     print('debug')
@@ -1959,10 +1979,14 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                         thisChord.addLyric('✓')
                         each_ranking_accuracy += 1
                         each_top1_accuracy += 1
+                        each_chord_similarity += 1
                     elif gt_chord_label_list[0] == predicted_chord_label_list[0]:
                         each_top1_accuracy += 1
+                        each_chord_similarity += 1
                         thisChord.addLyric('✓!')
                     else:
+                        chord_score = harte_chord_distance(gt_chord_label_list[0], predicted_chord_label_list[0])
+                        each_chord_similarity += chord_score
                         thisChord.addLyric('✘')
                     for ID, each_value in enumerate(predict_y[a_counter]):
                         if each_value >= threshold and chord_name[ID] not in predicted_chord_label_list:
@@ -2003,7 +2027,9 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     a_counter += 1
                 ranking_accuracy.append(each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
                 top1_accuracy.append(each_top1_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                chord_similarity.append(each_chord_similarity/len(sChords.recurse().getElementsByClass('Chord')))
                 print('top1 acc:', each_top1_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
+                print('chord similarity:', each_chord_similarity/len(sChords.recurse().getElementsByClass('Chord')))
                 print('ranking acc:', each_ranking_accuracy/len(sChords.recurse().getElementsByClass('Chord')))
                 print('MLL acc', correct_num_MLL/len(sChords.recurse().getElementsByClass('Chord')))
                 print('MLL inclusive acc', (correct_num_MLL_inclusive/len(sChords.recurse().getElementsByClass('Chord'))))
@@ -2022,6 +2048,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
             # print(ndcg, np.mean(ndcg))
             print('NDCG score:', np.mean(ndcg), file=cv_log)
             a_top1_acc.append(np.mean(top1_accuracy))
+            a_chord_similarity.append(np.mean(chord_similarity))
             a_ranking_acc.append(np.mean(ranking_accuracy))
             a_MLL_acc.append(np.mean(MLL_acc))
             a_MLL_inclusive_acc.append(np.mean(MLL_inclusive_acc))
@@ -2030,6 +2057,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     print('overall performance', file=cv_log)
     print('overall kl divergence', np.mean(a_kl_divergence), '±', stats.sem(a_kl_divergence), file=cv_log)
     print('overall top1 accuracy', np.mean(a_top1_acc), '±', stats.sem(a_top1_acc), file=cv_log)
+    print('overall chord similarity', np.mean(a_chord_similarity), '±', stats.sem(a_chord_similarity), file=cv_log)
     print('overall ranking accuracy', np.mean(a_ranking_acc), '±', stats.sem(a_ranking_acc), file=cv_log)
     print('overall NDCG score', np.mean(a_NDCG), '±', stats.sem(a_NDCG), file=cv_log)
     print('smallest vote portion', smallest_vote_portion, file=cv_log)
@@ -2098,7 +2126,7 @@ def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID
     cvscores_percentage_of_NCT_per_slice = []
     batch_size = 256
     epochs = 500
-    if modelID == 'DNN':
+    if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
         patience = 20
@@ -2332,9 +2360,10 @@ def train_and_predict_SLL_chord_label(layer, nodes, windowsize, portion, modelID
     train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
     keys, keys1, music21 = determine_middle_name2(augmentation, sign, pitch_class)
     acc_test = []
+    a_chord_similarity = []
     batch_size = 256
     epochs = 500
-    if modelID == 'DNN':
+    if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
         patience = 20
@@ -2373,6 +2402,7 @@ def train_and_predict_SLL_chord_label(layer, nodes, windowsize, portion, modelID
                      + str(timestep) + extension + '_cv_' + str(times + 1)
         FOLDER_NAME = 'MODEL'
         train_id, valid_id, test_id = get_id(id_sum, num_of_chorale, times)
+        chord_similarity = []
         # if exclude != []:
         #     train_id.extend(test_id)
         #     test_id = exclude # Swap the test id into the 39 ones
@@ -2453,20 +2483,28 @@ def train_and_predict_SLL_chord_label(layer, nodes, windowsize, portion, modelID
                 s = converter.parse(os.path.join(input, fileName[i]))  # the source musicXML file
                 sChords = s.chordify()
                 k = s.analyze('AardenEssen')
+                each_chord_similarity = 0
                 for j, thisChord in enumerate(sChords.recurse().getElementsByClass('Chord')):
                     thisChord.addLyric(chord_name[test_yy_int[a_counter]])
                     thisChord.addLyric(chord_name[predict_y[a_counter]])
                     if test_yy_int[a_counter] == predict_y[a_counter]:
+                        each_chord_similarity += 1
                         thisChord.addLyric('✓')
+                        thisChord.addLyric('1')
                     else:
                         thisChord.addLyric('✘')
+                        thisChord.addLyric(str(round(harte_chord_distance(chord_name[test_yy_int[a_counter]], chord_name[predict_y[a_counter]]), 2)))
+                        each_chord_similarity += harte_chord_distance(chord_name[test_yy_int[a_counter]], chord_name[predict_y[a_counter]])
                     a_counter += 1
+                chord_similarity.append(each_chord_similarity/len(sChords.recurse().getElementsByClass('Chord')))
                 s.insert(0, sChords)
                 s.write('musicxml',
                         fp=os.path.join('.', 'predicted_result', sign,
                                         outputtype + pitch_class + inputtype + modelID + str(windowsize) + '_' + str(
                                             windowsize + 1), fileName[i][
                                                              :-4]) + '.xml')
+        a_chord_similarity.append(np.mean(chord_similarity))
+    print('chord similarity:', np.mean(a_chord_similarity), '±', stats.sem(a_chord_similarity), file=cv_log)
     print('acc:', np.mean(acc_test), '±', stats.sem(acc_test), file=cv_log)
 
 
@@ -2540,7 +2578,7 @@ def train_and_predict_non_chord_tone(layer, nodes, windowsize, portion, modelID,
     percentage_of_agreements_for_chord_inferral_algorithms = []
     batch_size = 256
     epochs = 500
-    if modelID == 'DNN':
+    if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
         patience = 20
