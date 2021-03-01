@@ -1751,7 +1751,7 @@ def harte_chord_distance(chord_name1, chord_name2):
 
 def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
-                                     inputtype, predict, exclude=[], algorithm=''):
+                                     inputtype, predict, exclude=[], algorithm='', threshold=0.125):
     print('Step 5: Training and testing the MLL machine learning models')
     id_sum = find_id_FB(input, exclude)
     num_of_chorale = len(id_sum)
@@ -1770,7 +1770,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     a_recall_micro = []
     a_f1_micro = []
 
-    smallest_vote_portion = 0.125
+    smallest_vote_portion = threshold
     if modelID == 'DNN' or modelID == 'CNN':
         patience = 50
     else:
@@ -2066,6 +2066,7 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
     print('micro avg precision', np.mean(a_precision_micro), '±', stats.sem(a_precision_micro), file=cv_log)
     print('micro avg recall', np.mean(a_recall_micro), '±', stats.sem(a_recall_micro), file=cv_log)
     print('micro avg f1', np.mean(a_f1_micro), '±', stats.sem(a_f1_micro), file=cv_log)
+    return np.mean(a_MLL_acc), np.mean(a_MLL_inclusive_acc), np.mean(a_precision_micro), np.mean(a_recall_micro)
 
 
 def train_and_predict_MLL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,

@@ -11,6 +11,7 @@ from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony, transpose_polyphony_FB
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source',
@@ -147,12 +148,28 @@ def main():
                                          args.output, args.input, args.predict,
                                          ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)
     elif args.source == 'LDL_BCMCL':
-        train_and_predict_LDL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
-                                         args.percentage,
-                                         args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
-                                         args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
-                                         args.output, args.input, args.predict,
-                                         ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)
+        print('now threshold value:', )
+        all_threshold = [i/100 for i in list(range(41, 51))]
+        all_acc = []
+        all_inc_acc = []
+        all_p = []
+        all_r= []
+        for each_threshold in all_threshold:
+            print('now threshold value:', each_threshold)
+            acc, inc_acc, p, r = train_and_predict_LDL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
+                                             args.percentage,
+                                             args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
+                                             args.cross_validation, args.pitch, args.ratio, input, output, args.balanced,
+                                             args.output, args.input, args.predict,
+                                             ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm, each_threshold)
+            all_acc.append(acc)
+            all_inc_acc.append(inc_acc)
+            all_p.append(p)
+            all_r.append(r)
+            print(all_acc)
+            print(all_inc_acc)
+            print(all_p)
+            print(all_r)
     elif args.source == 'SLL_BCMCL':
         train_and_predict_SLL_chord_label(args.num_of_hidden_layer, args.num_of_hidden_node, args.window,
                                           args.percentage,
