@@ -14,6 +14,7 @@ from __future__ import print_function
 import numpy as np
 import copy
 import collections
+import keras
 #import graphviz
 np.random.seed(1337)  # for reproducibility
 import operator
@@ -1752,7 +1753,7 @@ def harte_chord_distance(chord_name1, chord_name2):
 def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID, ts, bootstraptime, sign, augmentation,
                                      cv, pitch_class, ratio, input, output, balanced, outputtype,
                                      inputtype, predict, exclude=[], algorithm='', threshold=0.125):
-    print('Step 5: Training and testing the MLL machine learning models')
+    print('Step 5: Training and testing the LDL machine learning models')
     id_sum = find_id_FB(input, exclude)
     num_of_chorale = len(id_sum)
     train_num = num_of_chorale - int(round((num_of_chorale * (1 - ratio) / 2))) * 2
@@ -1936,9 +1937,11 @@ def train_and_predict_LDL_chord_label(layer, nodes, windowsize, portion, modelID
                     # calculate NDCG
                     predicted_value_chord_pair = {}
                     gt_value = test_yy[a_counter]
-                    # for each_value in gt_value:
-                    #     if smallest_vote_portion > each_value and each_value != 0:
-                    #         smallest_vote_portion = each_value
+                    for each_value in gt_value:
+                        if smallest_vote_portion > each_value and each_value != 0:
+                            smallest_vote_portion = each_value
+                            if smallest_vote_portion <= 0.125:
+                                print('smallest value found!')
                     for id, item in enumerate(predict_y[a_counter]):
                         predicted_value_chord_pair[chord_name[id]] = item
                     predicted_value_chord_pair_sorted_ori = dict(sorted(predicted_value_chord_pair.items(), key=lambda item: item[1], reverse=True))

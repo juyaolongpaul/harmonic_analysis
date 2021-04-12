@@ -350,8 +350,8 @@ def extract_chord_labels(file_path, filetype):
     elif filetype == '.xml':
         print('Step 0: Extract chord labels from the XML files')
         for fn in os.listdir(file_path):
-            if fn[-3:] == 'txt':
-                if 'prime' not in fn: continue
+            if fn[-3:] == 'txt' and 'DE' not in fn:
+                # if 'prime' not in fn: continue
                 f_chord_label = open(os.path.join(file_path, fn))
                 for each_line in f_chord_label.readlines():
                     if 'FB_lyric' in each_line: # a new file

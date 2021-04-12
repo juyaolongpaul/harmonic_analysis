@@ -555,7 +555,7 @@ def label_suspension(ptr, ptr2, s, sChord, voice_number, thisChord, suspension_p
 def replace_with_next_chord(pitch_four_voice, pitch_four_voice_next, thisChord, sChord, ptr, mark, s):
     if pitch_four_voice[-1].pitch.pitchClass == pitch_four_voice_next[-1].pitch.pitchClass or int(
             thisChord.beat) == int(sChord.recurse().getElementsByClass('Chord')[ptr + 1].beat):
-        # same bass or different basses but same beat (362 mm.2 last)
+        # same bass pitch class or different basses but same beat (362 mm.2 last)
         next_chord_pitch, next_mark = get_chord_tone(sChord.recurse().getElementsByClass('Chord')[ptr + 1], '', s, [], [],
                                                      'Y')  ## TODO: shouldn't we give the actual FB to this function?
         ## TODO: should we also consider the mark for the next chord in some ways?
@@ -962,7 +962,7 @@ def process_suspension(sChords, want_suspension_NCT, suspension_ptr, ptr, algori
                 ptr += 1
 
 
-def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument, algorithm_e=False, algorithm_b_prime = False, algorithm_de=False, translate_chord='Y'):
+def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discrepancies_chord_labels, path, no_instrument=False, algorithm_e=False, algorithm_b_prime = False, algorithm_de=False, translate_chord='Y'):
     a_chord_label_FB = []  # record of all the chord labels by figured bass
     a_chord_label_FB_part = [] # record chord labels by Algorithm D, later merged with the ones from Algorithm E
     a_FB = [] # record of all FB figures
@@ -987,7 +987,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_E'))
     if not os.path.isdir(os.path.join(path, 'BCMCL', 'Algorithm_DE')):
         os.mkdir(os.path.join(path, 'BCMCL', 'Algorithm_DE'))
-    if algorithm_e == False:
+    if algorithm_e == False and translate_chord == 'Y':
         if want_root_position_traid == False and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
             f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_A_all_chords.txt'), 'w')
         elif want_root_position_traid == True and want_suspension_NCT == False and want_discrepancies_chord_labels == False:
@@ -1002,7 +1002,7 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
                 f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_D_all_chords.txt'), 'w')
             else:
                 f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_DE_all_chords.txt'), 'w')
-    else:
+    elif translate_chord == 'Y':
         f_all_chords = open(os.path.join(path, 'BCMCL', 'Algorithm_E_all_chords.txt'), 'w')
 
 
@@ -1028,8 +1028,9 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
         # if No_of_files > 5: continue
         print(No_of_files)
         print(filename)
-        print(filename, file=f_all_chords)
-        print(filename, file=f_sus)
+        if translate_chord == 'Y':
+            print(filename, file=f_all_chords)
+            print(filename, file=f_sus)
         suspension_ptr = []  # list that records all the suspensions
         ptr = 0  # record how many suspensions we have within this chorale
         s_MIDI = converter.parse(os.path.join(path,
@@ -1156,20 +1157,20 @@ def lyrics_to_chordify(want_root_position_traid, want_suspension_NCT, want_discr
             s.write('musicxml', os.path.join(path,
                                              filename[:-4] + '_' + 'FB_align' + '.xml'))
         # obtain chord labels and do some statistical analysis
-
-        voice_FB = s.parts[-1]
-        a_chord_label_FB, all_chord_for_this_file = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
-        if algorithm_de == True:
-            voice_FB_algorithm_D = s.parts[-2]
-            a_chord_label_FB_part_final = []
-            a_chord_label_FB_part, all_chord_for_this_file_part = put_chords_into_files(voice_FB_algorithm_D, a_chord_label_FB_part, replace='N')
-            # merge together
-            for id, each_chord in enumerate(a_chord_label_FB_part):
-                a_chord_label_FB_part_final.append(list(set(each_chord).union(a_chord_label_FB[id])))
-        print('debug')
-        a_chord_label_FB = all_chord_for_this_file = a_chord_label_FB_part_final
-        print(all_chord_for_this_file, file=f_all_chords)
-    if algorithm_e == False:
+        if translate_chord == 'Y':
+            voice_FB = s.parts[-1]
+            a_chord_label_FB, all_chord_for_this_file = put_chords_into_files(voice_FB, a_chord_label_FB, replace='N')
+            if algorithm_de == True:
+                voice_FB_algorithm_D = s.parts[-2]
+                a_chord_label_FB_part_final = []
+                a_chord_label_FB_part, all_chord_for_this_file_part = put_chords_into_files(voice_FB_algorithm_D, a_chord_label_FB_part, replace='N')
+                # merge together
+                for id, each_chord in enumerate(a_chord_label_FB_part):
+                    a_chord_label_FB_part_final.append(list(set(each_chord).union(a_chord_label_FB[id])))
+                print('debug')
+                a_chord_label_FB = all_chord_for_this_file = a_chord_label_FB_part_final
+            print(all_chord_for_this_file, file=f_all_chords)
+    if algorithm_e == False and translate_chord == 'Y':
         a_chord_label_final_only_multiple_interpretations = []
         a_chord_label_final_only_multiple_interpretations_key_invariant = []
         for each in a_chord_label_FB:
@@ -1284,14 +1285,15 @@ if __name__ == '__main__':
     no_instrument = False
     # Step 1: we need to first extract the figured bass anntoations from BCFB into a format music21 can process
     extract_FB_as_lyrics(path, no_instrument)
+    lyrics_to_chordify(False, False, False, path, no_instrument, translate_chord='N')
     # Step 2: choose an algorithm you want to use to generate chord labels
-    # you can also uncomment them all, and they will be executed in a serial manner
+    # For BCMCL 1.1, you don't need to change the script
     # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
     # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
-    # lyrics_to_chordify(True, True, False, path, no_instrument, algorithm_e=False, algorithm_b_prime=True) # Algorithm B'
-    # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
-    # lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
-    # lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e)
-    lyrics_to_chordify(True, True, True, path, no_instrument, algorithm_de=True)  # Algorithm D and E. Algorithm_e should set to False!
-    # Algorithm E, where we still want modern suspension treatment
+    lyrics_to_chordify(True, True, False, path, no_instrument, algorithm_e=False, algorithm_b_prime=True) # Algorithm B'
+    lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
+    lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
+    lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e=True) # Algorithm E
+    # lyrics_to_chordify(True, True, True, path, no_instrument, algorithm_de=True)
+    # This is to calculate the statistics of BCMCL 1.1 reported in Section
 

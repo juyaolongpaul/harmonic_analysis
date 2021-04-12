@@ -319,13 +319,88 @@ def key_invariant_pairs(each_pair):
                 return ','.join([chord_quality_1, chord_quality_2, a_interval_1.complement.directedSimpleName])
 
 
+def print_this_plot_comparison():
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.ticker import PercentFormatter
+    plt.rcParams.update({'font.size': 40})
+    labels = ['M', 'm', '7', 'm7', 'o', 'M7', '/o7', 'o7', '+']
+    one_one =  [0.44436519258202567, 0.22032017752417182, 0.11657948961800603, 0.08178792201616739, 0.05444602948169282, 0.03685211602472658, 0.03312727849104454, 0.009193216040576954, 0.0033285782215882074] # quality distribution for BCMCL 1.1
+    one_one_chord_type = {'D': 0.07370423204945316, 'G': 0.06435251228403867, 'A': 0.05801236329053733, 'C': 0.050245680773498176, 'F': 0.04763036931367887, 'E': 0.045015057853859564, 'B-': 0.03938817562212712, 'Bm': 0.03471231573941987, 'Gm': 0.03360278966555714, 'Em': 0.0315422412426692, 'Am': 0.03146298938025044, 'Dm': 0.02456807734981772, 'Cm': 0.023696306863211284, 'F#m': 0.020446980504041846, 'D7': 0.02036772864162308, 'E-': 0.020129973054366777, 'A7': 0.017276906007291173, 'E7': 0.016008876208590903, 'B': 0.016008876208590903, 'F#': 0.0145823426850531, 'other': 0.3172452052623236}
+    one_zero_chord_type = {'D': 0.08412509897070466, 'G': 0.07412905779889153, 'A': 0.06769596199524941, 'C': 0.05760095011876484, 'F': 0.05423594615993666, 'E': 0.05374109263657957, 'B-': 0.04493269992082344, 'Bm': 0.039885193982581155, 'Gm': 0.0367181314330958, 'Am': 0.0367181314330958, 'Em': 0.035134600158353124, 'Cm': 0.027216943784639746, 'Dm': 0.027019002375296912, 'F#m': 0.023258115597783055, 'E-': 0.022268408551068885, 'B': 0.019002375296912115, 'F#': 0.016330166270783847, 'D7': 0.01157957244655582, 'A7': 0.011282660332541567, 'G7': 0.010095011876484561, 'other': 0.24703087885985753}
+    one_zero = [0.5113951644867222, 0.24900911613158938, 0.07520808561236624, 0.05648038049940547, 0.0587594133967499, 0.016845025762980578, 0.023285770907649623, 0.006936187078874356, 0.002080856123662307] # quality distribution for BCMCL 1.0
+    x = np.arange(len(labels))  # the label locations
+    width = 0.4  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width / 2, one_one, width, label='BCMCL 1.1')
+    rects2 = ax.bar(x + width / 2, one_zero, width, label='BCMCL 1.0')
+    ax.set_ylabel('Percentage (%)')
+    ax.set_title('Chord Qualities')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+    # ax.bar_label(rects1, padding=3)
+    # ax.bar_label(rects2, padding=3)
+
+    fig.tight_layout()
+    # plt.show()
+    plt.savefig('chord_quality.png', dpi=300)
+
+
+
+def print_this_plot_comparison_2():
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.ticker import PercentFormatter
+    plt.rcParams.update({'font.size': 40})
+
+    # one_one =  [0.44436519258202567, 0.22032017752417182, 0.11657948961800603, 0.08178792201616739, 0.05444602948169282, 0.03685211602472658, 0.03312727849104454, 0.009193216040576954, 0.0033285782215882074] # quality distribution for BCMCL 1.1
+    one_one_chord_type = {'D': 0.07370423204945316, 'G': 0.06435251228403867, 'A': 0.05801236329053733,
+                          'C': 0.050245680773498176, 'F': 0.04763036931367887, 'E': 0.045015057853859564,
+                          'B-': 0.03938817562212712, 'Bm': 0.03471231573941987, 'Gm': 0.03360278966555714,
+                          'Em': 0.0315422412426692, 'Am': 0.03146298938025044, 'Dm': 0.02456807734981772,
+                          'Cm': 0.023696306863211284, 'F#m': 0.020446980504041846, 'D7': 0.02036772864162308,
+                          'E-': 0.020129973054366777, 'A7': 0.017276906007291173,
+                          'B': 0.016008876208590903, 'F#': 0.0145823426850531, 'other': 0.3172452052623236}
+    # one_one_chord_type_ori = {'D': 0.07370423204945316, 'G': 0.06435251228403867, 'A': 0.05801236329053733, 'C': 0.050245680773498176, 'F': 0.04763036931367887, 'E': 0.045015057853859564, 'B-': 0.03938817562212712, 'Bm': 0.03471231573941987, 'Gm': 0.03360278966555714, 'Em': 0.0315422412426692, 'Am': 0.03146298938025044, 'Dm': 0.02456807734981772, 'Cm': 0.023696306863211284, 'F#m': 0.020446980504041846, 'D7': 0.02036772864162308, 'E-': 0.020129973054366777, 'A7': 0.017276906007291173, 'E7': 0.016008876208590903, 'B': 0.016008876208590903, 'F#': 0.0145823426850531, 'other': 0.3172452052623236}
+    one_zero_chord_type = {'D': 0.08412509897070466, 'G': 0.07412905779889153, 'A': 0.06769596199524941, 'C': 0.05760095011876484, 'F': 0.05423594615993666, 'E': 0.05374109263657957, 'B-': 0.04493269992082344, 'Bm': 0.039885193982581155, 'Gm': 0.0367181314330958, 'Em': 0.035134600158353124, 'Am': 0.0367181314330958, 'Dm': 0.027019002375296912, 'Cm': 0.027216943784639746, 'F#m': 0.023258115597783055, 'D7': 0.01157957244655582, 'E-': 0.022268408551068885, 'A7': 0.011282660332541567, 'B': 0.019002375296912115, 'F#': 0.016330166270783847,  'other': 0.24703087885985753}
+    labels = list(one_one_chord_type.keys())
+    # one_zero_chord_type_ori = {'D': 0.08412509897070466, 'G': 0.07412905779889153, 'A': 0.06769596199524941, 'C': 0.05760095011876484,
+    #  'F': 0.05423594615993666, 'E': 0.05374109263657957, 'B-': 0.04493269992082344, 'Bm': 0.039885193982581155,
+    #  'Gm': 0.0367181314330958, 'Am': 0.0367181314330958, 'Em': 0.035134600158353124, 'Cm': 0.027216943784639746,
+    #  'Dm': 0.027019002375296912, 'F#m': 0.023258115597783055, 'E-': 0.022268408551068885, 'B': 0.019002375296912115,
+    #  'F#': 0.016330166270783847, 'D7': 0.01157957244655582, 'A7': 0.011282660332541567, 'G7': 0.010095011876484561,
+    #  'other': 0.24703087885985753}
+    # one_zero = [0.5113951644867222, 0.24900911613158938, 0.07520808561236624, 0.05648038049940547, 0.0587594133967499, 0.016845025762980578, 0.023285770907649623, 0.006936187078874356, 0.002080856123662307] # quality distribution for BCMCL 1.0
+    x = np.arange(len(list(one_one_chord_type.keys())))  # the label locations
+    width = 0.35  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width / 2, list(one_one_chord_type.values()), width, label='BCMCL 1.1')
+    rects2 = ax.bar(x + width / 2, list(one_zero_chord_type.values()), width, label='BCMCL 1.0')
+    ax.set_ylabel('Percentage (%)')
+    ax.set_title('Chord Types')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=90)
+    ax.legend()
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+    # ax.bar_label(rects1, padding=3)
+    # ax.bar_label(rects2, padding=3)
+
+    fig.tight_layout()
+    # plt.show()
+    plt.savefig('chord_type.png', dpi=300)
+
 def print_this_plot():
     from matplotlib.ticker import PercentFormatter
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import figure
     plt.rcParams.update({'font.size': 40})
     figure(num=None, figsize=(4, 6), facecolor='w', edgecolor='k')
-    counter_fre =  {'M': 0.44436519258202567, 'm': 0.22032017752417182, '7': 0.11657948961800603, 'm7': 0.08178792201616739, 'o': 0.05444602948169282, 'M7': 0.03685211602472658, '/o7': 0.03312727849104454, 'o7': 0.009193216040576954, '+': 0.0033285782215882074}
+    counter_fre =  {'M': 0.44436519258202567, 'm': 0.22032017752417182, '7': 0.11657948961800603, 'm7': 0.08178792201616739, 'o': 0.05444602948169282, 'M7': 0.03685211602472658, '/o7': 0.03312727849104454, 'o7': 0.009193216040576954, '+': 0.0033285782215882074}# quality distribution for BCMCL 1.1
+    counter_fre = {'M': 0.5113951644867222, 'm': 0.24900911613158938, '7': 0.07520808561236624,
+                   'm7': 0.05648038049940547, 'o': 0.0587594133967499, 'M7': 0.016845025762980578, '/o7': 0.023285770907649623,
+                   'o7': 0.006936187078874356, '+': 0.002080856123662307}
     plt.bar(list(counter_fre.keys()), counter_fre.values(), width=1, color='g')
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.ylabel('Percentage (%)')
@@ -369,5 +444,6 @@ if __name__ == "__main__":
     # compare_chord_labels(inputpath, 'omr', 'corrected', 'revised', 'aligned')
     # #count_pickup_measure_NO()
     #print_this_plot()
-    print_BCMCL11()
+    # print_BCMCL11()
+    print_this_plot_comparison()
     # key_invariant_pairs()

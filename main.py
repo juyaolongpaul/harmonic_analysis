@@ -2,13 +2,14 @@
 
 import argparse
 import os
-
+import keras
 from get_input_and_output import generate_data_windowing_non_chord_tone_new_annotation_12keys, generate_data_windowing_non_chord_tone_new_annotation_12keys_FB
 from kernscore import extract_chord_labels
 from predict_result_for_140 import train_and_predict_non_chord_tone, train_and_predict_MLL_chord_label, train_and_predict_LDL_chord_label, train_and_predict_SLL_chord_label
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony, transpose_polyphony_FB
+from FB2lyrics import lyrics_to_chordify
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
@@ -17,13 +18,13 @@ def main():
     parser.add_argument('-s', '--source',
                         help='Maximally melodic (modified version from Rameau) '
                              'or rule_MaxMel (default: %(default)) or Rameau',
-                        type=str, default='LDL_BCMCL')
+                        type=str, default='MLL_BCMCL')
     parser.add_argument('-b', '--bootstrap',
                         help=' bootstrap the data (default: %(default)s)',
                         type=int, default=0)
     parser.add_argument('-a', '--augmentation',
                         help=' augment the data 12 times by transposing to 12 keys (default:%(default)',
-                        type=str, default='Y')
+                        type=str, default='N')
     parser.add_argument('-l', '--num_of_hidden_layer',
                         help='number of units (at least two layers) (default: %(default)s)',
                         type=int, default=3)
@@ -88,17 +89,19 @@ def main():
     elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL' or args.source == 'SLL_BCMCL':
         output = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
     f2 = '.txt'
-    # if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
-    #     extract_chord_labels(output, f1)  # extract chord labels into text files
-    # if args.source != 'MLL_BCMCL':  # chord annotations in BCMCL have already been standardized
-    #     annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
-    # provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
-    # if args.source != 'MLL_BCMCL':
-    #     transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
-    # else:
-    #     transpose_polyphony_FB(args.source, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'))
-    # # if args.source != 'Rameau':
-    #     f1 = '.xml'
+    if 'BCMCL' in args.source:
+        lyrics_to_chordify(False, False, False, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'), translate_chord=False)
+    if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
+        extract_chord_labels(output, f1)  # extract chord labels into text files
+    if args.source != 'MLL_BCMCL' and args.source != 'SLL_BCMCL' and args.source != 'LDL_BCMCL':  # chord annotations in BCMCL have already been standardized
+        annotation_translation(input, output, args.version, args.source)  # A function that extract chord labels from musicxml to txt and translate them
+    provide_path_12keys(input, f1, output, f2, args.source)  # Transpose the annotations into 12 keys
+    if args.source != 'MLL_BCMCL' and args.source != 'SLL_BCMCL' and args.source != 'LDL_BCMCL':
+        transpose_polyphony(args.source, input)  # Transpose the chorales into 12 keys
+    else:
+        transpose_polyphony_FB(args.source, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'))
+    if args.source != 'Rameau':
+        f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly
     counter2 = 0  # record the number of salami slices of chords
     counter = 0
@@ -111,22 +114,22 @@ def main():
     input_dim = 12
     x = []
     y = []
-    # if 'BCMCL' not in args.source:
-    #     generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
-    #                                                              counter, counterMin, input, f1, output, f2,
-    #                                                              args.source,
-    #                                                              args.augmentation, args.pitch, args.ratio,
-    #                                                              args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
-    #   # only execute this when the CV matrices are complete
-    # else:
-    #     generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
-    #                                                                     args.window,
-    #                                                                     counter, counterMin, input, f1, output, f2,
-    #                                                                     args.source,
-    #                                                                     args.augmentation, args. pitch, args.ratio,
-    #                                                                     args.cross_validation, args.version,
-    #                                                                     args.output, args.input,
-    #                                                                     'N', args.algorithm)  # generate training and testing data, return the sequence of test id
+    if 'BCMCL' not in args.source:
+        generate_data_windowing_non_chord_tone_new_annotation_12keys(counter1, counter2, x, y, input_dim, output_dim, args.window,
+                                                                 counter, counterMin, input, f1, output, f2,
+                                                                 args.source,
+                                                                 args.augmentation, args.pitch, args.ratio,
+                                                                 args.cross_validation, args.version, args.output, args.input)  # generate training and testing data, return the sequence of test id
+      # only execute this when the CV matrices are complete
+    else:
+        generate_data_windowing_non_chord_tone_new_annotation_12keys_FB(counter1, counter2, x, y, input_dim, output_dim,
+                                                                        args.window,
+                                                                        counter, counterMin, input, f1, output, f2,
+                                                                        args.source,
+                                                                        args.augmentation, args. pitch, args.ratio,
+                                                                        args.cross_validation, args.version,
+                                                                        args.output, args.input,
+                                                                        'N', args.algorithm)  # generate training and testing data, return the sequence of test id
 
     # train_and_predict_non_chord_tone(args.num_of_hidden_layer, args.num_of_hidden_node, args.window, args.percentage,
     #                                  args.model, args.timestep, args.bootstrap, args.source, args.augmentation,
@@ -149,7 +152,7 @@ def main():
                                          ['8.06', '161.06a', '161.06b', '16.06', '48.07', '195.06', '149.07', '447'], args.algorithm)
     elif args.source == 'LDL_BCMCL':
         print('now threshold value:', )
-        all_threshold = [i/100 for i in list(range(41, 51))]
+        all_threshold = [i/100 for i in list(range(41, 42))]
         all_acc = []
         all_inc_acc = []
         all_p = []
