@@ -9,6 +9,8 @@ from predict_result_for_140 import train_and_predict_FB
 from translate_output import annotation_translation
 from transpose_to_C_chords import provide_path_12keys
 from transpose_to_C_polyphony import transpose_polyphony_FB
+from FB2lyrics import extract_FB_as_lyrics
+from FB2lyrics import lyrics_to_chordify
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
@@ -76,6 +78,11 @@ def main():
                         help='specify whether you want to replace pitch class with intervals or not (default: %(default))',
                         type=str, default='Y')
     args = parser.parse_args()
+    path = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
+    no_instrument = False
+    # first to extract necessary figured bass information
+    extract_FB_as_lyrics(path, no_instrument)
+    lyrics_to_chordify(False, False, False, path, no_instrument, translate_chord='N')
     f1 = '.xml'
     f2 = '.txt'
     if args.source == 'Bach_o_FB':
