@@ -82,7 +82,7 @@ def main():
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master')
     elif args.source == 'Bach_e_FB':
         input = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'editorial_FB_only')
-    # transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
+    transpose_polyphony_FB(args.source, input)  # Transpose the chorales into 12 keys
     # if args.source != 'Rameau':
     #     f1 = '.xml'
     counter1 = 0  # record the number of salami slices of poly

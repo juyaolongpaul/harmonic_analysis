@@ -1208,12 +1208,12 @@ if __name__ == '__main__':
     algorithm_e = True
     # Step 1: we need to first extract the figured bass anntoations from BCFB into a format music21 can process
     extract_FB_as_lyrics(path, no_instrument)
-    # Step 2: choose an algorithm you want to use to generate chord labels
-    # you can also uncomment them all, and they will be executed in a serial manner
-    # lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
-    # lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
-    # lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
-    # lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
-    lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e)
-    # Algorithm E, where we still want modern suspension treatment
+    lyrics_to_chordify(False, False, False, path, no_instrument, translate_chord='N')
+    # Step 2: choose an algorithm you want to use to generate chord labels,
+    # for BCMCL 1.0, you don't need to change the script
+    lyrics_to_chordify(False, False, False, path, no_instrument) # Algorithm A
+    lyrics_to_chordify(True, False, False, path, no_instrument) # Algorithm B
+    lyrics_to_chordify(True, True, False, path, no_instrument) # Algorithm C
+    lyrics_to_chordify(True, True, True, path, no_instrument) # Algorithm D
+    # lyrics_to_chordify(False, True, False, path, no_instrument, algorithm_e) # Algorithm E
 
