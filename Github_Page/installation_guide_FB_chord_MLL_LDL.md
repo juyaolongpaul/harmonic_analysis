@@ -11,7 +11,7 @@ This guide is to deploy the multi-label learning and label distritbuion learning
 3. Activate the virtual environment. If you use the command line provided in the second step, you can activate it by `source ./.env/bin/activate` in Mac OS and Linux; in Windows, it is `.\.env\Scripts\activate`.
 4. Use `pip install -r requirements_cpu.txt` to install the required packages.
 5. Use `python FB2lyrics.py` to run the script to generate all the necessary file for multi-label learning and label distribution learning.
-6. Use `python -s MLL_BCMCL main_FB.py` to run the project for multi-label learning (proposed in Section 7.2). Use `python -s LDL_BCMCL main_FB.py` to run the project for label distribution learning (proposed in Section 7.3). 
+6. Use `python -s MLL_BCMCL main.py` to run the project for multi-label learning (proposed in Section 7.2). Use `python -s LDL_BCMCL main.py` to run the project for label distribution learning (proposed in Section 7.3). 
 
 If you have questions or further inquiries, please send an email to `yaolong.ju@mail.mcgill.ca`. 
 
