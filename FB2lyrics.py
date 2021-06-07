@@ -1257,7 +1257,7 @@ def print_distribution_plot(word, unit, total_NO_slice, a_slice_discrepancy=[]):
     plt.ylabel('Percentage (%)')
     plt.xlabel(word)
     plt.xticks(rotation='vertical')
-    plt.show()
+    #plt.show()
 
 def turn_number_into_percentage(c):
     cc = {}
