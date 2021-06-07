@@ -89,8 +89,8 @@ def main():
     elif args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL' or args.source == 'SLL_BCMCL':
         output = os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master', 'BCMCL')
     f2 = '.txt'
-    if 'BCMCL' in args.source:
-        lyrics_to_chordify(False, False, False, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'), translate_chord=False)
+    # if 'BCMCL' in args.source:
+    #     lyrics_to_chordify(False, False, False, os.path.join('.', 'Bach_chorale_FB', 'FB_source', 'musicXML_master'), translate_chord=False)
     if args.source == 'ISMIR2019' or args.source == 'MLL_BCMCL' or args.source == 'LDL_BCMCL':
         extract_chord_labels(output, f1)  # extract chord labels into text files
     if args.source != 'MLL_BCMCL' and args.source != 'SLL_BCMCL' and args.source != 'LDL_BCMCL':  # chord annotations in BCMCL have already been standardized
